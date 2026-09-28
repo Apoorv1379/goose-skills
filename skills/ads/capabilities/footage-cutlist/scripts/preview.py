@@ -29,7 +29,21 @@ def framed(spec, b, t):
     W, H = spec["size"]
     y, bh = box_for(spec, b)
     src = spec["_sources"][b["source"]]
-    im = grab(src["path"], t)
+    if src.get("still"):
+        from PIL import Image as _I
+        im = _I.open(src["path"]).convert("RGB")
+    else:
+        im = grab(src["path"], t)
+    if b.get("look") == "screen":
+        from filmed import ScreenLook
+        fr = ScreenLook(W, bh, b.get("screen")).render(im, 0.0, 0, crop=b.get("crop"), masks=b.get("mask"))
+        canvas = Image.new("RGB", (W, H), (26, 26, 26))
+        canvas.paste(fr, (0, y))
+        if b["state"] == "split":
+            d = ImageDraw.Draw(canvas)
+            cy, ch = zones(spec)["creator"]
+            d.rectangle([0, cy, W, cy + ch], fill=(60, 60, 64))
+        return canvas.resize((TW, int(TW * H / W)))
     fit = b.get("fit", "width")
     if fit == "crop":
         x0, y0, x1, y1 = b["crop"]
@@ -37,7 +51,7 @@ def framed(spec, b, t):
         fit = "width"
     bg = b.get("bg") or spec.get("bg", "auto")
     col = (40, 40, 44)
-    if bg == "auto":
+    if bg == "auto" and not src.get("still"):
         hx = sample_bg(src["path"], b["in"] + 0.1)
         col = tuple(int(hx[i:i + 2], 16) for i in (2, 4, 6))
     elif bg != "blur":

@@ -1,6 +1,6 @@
 ---
 name: caption-burn
-description: Word-timed burned-in captions for a finished vertical video. transcribe.py gets word timings from the video's own audio through the GooseWorks proxy (fal Whisper, bills the Ads agent, cents); captions.py burns one to three words at a time with Pillow + ffmpeg (no libass needed), either pinned to a split-screen seam (plate 25% above / 75% below) or at a fixed height, in a plate or outline style, holding the last caption (the CTA) to the final frame. Use as the last step of any talking video ad.
+description: Burned-in captions for a finished vertical video, three kinds. transcribe.py gets word timings from the video's own audio through the GooseWorks proxy (fal Whisper, bills the Ads agent, cents); captions.py burns one to three words at a time with Pillow + ffmpeg (no libass needed), either pinned to a split-screen seam (plate 25% above / 75% below) or at a fixed height, in a plate, outline or one-word serif style, with an optional red hook card; plates.py burns per-beat caption blocks (black, one union silhouette, placed in the emptiest band) for formats with no voice. The last caption (the CTA) holds to the final frame. Use as the last step of any video ad.
 status: active
 ---
 
@@ -29,6 +29,24 @@ and each beat's `state`. Any file with `beats: [{start, end, vo}]` works.
 - `plate` (default): white bold on a dark grey rounded plate, 1–2 words, cap ~0.019 H.
 - `outline`: white bold with a dark outline, no plate, 1–3 words, cap ~0.034 H.
 - `--highlight WORD` colours that word yellow (the CTA keyword). Repeatable.
+
+- `serif-word`: ONE word at a time, heavy serif (Georgia Bold), white with a black outline,
+  on a fixed baseline at 0.77 H (the screen-insert look). The highlight word is quoted.
+- `--card "LINE ONE|LINE TWO" --card-until 4.7`: a white rounded hook card with two lines
+  of heavy red capitals near the top, for the opening seconds. ~14 characters a line.
+
+## Captions for a format with no voice (plates.py)
+
+```bash
+python plates.py --video walk.mp4 --beats cutlist.json --out captioned.mp4 [--logo logo.png]
+```
+
+Each beat's `caption` (a string or list of lines) shows for the whole beat on ONE black
+block (square rectangles unioned, then rounded as a single silhouette: rounding each line
+leaves seams), lines left-aligned, the block centred on its widest line. It goes in the
+emptiest band of that beat's frame unless the beat pins `cap_y`. `logo: true` on a beat
+hangs the logo tile under the block. Write lines a person would type: the same short
+"fragment. fragment." shape three times reads as AI-written. No emoji twice.
 
 ## Rules
 

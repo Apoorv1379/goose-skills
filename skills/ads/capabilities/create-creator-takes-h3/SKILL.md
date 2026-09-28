@@ -58,6 +58,9 @@ approved still, then never retype them: a person described two ways drifts betwe
 4. **No square brackets in lines.** H3 speaks them aloud; `plan_takes.py` refuses them.
 5. **Dialogue stays verbatim.** Takes are sent with `prompt_expansion_mode: disabled`.
 6. **Takes split between lines, never inside one**, and run 0.6s past the last word.
+   `--split-at 6.3,14.5` joins the takes exactly at those line boundaries: the
+   screen-insert format joins where an insert ENDS, so the cut is hidden under the screen.
+   The voice runs under inserts too, so every line (creator or product beat) is in a take.
 7. **Join with a 0.10s dissolve, never 0.20s.** At 0.20s both poses show through the blend
    ("two pairs of hands"). Measured: 11.04 peak change at 0.10s vs 13.30 for a hard cut.
 8. **One filter graph.** Joining files with the concat demuxer puts black frames at every

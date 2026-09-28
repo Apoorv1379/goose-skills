@@ -810,7 +810,7 @@
       "name": "caption-burn",
       "category": "capabilities",
       "domain": "ads",
-      "description": "Word-timed burned-in captions for a finished vertical video. transcribe.py gets word timings from the video's own audio through the GooseWorks proxy (fal Whisper, bills the Ads agent, cents); captions.py burns one to three words at a time with Pillow + ffmpeg (no libass needed), either pinned to a split-screen seam (plate 25% above / 75% below) or at a fixed height, in a plate or outline style, holding the last caption (the CTA) to the final frame. Use as the last step of any talking video ad.",
+      "description": "Burned-in captions for a finished vertical video, three kinds. transcribe.py gets word timings from the video's own audio through the GooseWorks proxy (fal Whisper, bills the Ads agent, cents); captions.py burns one to three words at a time with Pillow + ffmpeg (no libass needed), either pinned to a split-screen seam (plate 25% above / 75% below) or at a fixed height, in a plate, outline or one-word serif style, with an optional red hook card; plates.py burns per-beat caption blocks (black, one union silhouette, placed in the emptiest band) for formats with no voice. The last caption (the CTA) holds to the final frame. Use as the last step of any video ad.",
       "tags": "ads, content",
       "path": "skills/ads/capabilities/caption-burn",
       "files": [
@@ -818,6 +818,7 @@
         "skills/ads/capabilities/caption-burn/scripts/_fonts.py",
         "skills/ads/capabilities/caption-burn/scripts/captions.py",
         "skills/ads/capabilities/caption-burn/scripts/media_proxy.py",
+        "skills/ads/capabilities/caption-burn/scripts/plates.py",
         "skills/ads/capabilities/caption-burn/scripts/transcribe.py",
         "skills/ads/capabilities/caption-burn/skill.meta.json",
         "skills/ads/capabilities/caption-burn/tests/smoke-test.md"
@@ -1481,7 +1482,7 @@
       "name": "compose-creator-layer",
       "category": "capabilities",
       "domain": "ads",
-      "description": "Composite a generated creator track into a product layer, per beat — in the creator's zone on split beats (either side of a seam), full frame on creator beats, hidden on product beats — with the creator's voice as the audio (loudness -14 LUFS) and an optional ducked music bed. Free, local ffmpeg. Pairs with footage-cutlist (the layer) and create-creator-takes-h3 (the creator). Use for split-screen, screen-insert and any creator-over-product format.",
+      "description": "Composite a generated creator track into a product layer, per beat — in the creator's zone on split beats (either side of a seam), full frame on creator beats, hidden on product beats — with the creator's voice as the audio (loudness -14 LUFS) and an optional ducked music bed, or a music-only or silent master for voiceless formats. Free, local ffmpeg. Pairs with footage-cutlist (the layer) and create-creator-takes-h3 (the creator). Use for split-screen, screen-insert and any creator-over-product format.",
       "tags": "ads, content",
       "path": "skills/ads/capabilities/compose-creator-layer",
       "files": [
@@ -3003,7 +3004,7 @@
       "name": "footage-cutlist",
       "category": "capabilities",
       "domain": "ads",
-      "description": "Watch a brand's own product footage (screen recording, product film), pick the moment that proves each line with the user, and render those picks as a product layer — free, local. survey.py turns footage into timestamped contact sheets + scene cuts + motion so the agent can actually look at it; the agent writes a cut list (beat → source window + framing); preview.py draws it as a review sheet the user corrects round by round; cut.py renders the approved list into a silent 1080x1920 layer with the creator's area left as a plate. Use for any format that shows real product footage under or beside a creator (split-screen, screen inserts, walkthroughs).",
+      "description": "Watch a brand's own product footage (screen recording, product film), pick the moment that proves each line with the user, and render those picks as a product layer — free, local. survey.py turns footage into timestamped contact sheets + scene cuts + motion so the agent can actually look at it; the agent writes a cut list (beat → source window + framing); preview.py draws it as a review sheet the user corrects round by round; cut.py renders the approved list into a silent 1080x1920 layer with the creator's area left as a plate. Also frames footage as a filmed screen (keystone, bezel, handheld drift) with dissolves between beats, and takes still screenshots as sources. Use for any format that shows real product footage beside, between or instead of a creator (split-screen, screen inserts, walkthroughs).",
       "tags": "ads, content",
       "path": "skills/ads/capabilities/footage-cutlist",
       "files": [
@@ -3011,6 +3012,7 @@
         "skills/ads/capabilities/footage-cutlist/scripts/_common.py",
         "skills/ads/capabilities/footage-cutlist/scripts/cut.py",
         "skills/ads/capabilities/footage-cutlist/scripts/cutlist.py",
+        "skills/ads/capabilities/footage-cutlist/scripts/filmed.py",
         "skills/ads/capabilities/footage-cutlist/scripts/preview.py",
         "skills/ads/capabilities/footage-cutlist/scripts/survey.py",
         "skills/ads/capabilities/footage-cutlist/skill.meta.json",
@@ -6609,6 +6611,41 @@
         ],
         "installation": {
           "base_command": "npx goose-skills install video-ad-formats",
+          "supports": [
+            "claude",
+            "cursor",
+            "codex"
+          ]
+        }
+      }
+    },
+    {
+      "slug": "render-logo-equation-card",
+      "name": "render-logo-equation-card",
+      "category": "capabilities",
+      "domain": "ads",
+      "description": "Render the logo-equation card ad (7s, 9:16) — partner icon + brand icon joined by a plus sign as an equation, a two-line \"= outcome\" headline, four numbered steps, and a CTA that hard-cuts in at 2s, on a static black card over timelapse b-roll, no voice. render_card.py draws the two card plates with measured geometry and hard guardrails (the user must confirm the integration is real, no partnership/endorsement/ranking words, no comment-bait CTA, no dashes); compose.py lays the card over the b-roll sped up to read as a timelapse, with an optional bed; measure_motion.py gates the b-roll (a real-time shot reads as a photo). Free, local.",
+      "tags": "ads, content",
+      "path": "skills/ads/capabilities/render-logo-equation-card",
+      "files": [
+        "skills/ads/capabilities/render-logo-equation-card/SKILL.md",
+        "skills/ads/capabilities/render-logo-equation-card/scripts/_fonts.py",
+        "skills/ads/capabilities/render-logo-equation-card/scripts/compose.py",
+        "skills/ads/capabilities/render-logo-equation-card/scripts/measure_motion.py",
+        "skills/ads/capabilities/render-logo-equation-card/scripts/render_card.py",
+        "skills/ads/capabilities/render-logo-equation-card/skill.meta.json",
+        "skills/ads/capabilities/render-logo-equation-card/tests/smoke-test.md"
+      ],
+      "metadata": {
+        "slug": "render-logo-equation-card",
+        "category": "capabilities",
+        "domain": "ads",
+        "tags": [
+          "ads",
+          "content"
+        ],
+        "installation": {
+          "base_command": "npx goose-skills install render-logo-equation-card",
           "supports": [
             "claude",
             "cursor",
