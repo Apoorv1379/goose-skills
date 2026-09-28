@@ -211,31 +211,101 @@ def _poll_get(url, params, deadline, what):
     raise TimeoutError(f"FAL {what} unreachable through the outage: {last}")
 
 
-def _poll_to_result(model_path, status_url, response_url, params, timeout_s, poll_s):
+# ── Poll timeouts: NEVER resubmit (GOOSE-3729) ────────────────────────────────
+# A poll timeout does NOT mean the job failed — fal keeps rendering (a veed/fabric
+# lipsync once finished at 626s, 26s after a 600s poller gave up; the retry paid
+# for a second identical job). So a timeout raises FalPollTimeout carrying the
+# request_id: re-attach with resume_fal(request_id), never re-call fal_generate*.
+# Video/lipsync/audio-driven models get a long default; images keep a short one.
+# (The proxy also dedupes an identical submit within 30 min as a back-stop.)
+IMAGE_POLL_TIMEOUT_S = 600
+VIDEO_POLL_TIMEOUT_S = 1800
+_SLOW_MODEL_HINTS = (
+    "video", "lipsync", "lip-sync", "fabric", "omnihuman", "sync-lipsync", "avatar",
+    "talking", "kling", "seedance", "veo", "wan", "hailuo", "minimax", "pixverse",
+    "luma", "runway", "ltx", "hunyuan", "sora", "music", "audio",
+)
+
+
+def default_poll_timeout(model_path):
+    """Seconds to poll before giving up (NOT resubmitting): long for video/lipsync,
+    short for images. Env GW_FAL_POLL_TIMEOUT_S overrides both."""
+    env = os.environ.get("GW_FAL_POLL_TIMEOUT_S")
+    if env:
+        try:
+            return max(1, int(float(env)))
+        except ValueError:
+            pass
+    mp = (model_path or "").lower()
+    return VIDEO_POLL_TIMEOUT_S if any(h in mp for h in _SLOW_MODEL_HINTS) else IMAGE_POLL_TIMEOUT_S
+
+
+class FalPollTimeout(TimeoutError):
+    """The job is still (probably) running on fal — we only stopped waiting.
+    DO NOT resubmit: that starts, and pays for, a second identical job.
+    Re-attach with resume_fal(e.request_id) (or resume.py --request-id <id>)."""
+
+    def __init__(self, model_path, request_id, timeout_s, last_status=None):
+        self.model_path = model_path
+        self.request_id = request_id
+        self.timeout_s = timeout_s
+        self.last_status = last_status
+        super().__init__(
+            f"FAL job {request_id} ({model_path}) still not finished after {timeout_s}s "
+            f"(last status: {last_status or 'unknown'}). It is still running and already "
+            f"paid for — DO NOT resubmit (that pays for a second job). Re-attach with "
+            f"resume_fal({request_id!r}) or `resume.py --request-id {request_id}`.")
+
+
+def _poll_to_result(model_path, status_url, response_url, params, timeout_s, poll_s,
+                    request_id=None):
     deadline = time.time() + timeout_s
-    while time.time() < deadline:
-        st = _poll_get(status_url, params, deadline, "status").json()
-        s = st.get("status")
-        if s == "COMPLETED":
-            out = _poll_get(response_url, params, deadline, "result").json()
-            _raise_if_fal_error(out, model_path)
-            return out
-        if s in ("FAILED", "ERROR"):
-            raise RuntimeError(f"FAL failed: {st}")
-        time.sleep(poll_s)
-    raise TimeoutError(f"FAL polling exceeded {timeout_s}s for {model_path}")
+    last = None
+    try:
+        while time.time() < deadline:
+            st = _poll_get(status_url, params, deadline, "status").json()
+            s = st.get("status")
+            last = s or last
+            if s == "COMPLETED":
+                out = _poll_get(response_url, params, deadline, "result").json()
+                _raise_if_fal_error(out, model_path)
+                return out
+            if s in ("FAILED", "ERROR"):
+                raise RuntimeError(f"FAL failed: {st}")
+            time.sleep(poll_s)
+    except FalPollTimeout:
+        raise
+    except TimeoutError as e:  # poll deadline hit during a backend outage
+        last = f"{last or 'unknown'}; {e}"
+    rid = request_id or urlparse(response_url).path.rstrip("/").rsplit("/", 1)[-1]
+    raise FalPollTimeout(model_path, rid, timeout_s, last)
 
 
-def _fal_run(model_path, payload, timeout_s=600, poll_s=3):
+def _fal_run(model_path, payload, timeout_s=None, poll_s=3, new_take=False):
     """Submit a FAL job through the proxy, poll to completion (surviving backend blips),
-    return the raw result dict. `model_path` e.g. 'fal-ai/kling-video/.../image-to-video'."""
+    return the raw result dict. `model_path` e.g. 'fal-ai/kling-video/.../image-to-video'.
+
+    timeout_s: seconds to POLL (default: default_poll_timeout(model_path)). On timeout
+    raises FalPollTimeout(request_id=...) — it never resubmits; resume with resume_fal.
+    new_take: True = deliberately start a NEW job even if an identical submit is already
+    running (a re-roll of the same prompt). Default False: the proxy returns the running
+    job for an identical submit within 30 min instead of paying for a second one."""
+    if timeout_s is None:
+        timeout_s = default_poll_timeout(model_path)
     api_base, tok, agent = _cfg()
     base = api_base + "/api/internal/fal-proxy"
     params = _params(tok, agent)
+    headers = {"x-gw-no-dedupe": "1"} if new_take else None
     t0 = time.time()
     prompt = payload.get("prompt") if isinstance(payload, dict) else None
     try:
-        sub = requests.post(f"{base}/{model_path}", params=params, json=payload, timeout=120).json()
+        sub_resp = requests.post(f"{base}/{model_path}", params=params, json=payload,
+                                 headers=headers, timeout=120)
+        sub = sub_resp.json()
+        if sub_resp.headers.get("x-gw-deduped") == "1":
+            gw_log(f"FAL {model_path}: identical submit already running — re-attached to "
+                   f"{sub.get('request_id')} (no new job, no new charge)", "info",
+                   provider="fal", model=model_path, details={"request_id": sub.get("request_id")})
         _raise_if_fal_error(sub, model_path)
         if "status_url" not in sub:  # some models return a result synchronously
             gw_log(f"FAL {model_path} completed (sync)", "generation", provider="fal",
@@ -245,7 +315,8 @@ def _fal_run(model_path, payload, timeout_s=600, poll_s=3):
         status_url, response_url = to_proxy(sub["status_url"]), to_proxy(sub["response_url"])
         request_id = sub.get("request_id") or urlparse(sub["response_url"]).path.rstrip("/").rsplit("/", 1)[-1]
         _persist_pending(model_path, request_id, status_url, response_url)
-        result = _poll_to_result(model_path, status_url, response_url, params, timeout_s, poll_s)
+        result = _poll_to_result(model_path, status_url, response_url, params, timeout_s,
+                                 poll_s, request_id=request_id)
         _clear_pending(request_id)
         gw_log(f"FAL {model_path} completed", "generation", provider="fal",
                model=model_path, duration_ms=(time.time() - t0) * 1000,
@@ -262,17 +333,20 @@ def _fal_run(model_path, payload, timeout_s=600, poll_s=3):
         raise
 
 
-def resume_fal(request_id, timeout_s=600, poll_s=3):
+def resume_fal(request_id, timeout_s=None, poll_s=3):
     """Re-attach to an already-submitted FAL job by request-id (after a mid-poll backend
-    crash) using the pending record persisted at submit. NEVER re-submits → can't
-    double-bill. Returns the raw result dict; clears the pending record on success."""
+    crash or a FalPollTimeout) using the pending record persisted at submit. NEVER
+    re-submits → can't double-bill. Returns the raw result dict; clears the pending
+    record on success. Raises FalPollTimeout again if it still isn't done."""
     rec = json.loads(_pending_path(request_id).read_text())
+    if timeout_s is None:
+        timeout_s = default_poll_timeout(rec.get("model_path"))
     _, tok, agent = _cfg()
     # Bill the resumed result to the project it was SUBMITTED for, not whatever
     # GW_PROJECT_ID this (possibly different) process has.
     params = _params(tok, agent, project_id=rec.get("project_id"))
     result = _poll_to_result(rec["model_path"], rec["status_url"], rec["response_url"],
-                             params, timeout_s, poll_s)
+                             params, timeout_s, poll_s, request_id=request_id)
     _clear_pending(request_id)
     return result
 
@@ -291,7 +365,9 @@ def list_pending():
 
 
 def fal_generate(model_path, payload, **kw):
-    """Image models → returns the first result image URL (public *.fal.media CDN)."""
+    """Image models → returns the first result image URL (public *.fal.media CDN).
+    kw: timeout_s, poll_s, new_take (see _fal_run). A poll timeout raises
+    FalPollTimeout — resume it with resume_fal(e.request_id), never call this again."""
     r = _fal_run(model_path, payload, **kw)
     imgs = r.get("images") if isinstance(r, dict) else None
     if not imgs:
@@ -300,7 +376,11 @@ def fal_generate(model_path, payload, **kw):
 
 
 def fal_generate_video(model_path, payload, **kw):
-    """Video (i2v/t2v) models → returns the result video URL."""
+    """Video (i2v/t2v/lipsync) models → returns the result video URL. Polls up to
+    VIDEO_POLL_TIMEOUT_S by default; on timeout raises FalPollTimeout (resume, don't
+    resubmit). Pass new_take=True only for a deliberate re-roll of the same input."""
+    kw.setdefault("timeout_s", default_poll_timeout(model_path)
+                  if os.environ.get("GW_FAL_POLL_TIMEOUT_S") else VIDEO_POLL_TIMEOUT_S)
     r = _fal_run(model_path, payload, **kw)
     url = (r.get("video") or {}).get("url") if isinstance(r, dict) else None
     if not url:

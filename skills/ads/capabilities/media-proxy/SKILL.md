@@ -27,6 +27,19 @@ render. Two built-in protections (automatic for every capability that imports th
   resume.py --request-id <id> --out final.mp4   # poll to completion + download
   ```
   `resume_fal` NEVER re-submits, so it can't double-charge.
+- **Poll timeout never resubmits (GOOSE-3729)** — polling gives up after
+  `default_poll_timeout(model)`: **1800s for video / lipsync / audio-driven models**,
+  600s for images (`GW_FAL_POLL_TIMEOUT_S` overrides; `timeout_s=` per call). A timeout
+  raises `FalPollTimeout` carrying `.request_id` + `.model_path` — the job is still
+  running and already paid for. **Re-attach with `resume_fal(e.request_id)`; never call
+  `fal_generate*` again for it** (a veed/fabric lipsync once finished 26s after a 600s
+  poller quit, and the retry paid for a second identical job).
+- **Proxy dedupe back-stop** — the fal proxy returns the already-running job for an
+  identical submit (same agent + model + body) within 30 min, so an accidental
+  resubmit re-attaches instead of paying twice (response header `x-gw-deduped: 1`).
+  For a **deliberate re-roll** of the same input (want a new take), pass
+  `new_take=True` (`fal_generate(..., new_take=True)` / `fal_generate_video(...)`),
+  which sends `x-gw-no-dedupe: 1` (raw HTTP callers: that header or `?dedupe=0`).
 
 ## Use it
 
