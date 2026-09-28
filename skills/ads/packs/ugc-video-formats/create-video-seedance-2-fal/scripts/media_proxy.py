@@ -20,10 +20,15 @@ as a `generation` trail, failures as an `api_failure` with the error + prompt �
 local skill run isn't a black box. Import `gw_log(...)` to log your own steps/issues
 and `run_id()` to read the current run id. Best-effort; never breaks a render.
 
+`input_digest(model, args)` names the exact inputs of a generation (GOOSE-3731):
+pass it with the MCP `media_upload` of the result (plus an `ingredient_key`), so a
+resumed run reuses the saved file only when the digest still matches.
+
 FAL inputs that are local files (a product image, an audio track) must be a PUBLIC
 URL — the orchestrator hosts them via the MCP `get_upload_url` → `get_download_url`
 presigned URL and passes that URL in; this module does NOT do MCP uploads.
 """
+import hashlib
 import json
 import os
 import pathlib
@@ -101,6 +106,24 @@ def run_id():
     """This run's id — env GW_RUN_ID if the orchestrator set one, else a stable
     per-process id. Groups every event (agent-logged + auto-logged) from one run."""
     return _RUN_ID
+
+
+def input_digest(model, args):
+    """Stable id of one generation's inputs (GOOSE-3731).
+
+    sha256 of the canonical JSON ``{"model": model, "args": args}`` (sorted keys, no
+    whitespace, UTF-8), first 32 hex chars. Same model + same args -> same digest on any
+    machine, so a resumed run can tell a saved ingredient is still valid.
+
+    Hash what DETERMINES the output, and only that: the model path and the exact
+    payload/params you send (prompt, voice_id, model_id, seed, duration, aspect...).
+    Replace inputs that change between runs without changing the result - a
+    presigned or proxy URL of an input file - with something stable (that input's
+    own ingredient_key + input_digest) before hashing, or the digest never matches.
+    """
+    canonical = json.dumps({"model": model, "args": args}, sort_keys=True,
+                           separators=(",", ":"), ensure_ascii=False)
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()[:32]
 
 
 def gw_log(message, event_type="info", level="info", *, skill=None, provider=None,

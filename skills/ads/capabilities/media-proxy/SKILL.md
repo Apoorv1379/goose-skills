@@ -56,6 +56,23 @@ vid = fal_generate_video("fal-ai/kling-video/v2.1/standard/image-to-video",
 eleven_music(prompt, 10500, "music.mp3", force_instrumental=True)
 ```
 
+## Save-as-you-go digest (GOOSE-3731)
+
+`input_digest(model, args)` = sha256 of the canonical JSON `{"model", "args"}` (sorted
+keys, no whitespace), first 32 hex chars. Pass it with the MCP `media_upload` of the
+result (plus an `ingredient_key` such as `vo/scene-03`); on a resume, `media_list
+{ ingredient_key }` returns the saved file and its digest, and the file is reused only
+when the digest of the args you would send now is the same.
+
+```python
+from media_proxy import input_digest, eleven_tts
+args = {"text": line, "voice_id": vid, "model_id": "eleven_v3"}
+digest = input_digest("elevenlabs/tts", args)
+```
+
+Hash only what determines the output. Swap any expiring input URL (presigned / proxy)
+for that input's own ingredient_key + digest first, or the digest never matches.
+
 ## Contracts (load-bearing)
 
 - **Bills the Ads agent** — `?token=&agent_id=` from `~/.gooseworks/credentials.json`
