@@ -1,6 +1,6 @@
 {
   "version": "1.3.0",
-  "generated": "2026-09-24",
+  "generated": "2026-09-28",
   "skills": [
     {
       "slug": "ad-angle-miner",
@@ -806,6 +806,44 @@
       }
     },
     {
+      "slug": "caption-burn",
+      "name": "caption-burn",
+      "category": "capabilities",
+      "domain": "ads",
+      "description": "Word-timed burned-in captions for a finished vertical video. transcribe.py gets word timings from the video's own audio through the GooseWorks proxy (fal Whisper, bills the Ads agent, cents); captions.py burns one to three words at a time with Pillow + ffmpeg (no libass needed), either pinned to a split-screen seam (plate 25% above / 75% below) or at a fixed height, in a plate or outline style, holding the last caption (the CTA) to the final frame. Use as the last step of any talking video ad.",
+      "tags": "ads, content",
+      "path": "skills/ads/capabilities/caption-burn",
+      "files": [
+        "skills/ads/capabilities/caption-burn/SKILL.md",
+        "skills/ads/capabilities/caption-burn/scripts/_fonts.py",
+        "skills/ads/capabilities/caption-burn/scripts/captions.py",
+        "skills/ads/capabilities/caption-burn/scripts/media_proxy.py",
+        "skills/ads/capabilities/caption-burn/scripts/transcribe.py",
+        "skills/ads/capabilities/caption-burn/skill.meta.json",
+        "skills/ads/capabilities/caption-burn/tests/smoke-test.md"
+      ],
+      "metadata": {
+        "slug": "caption-burn",
+        "category": "capabilities",
+        "domain": "ads",
+        "tags": [
+          "ads",
+          "content"
+        ],
+        "installation": {
+          "base_command": "npx goose-skills install caption-burn",
+          "supports": [
+            "claude",
+            "cursor",
+            "codex"
+          ]
+        },
+        "requires_skills": [
+          "media-proxy"
+        ]
+      }
+    },
+    {
       "slug": "champion-move-outreach",
       "name": "champion-move-outreach",
       "category": "composites",
@@ -1439,6 +1477,38 @@
       }
     },
     {
+      "slug": "compose-creator-layer",
+      "name": "compose-creator-layer",
+      "category": "capabilities",
+      "domain": "ads",
+      "description": "Composite a generated creator track into a product layer, per beat — in the creator's zone on split beats (either side of a seam), full frame on creator beats, hidden on product beats — with the creator's voice as the audio (loudness -14 LUFS) and an optional ducked music bed. Free, local ffmpeg. Pairs with footage-cutlist (the layer) and create-creator-takes-h3 (the creator). Use for split-screen, screen-insert and any creator-over-product format.",
+      "tags": "ads, content",
+      "path": "skills/ads/capabilities/compose-creator-layer",
+      "files": [
+        "skills/ads/capabilities/compose-creator-layer/SKILL.md",
+        "skills/ads/capabilities/compose-creator-layer/scripts/compose.py",
+        "skills/ads/capabilities/compose-creator-layer/skill.meta.json",
+        "skills/ads/capabilities/compose-creator-layer/tests/smoke-test.md"
+      ],
+      "metadata": {
+        "slug": "compose-creator-layer",
+        "category": "capabilities",
+        "domain": "ads",
+        "tags": [
+          "ads",
+          "content"
+        ],
+        "installation": {
+          "base_command": "npx goose-skills install compose-creator-layer",
+          "supports": [
+            "claude",
+            "cursor",
+            "codex"
+          ]
+        }
+      }
+    },
+    {
       "slug": "comprehensive-enrichment",
       "name": "comprehensive-enrichment",
       "category": "capabilities",
@@ -1768,6 +1838,46 @@
             "codex"
           ]
         }
+      }
+    },
+    {
+      "slug": "create-creator-takes-h3",
+      "name": "create-creator-takes-h3",
+      "category": "capabilities",
+      "domain": "ads",
+      "description": "Generate an AI creator talking to camera, saying an approved script, as one continuous track — H3 Max reference-to-video through the GooseWorks fal-proxy (bills the Ads agent). Plans takes on line boundaries under H3's 15s cap, dry-runs a cost estimate, generates the first take alone so its voice can be locked and passed to every later take, joins takes with measured 0.10s dissolves, and moves each line's timing onto the words actually spoken. Use for any format with a generated creator speaking a script (split-screen, screen inserts, talking-head ads).",
+      "tags": "ads, content",
+      "path": "skills/ads/capabilities/create-creator-takes-h3",
+      "files": [
+        "skills/ads/capabilities/create-creator-takes-h3/SKILL.md",
+        "skills/ads/capabilities/create-creator-takes-h3/scripts/align_beats.py",
+        "skills/ads/capabilities/create-creator-takes-h3/scripts/character-prompt.json",
+        "skills/ads/capabilities/create-creator-takes-h3/scripts/join_takes.py",
+        "skills/ads/capabilities/create-creator-takes-h3/scripts/media_proxy.py",
+        "skills/ads/capabilities/create-creator-takes-h3/scripts/plan_takes.py",
+        "skills/ads/capabilities/create-creator-takes-h3/scripts/run_takes.py",
+        "skills/ads/capabilities/create-creator-takes-h3/skill.meta.json",
+        "skills/ads/capabilities/create-creator-takes-h3/tests/smoke-test.md"
+      ],
+      "metadata": {
+        "slug": "create-creator-takes-h3",
+        "category": "capabilities",
+        "domain": "ads",
+        "tags": [
+          "ads",
+          "content"
+        ],
+        "installation": {
+          "base_command": "npx goose-skills install create-creator-takes-h3",
+          "supports": [
+            "claude",
+            "cursor",
+            "codex"
+          ]
+        },
+        "requires_skills": [
+          "media-proxy"
+        ]
       }
     },
     {
@@ -2886,6 +2996,42 @@
         "requires_skills": [
           "scrapecreators-api"
         ]
+      }
+    },
+    {
+      "slug": "footage-cutlist",
+      "name": "footage-cutlist",
+      "category": "capabilities",
+      "domain": "ads",
+      "description": "Watch a brand's own product footage (screen recording, product film), pick the moment that proves each line with the user, and render those picks as a product layer — free, local. survey.py turns footage into timestamped contact sheets + scene cuts + motion so the agent can actually look at it; the agent writes a cut list (beat → source window + framing); preview.py draws it as a review sheet the user corrects round by round; cut.py renders the approved list into a silent 1080x1920 layer with the creator's area left as a plate. Use for any format that shows real product footage under or beside a creator (split-screen, screen inserts, walkthroughs).",
+      "tags": "ads, content",
+      "path": "skills/ads/capabilities/footage-cutlist",
+      "files": [
+        "skills/ads/capabilities/footage-cutlist/SKILL.md",
+        "skills/ads/capabilities/footage-cutlist/scripts/_common.py",
+        "skills/ads/capabilities/footage-cutlist/scripts/cut.py",
+        "skills/ads/capabilities/footage-cutlist/scripts/cutlist.py",
+        "skills/ads/capabilities/footage-cutlist/scripts/preview.py",
+        "skills/ads/capabilities/footage-cutlist/scripts/survey.py",
+        "skills/ads/capabilities/footage-cutlist/skill.meta.json",
+        "skills/ads/capabilities/footage-cutlist/tests/smoke-test.md"
+      ],
+      "metadata": {
+        "slug": "footage-cutlist",
+        "category": "capabilities",
+        "domain": "ads",
+        "tags": [
+          "ads",
+          "content"
+        ],
+        "installation": {
+          "base_command": "npx goose-skills install footage-cutlist",
+          "supports": [
+            "claude",
+            "cursor",
+            "codex"
+          ]
+        }
       }
     },
     {
