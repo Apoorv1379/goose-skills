@@ -70,7 +70,21 @@ MANNERISM = """
 """
 
 
-def split(beats):
+def split(beats, at=None):
+    """Greedy under MAX_SPEECH, or exactly at the line boundaries nearest `at` (reel times):
+    the screen-insert format joins its takes where an insert ENDS, so the creator-to-creator
+    cut is hidden under the screen and needs no dissolve."""
+    if at:
+        cuts = sorted({min(range(1, len(beats)), key=lambda i: abs(beats[i]["start"] - t)) for t in at})
+        groups, prev = [], 0
+        for c in cuts + [len(beats)]:
+            groups.append(beats[prev:c])
+            prev = c
+        for g in groups:
+            if g and g[-1]["end"] - g[0]["start"] > MAX_TAKE - TAIL:
+                raise SystemExit("a take from %.2f to %.2f is over H3's %ds cap; add a split"
+                                 % (g[0]["start"], g[-1]["end"], MAX_TAKE))
+        return [g for g in groups if g]
     takes, cur = [], []
     for b in beats:
         if cur and b["end"] - cur[0]["start"] > MAX_SPEECH:
@@ -109,10 +123,14 @@ def main():
     ap.add_argument("--aspect", choices=sorted(RATIOS))
     ap.add_argument("--resolution", default="1080P", choices=["480P", "768P", "1080P"])
     ap.add_argument("--slug", default="creator")
+    ap.add_argument("--split-at", help="comma-separated reel times to join takes at (e.g. where screen "
+                                       "inserts end); default: greedy under 15s")
     a = ap.parse_args()
 
     spec = json.loads(pathlib.Path(a.beats).read_text(encoding="utf-8"))
     beats = [b for b in spec["beats"] if (b.get("vo") or "").strip()]
+    # a take must include every line spoken over a product beat too (the voice runs under
+    # screen inserts), so the creator track covers the whole reel
     if not beats:
         raise SystemExit("no beat has a `vo` line")
     chp = pathlib.Path(a.character)
@@ -127,7 +145,8 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
 
     plan = []
-    for n, group in enumerate(split(beats), 1):
+    at = [float(v) for v in a.split_at.split(",")] if a.split_at else None
+    for n, group in enumerate(split(beats, at), 1):
         tid = "t%d" % n
         start, end = group[0]["start"], group[-1]["end"]
         dialogue = " <pause> ".join(re.sub(r"\s+", " ", b["vo"]).strip() for b in group)

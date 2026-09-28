@@ -1,6 +1,6 @@
 ---
 name: footage-cutlist
-description: Watch a brand's own product footage (screen recording, product film), pick the moment that proves each line with the user, and render those picks as a product layer — free, local. survey.py turns footage into timestamped contact sheets + scene cuts + motion so the agent can actually look at it; the agent writes a cut list (beat → source window + framing); preview.py draws it as a review sheet the user corrects round by round; cut.py renders the approved list into a silent 1080x1920 layer with the creator's area left as a plate. Use for any format that shows real product footage under or beside a creator (split-screen, screen inserts, walkthroughs).
+description: Watch a brand's own product footage (screen recording, product film), pick the moment that proves each line with the user, and render those picks as a product layer — free, local. survey.py turns footage into timestamped contact sheets + scene cuts + motion so the agent can actually look at it; the agent writes a cut list (beat → source window + framing); preview.py draws it as a review sheet the user corrects round by round; cut.py renders the approved list into a silent 1080x1920 layer with the creator's area left as a plate. Also frames footage as a filmed screen (keystone, bezel, handheld drift) with dissolves between beats, and takes still screenshots as sources. Use for any format that shows real product footage beside, between or instead of a creator (split-screen, screen inserts, walkthroughs).
 status: active
 ---
 
@@ -56,6 +56,16 @@ sheets; open a single `frame-*.png` (from `--frames`) when you need to read smal
   `focus`), `crop` (a source box `[x0,y0,x1,y1]` in fractions, then fit by width).
 - `bg`: `auto` samples the footage's own corner colour so the letterbox and the footage read
   as one surface; `blur`; or `#rrggbb`.
+- `look: "screen"`: frame the footage as a screen filmed at close range (thin bezel, dark
+  room, faint moire, grain, slow handheld drift). `crop` picks the source region,
+  `screen: {rot, keystone, fill, fit, drift}` the geometry, `mask` boxes are blurred in the
+  source (an email, a customer name). Inserts over a creator: `keystone ~0.007`,
+  `rot` within ±1°. Walkthroughs: `keystone ~0.024`, `rot` -1.5..0, `fill ~0.80`. Never
+  bigger angles and never alternate them between beats (read as a wonky camera).
+- `transition: {"dissolve_frames": 7}` (top level): cross-dissolve every beat into the next.
+  A hard cut between two screens reads as an edit; 6-7 frames reads as the camera moving.
+- A source can be a still image (png/jpg/webp): it holds for its slot. Give it
+  `look: "screen"` so the drift keeps it alive.
 - `why`: one line on what the window shows. It is printed on the review sheet so the user
   can see the reasoning, and it makes the agent say what it saw.
 
@@ -78,9 +88,14 @@ Beats must tile the timeline from 0 with no gaps. `cut.py` refuses a list that d
    subject, and check the review sheet for cut-off text.
 5. **Avoid dead screens.** A window inside a `still` run reads as the video having stopped.
    Start it where something moves, or shorten it.
-6. **Don't reuse footage.** `cut.py` warns when two beats overlap in the same source: it
+6. **A screen region should be roughly the box's shape.** A 9:16 box is filled by a source
+   region of ~0.6-0.8 aspect: crop fewer COLUMNS at full height. A wide, short crop floats
+   in black. For a complete panel with copy, use `fit: width` and let the room fill.
+7. **Watch for a third party inside the footage.** A customer logo row or another company's
+   name in the recording ends up in the ad. Crop above it or `mask` it.
+8. **Don't reuse footage.** `cut.py` warns when two beats overlap in the same source: it
    reads as a loop.
-7. **After the takes exist, re-check.** Line timing moves when the real voice is aligned
+9. **After the takes exist, re-check.** Line timing moves when the real voice is aligned
    (`align_beats.py`). Re-run `preview.py` + `cut.py` on the aligned list and look again.
 
 ## Going back and forth with the user

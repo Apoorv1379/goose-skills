@@ -44,8 +44,17 @@ def font(px, override=None):
     return ImageFont.truetype(font_path(override), px)
 
 
+IMAGE_EXT = (".png", ".jpg", ".jpeg", ".webp")
+
+
 def probe(path):
-    """{duration, width, height, fps, has_audio} for a media file."""
+    """{duration, width, height, fps, has_audio, still} for a media file. A still image
+    reports duration None and still True."""
+    if str(path).lower().endswith(IMAGE_EXT):
+        from PIL import Image
+        with Image.open(path) as im:
+            return {"duration": None, "width": im.width, "height": im.height, "fps": None,
+                    "has_audio": False, "still": True}
     out = subprocess.run(["ffprobe", "-v", "error", "-print_format", "json", "-show_format",
                           "-show_streams", str(path)], capture_output=True, text=True, check=True)
     j = json.loads(out.stdout)
@@ -63,7 +72,7 @@ def probe(path):
         w, h = h, w
     return {"duration": float(j["format"].get("duration") or v.get("duration") or 0),
             "width": w, "height": h, "fps": round(fps, 3),
-            "has_audio": any(s.get("codec_type") == "audio" for s in j["streams"])}
+            "has_audio": any(s.get("codec_type") == "audio" for s in j["streams"]), "still": False}
 
 
 def grab(path, t, width=None):

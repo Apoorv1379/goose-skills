@@ -9,6 +9,7 @@ nothing here chooses a moment.
       "seam": 768,                    # y of the split line (split beats only)
       "creator_side": "bottom",       # which side of the seam the creator is on
       "bg": "auto",                   # letterbox fill: "auto" (sampled), "#rrggbb", or "blur"
+      "transition": {"dissolve_frames": 0},   # 6-7 for a walkthrough; 0 = hard cuts
       "sources": {"demo": "footage/demo.mp4"},
       "beats": [
         {"id": "b1", "start": 0.0, "end": 3.1, "state": "creator",
@@ -19,7 +20,11 @@ nothing here chooses a moment.
          "fit": "width",                          # width | cover | crop
          "crop": [0.0, 0.1, 0.62, 0.7],           # fit=crop: source box, fractions
          "focus": [0.5, 0.3],                     # fit=cover: what to keep centred
-         "why": "the brand kit fills in at 13.4s"}
+         "why": "the brand kit fills in at 13.4s"},
+        {"id": "b3", "start": 7.4, "end": 9.8, "state": "product", "vo": "...",
+         "source": "demo", "in": 20.5, "look": "screen",          # filmed-screen framing
+         "crop": [0, 0, 0.6, 1], "screen": {"rot": -0.8, "keystone": 0.012, "fill": 0.86},
+         "mask": [[0.02, 0.9, 0.2, 0.95]]}                       # blurred in the source
       ]
     }
 
@@ -27,7 +32,8 @@ states: "creator" = the creator fills the frame (no footage); "split" = footage 
 zone and the creator in the other; "product" = footage fills the whole frame, creator hidden.
 
 Beats must tile the timeline: first starts at 0, each starts where the last ended.
-A window plays between 0.5x and 2x of real speed (`out` - `in` vs the slot); anything else
+Sources may be videos or still images (png/jpg/webp; a still holds for its slot).
+A video window plays between 0.5x and 2x of real speed (`out` - `in` vs the slot); anything else
 is refused, and a window is never looped or frozen to fill a slot.
 """
 import pathlib
@@ -86,6 +92,12 @@ def resolve(path):
             errs.append("%s: needs a known `source` (one of %s)" % (bid, list(srcs)))
             continue
         b["source"] = next(k for k, v in srcs.items() if v is s)
+        if b.get("look") not in (None, "plain", "screen"):
+            errs.append("%s: look must be plain or screen" % bid)
+        if s.get("still"):
+            b["in"], b["out"], b["speed"] = 0.0, slot, 1.0
+            b.setdefault("fit", "width")
+            continue
         a = float(b.get("in", 0.0))
         o = float(b.get("out", a + slot))
         b["in"], b["out"] = a, o
@@ -108,7 +120,7 @@ def resolve(path):
     # the same footage twice reads as a loop
     seen = []
     for b in beats:
-        if b.get("state") == "creator" or "in" not in b:
+        if b.get("state") == "creator" or "in" not in b or srcs.get(b.get("source"), {}).get("still"):
             continue
         for (src, a, o, bid) in seen:
             if src == b["source"] and min(o, b["out"]) - max(a, b["in"]) > 0.5:
