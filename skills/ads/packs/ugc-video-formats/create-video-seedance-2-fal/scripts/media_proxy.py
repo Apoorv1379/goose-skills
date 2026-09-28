@@ -7,7 +7,9 @@ Base = <api_base>/api/internal/<proxy>, with ?token=&agent_id= (+ &project_id= w
 GW_PROJECT_ID is set, so spend attributes to the ad project) on every request.
 FAL submit returns status_url/response_url on the REAL host (queue.fal.run); we
 host-swap them to the proxy base (keep the path) or polling 401s forever and burns
-credits. Credentials load from ~/.gooseworks/credentials.json (the CLI writes it).
+credits. Credentials: in a GooseWorks cloud sandbox (coworker chat) the backend injects
+GW_MEDIA_PROXY_TOKEN (a per-session token that already binds agent/org/user) + GW_API_BASE
+— those win. Otherwise (a local CLI run) they load from ~/.gooseworks/credentials.json.
 
 This is the shared helper every media capability imports. Import it, don't reinvent.
 
@@ -33,19 +35,49 @@ from urllib.parse import urlparse
 import requests
 
 
+_CREDS_PATH = "~/.gooseworks/credentials.json"
+
+
+def _base_from_proxy_url(url):
+    """'https://api.x/api/internal/fal-proxy' → 'https://api.x' (None if not a proxy URL)."""
+    if not url:
+        return None
+    u = url.rstrip("/")
+    i = u.find("/api/internal/")
+    return u[:i] if i > 0 else None
+
+
 def _cfg():
-    p = pathlib.Path(os.path.expanduser("~/.gooseworks/credentials.json"))
+    """(api_base, token, agent_id).
+
+    Cloud sandbox: GW_MEDIA_PROXY_TOKEN is a per-chat-session proxy token minted by the
+    backend — it already carries the billing agent/org/user, so agent_id is None (the
+    proxy ignores ?agent_id= for agent-scoped tokens). api_base = GW_API_BASE, else
+    derived from GW_FAL_PROXY_URL. Local CLI: ~/.gooseworks/credentials.json."""
+    env_tok = os.environ.get("GW_MEDIA_PROXY_TOKEN")
+    if env_tok:
+        base = (os.environ.get("GW_API_BASE")
+                or _base_from_proxy_url(os.environ.get("GW_FAL_PROXY_URL"))
+                or _base_from_proxy_url(os.environ.get("GW_ELEVENLABS_PROXY_URL")))
+        if base:
+            return base.rstrip("/"), env_tok, None
+    p = pathlib.Path(os.path.expanduser(_CREDS_PATH))
+    if not p.exists():
+        raise RuntimeError(
+            "No GooseWorks credentials: set GW_MEDIA_PROXY_TOKEN + GW_API_BASE (cloud "
+            f"sandbox) or log in with the GooseWorks CLI (writes {_CREDS_PATH}).")
     c = json.loads(p.read_text())
     return c["api_base"].rstrip("/"), c["api_key"], c.get("agent_id")
 
 
-def _params(tok, agent):
+def _params(tok, agent, project_id=None):
     p = {"token": tok}
     if agent:
         p["agent_id"] = agent
     # Attribute this generation's credits to the ad project so per-project spend shows in
-    # the app. The goose-video orchestrator sets GW_PROJECT_ID = the project being rendered.
-    pid = os.environ.get("GW_PROJECT_ID")
+    # the app. The goose-video orchestrator (or the cloud sandbox env) sets GW_PROJECT_ID
+    # = the project being rendered. An explicit project_id (a resumed job's) wins.
+    pid = project_id or os.environ.get("GW_PROJECT_ID")
     if pid:
         p["project_id"] = pid
     return p
@@ -236,7 +268,9 @@ def resume_fal(request_id, timeout_s=600, poll_s=3):
     double-bill. Returns the raw result dict; clears the pending record on success."""
     rec = json.loads(_pending_path(request_id).read_text())
     _, tok, agent = _cfg()
-    params = _params(tok, agent)
+    # Bill the resumed result to the project it was SUBMITTED for, not whatever
+    # GW_PROJECT_ID this (possibly different) process has.
+    params = _params(tok, agent, project_id=rec.get("project_id"))
     result = _poll_to_result(rec["model_path"], rec["status_url"], rec["response_url"],
                              params, timeout_s, poll_s)
     _clear_pending(request_id)

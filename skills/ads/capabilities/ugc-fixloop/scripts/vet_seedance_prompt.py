@@ -3,8 +3,9 @@
 deliberately NON-Claude second opinion before you spend the render.
 
 Portable: routes through the GooseWorks **openai-proxy** (bills the Ads agent, real
-key never touches this machine) — never a direct api.openai.com call. Reads creds
-from ~/.gooseworks/credentials.json (the CLI writes it). Takes the prompt to review
+key never touches this machine) — never a direct api.openai.com call. Creds: the cloud
+sandbox's GW_MEDIA_PROXY_TOKEN + GW_API_BASE env when set, else
+~/.gooseworks/credentials.json (the CLI writes it). Takes the prompt to review
 as an ARGUMENT (nothing baked in).
 
   vet_seedance_prompt.py --prompt-file working/seedance-prompt.txt \
@@ -54,6 +55,17 @@ our rule of thumb is ~{words} words for a ~15s clip; push back if you disagree.
 
 
 def _cfg():
+    # Cloud sandbox (coworker chat): a per-session proxy token that already binds the
+    # billing agent — no agent_id needed. Same resolution as media_proxy.py.
+    env_tok = os.environ.get("GW_MEDIA_PROXY_TOKEN")
+    if env_tok:
+        base = os.environ.get("GW_API_BASE")
+        if not base:
+            fal = (os.environ.get("GW_FAL_PROXY_URL") or "").rstrip("/")
+            i = fal.find("/api/internal/")
+            base = fal[:i] if i > 0 else None
+        if base:
+            return base.rstrip("/"), env_tok, None
     p = pathlib.Path(os.path.expanduser("~/.gooseworks/credentials.json"))
     if not p.exists():
         sys.exit(3)  # no creds → recipe falls back to inline self-review
@@ -86,7 +98,9 @@ def main():
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": user},
     ]}
-    q = urlencode({"token": tok, **({"agent_id": agent} if agent else {})})
+    pid = os.environ.get("GW_PROJECT_ID")
+    q = urlencode({"token": tok, **({"agent_id": agent} if agent else {}),
+                   **({"project_id": pid} if pid else {})})
     url = f"{api_base}/api/internal/openai-proxy/v1/chat/completions?{q}"
     req = urllib.request.Request(url, data=json.dumps(body).encode(),
                                  headers={"Content-Type": "application/json"}, method="POST")

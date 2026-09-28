@@ -1,6 +1,6 @@
 ---
 name: media-proxy
-description: Shared helper that routes ALL paid media generation (FAL image/video, ElevenLabs music) through the GooseWorks proxies so every call bills the Ads agent — never a provider SDK's default host. Host-swaps the FAL queue URLs, loads the agent token from ~/.gooseworks/credentials.json, and returns the result CDN URL. Every video-ad media capability imports this; templates never call a provider directly.
+description: Shared helper that routes ALL paid media generation (FAL image/video, ElevenLabs music) through the GooseWorks proxies so every call bills the Ads agent — never a provider SDK's default host. Host-swaps the FAL queue URLs, loads the agent token from the sandbox env (GW_MEDIA_PROXY_TOKEN) or ~/.gooseworks/credentials.json, and returns the result CDN URL. Every video-ad media capability imports this; templates never call a provider directly.
 status: active
 ---
 
@@ -46,7 +46,9 @@ eleven_music(prompt, 10500, "music.mp3", force_instrumental=True)
 ## Contracts (load-bearing)
 
 - **Bills the Ads agent** — `?token=&agent_id=` from `~/.gooseworks/credentials.json`
-  (the CLI writes it; run `gooseworks login` if missing).
+  (the CLI writes it; run `gooseworks login` if missing). In a GooseWorks cloud sandbox
+  (coworker chat) the env wins instead: `GW_MEDIA_PROXY_TOKEN` (a per-session token that
+  already binds agent/org/user) + `GW_API_BASE`; `GW_PROJECT_ID` attributes spend.
 - **Host-swap the FAL queue URLs** — submit returns `status_url`/`response_url` on
   `queue.fal.run`; the helper rewrites them to the proxy base (keeps the path). Never
   poll `queue.fal.run` directly (401 + burns credits).
