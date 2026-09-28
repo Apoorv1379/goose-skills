@@ -40,6 +40,14 @@ render. Two built-in protections (automatic for every capability that imports th
   For a **deliberate re-roll** of the same input (want a new take), pass
   `new_take=True` (`fal_generate(..., new_take=True)` / `fal_generate_video(...)`),
   which sends `x-gw-no-dedupe: 1` (raw HTTP callers: that header or `?dedupe=0`).
+- **Pass `input_digest=` for any piece you save as an ingredient, so a resumed run
+  never pays twice.** The body-match dedupe above breaks after a sandbox restart: the
+  resumed run re-uploads its inputs (voiceover, stills) and gets NEW urls, so the body
+  differs. `fal_generate*(..., input_digest=d)` sends `x-gw-input-digest: d`; the proxy
+  then dedupes on (agent + model + digest) for **24 h** and returns the job you already
+  paid for. Use the same stable digest you save with `media_upload` (see below). If
+  that job's result has since expired at fal, the poll fails: retry once with
+  `new_take=True`.
 
 ## Use it
 
@@ -65,9 +73,16 @@ result (plus an `ingredient_key` such as `vo/scene-03`); on a resume, `media_lis
 when the digest of the args you would send now is the same.
 
 ```python
-from media_proxy import input_digest, eleven_tts
+from media_proxy import input_digest, eleven_tts, fal_generate_video
 args = {"text": line, "voice_id": vid, "model_id": "eleven_v3"}
 digest = input_digest("elevenlabs/tts", args)
+
+# FAL job: hash the STABLE identities of its inputs, not their urls, and send the
+# same digest with the submit so a resumed run re-attaches instead of re-paying.
+lip_digest = input_digest("veed/fabric-1.0", {"image": "still/scene-03:" + still_digest,
+                                              "audio": "vo/scene-03:" + digest})
+clip = fal_generate_video("veed/fabric-1.0", {"image_url": still_url, "audio_url": vo_url},
+                          input_digest=lip_digest)
 ```
 
 Hash only what determines the output. Swap any expiring input URL (presigned / proxy)

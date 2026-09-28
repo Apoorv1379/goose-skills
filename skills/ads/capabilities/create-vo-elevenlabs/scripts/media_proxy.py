@@ -22,7 +22,10 @@ and `run_id()` to read the current run id. Best-effort; never breaks a render.
 
 `input_digest(model, args)` names the exact inputs of a generation (GOOSE-3731):
 pass it with the MCP `media_upload` of the result (plus an `ingredient_key`), so a
-resumed run reuses the saved file only when the digest still matches.
+resumed run reuses the saved file only when the digest still matches. Pass the SAME
+digest to the FAL submit (`fal_generate(..., input_digest=d)`) so a resumed run that
+re-submits the job (inputs re-uploaded -> new URLs) re-attaches to it instead of
+paying twice (GOOSE-3729).
 
 FAL inputs that are local files (a product image, an audio track) must be a PUBLIC
 URL — the orchestrator hosts them via the MCP `get_upload_url` → `get_download_url`
@@ -304,7 +307,8 @@ def _poll_to_result(model_path, status_url, response_url, params, timeout_s, pol
     raise FalPollTimeout(model_path, rid, timeout_s, last)
 
 
-def _fal_run(model_path, payload, timeout_s=None, poll_s=3, new_take=False):
+def _fal_run(model_path, payload, timeout_s=None, poll_s=3, new_take=False,
+             input_digest=None):
     """Submit a FAL job through the proxy, poll to completion (surviving backend blips),
     return the raw result dict. `model_path` e.g. 'fal-ai/kling-video/.../image-to-video'.
 
@@ -312,18 +316,28 @@ def _fal_run(model_path, payload, timeout_s=None, poll_s=3, new_take=False):
     raises FalPollTimeout(request_id=...) — it never resubmits; resume with resume_fal.
     new_take: True = deliberately start a NEW job even if an identical submit is already
     running (a re-roll of the same prompt). Default False: the proxy returns the running
-    job for an identical submit within 30 min instead of paying for a second one."""
+    job for an identical submit within 30 min instead of paying for a second one.
+    input_digest: a STABLE id of this job's inputs (use input_digest(model, args) over
+    ingredient keys / saved media ids, never expiring URLs). Sent as x-gw-input-digest;
+    the proxy then dedupes on (agent, model, digest) for 24 h instead of on the exact
+    body, so a resumed run with re-uploaded inputs re-attaches to the job it already
+    paid for. If that job's result has expired upstream the poll fails: retry with
+    new_take=True."""
     if timeout_s is None:
         timeout_s = default_poll_timeout(model_path)
     api_base, tok, agent = _cfg()
     base = api_base + "/api/internal/fal-proxy"
     params = _params(tok, agent)
-    headers = {"x-gw-no-dedupe": "1"} if new_take else None
+    headers = {}
+    if new_take:
+        headers["x-gw-no-dedupe"] = "1"
+    if input_digest:
+        headers["x-gw-input-digest"] = str(input_digest)
     t0 = time.time()
     prompt = payload.get("prompt") if isinstance(payload, dict) else None
     try:
         sub_resp = requests.post(f"{base}/{model_path}", params=params, json=payload,
-                                 headers=headers, timeout=120)
+                                 headers=headers or None, timeout=120)
         sub = sub_resp.json()
         if sub_resp.headers.get("x-gw-deduped") == "1":
             gw_log(f"FAL {model_path}: identical submit already running — re-attached to "
@@ -389,7 +403,7 @@ def list_pending():
 
 def fal_generate(model_path, payload, **kw):
     """Image models → returns the first result image URL (public *.fal.media CDN).
-    kw: timeout_s, poll_s, new_take (see _fal_run). A poll timeout raises
+    kw: timeout_s, poll_s, new_take, input_digest (see _fal_run). A poll timeout raises
     FalPollTimeout — resume it with resume_fal(e.request_id), never call this again."""
     r = _fal_run(model_path, payload, **kw)
     imgs = r.get("images") if isinstance(r, dict) else None
@@ -401,7 +415,8 @@ def fal_generate(model_path, payload, **kw):
 def fal_generate_video(model_path, payload, **kw):
     """Video (i2v/t2v/lipsync) models → returns the result video URL. Polls up to
     VIDEO_POLL_TIMEOUT_S by default; on timeout raises FalPollTimeout (resume, don't
-    resubmit). Pass new_take=True only for a deliberate re-roll of the same input."""
+    resubmit). Pass new_take=True only for a deliberate re-roll of the same input.
+    Pass input_digest= for any clip you save as an ingredient (see _fal_run)."""
     kw.setdefault("timeout_s", default_poll_timeout(model_path)
                   if os.environ.get("GW_FAL_POLL_TIMEOUT_S") else VIDEO_POLL_TIMEOUT_S)
     r = _fal_run(model_path, payload, **kw)
