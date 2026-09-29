@@ -147,9 +147,3 @@ thread; real conversations open with it and the clock is read from it.
 9. **No push-in on the link.** It read as a camera move a phone recording can't make; removed.
 10. **The generic badge end card looked the same for every brand.** Use the editorial layout
    with the brand's fonts (or named free stand-ins).
-11. **The shipped receive file is a two-note chime** whose loud second note lands ~0.25 s in,
-    so every received message sounded late and doubled when two arrived close. `stitch.sh`
-    plays only the first note (0.20 s, 60 ms fade) for `receive` (`SFX_MAX`).
-12. **Take end-card colours from the brand's live CSS variables, not the product photo.**
-    Graza's real tokens (`--color-background #F6E6D9`, `--color-text #3C422E`,
-    `--color-brand #D1E030`) differ from the greens sampled off the bottle.
