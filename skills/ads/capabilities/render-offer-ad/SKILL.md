@@ -25,6 +25,21 @@ split all arrive as `config.json` and are bound to Remotion **input props** — 
 hardcoded in the scenes (the source run's Spoiled Child strings are generalised into
 `project/src/props.ts`). Deterministic → **iterate the cut for free**.
 
+## Choices
+
+The creative calls are the user's, asked by the format recipe before any paid step; this
+renderer typesets whatever the config holds.
+
+- **headline_angle** — category-killer ("[old way] IS DEAD. the new way ↓"), a straight offer, a
+  bold benefit, a pain-point question, or a before → after → `copy.headline_words`,
+  `copy.subline`, `copy.motif_chip`. *The demo used the category-killer angle.*
+- **music** — the bed's mood (lo-fi pop, electronic, hip-hop, indie pop, minimal percussion) →
+  `music.prompt` for `create-music-elevenlabs`; the rendered `music.bed` file is what this
+  renderer mixes. *The demo used punchy lo-fi pop at 115 BPM.*
+
+The 4-beat structure, palette roles, fonts and gates are the format; palette, product photo,
+claims and CTA are brand facts.
+
 ## The 4 beats (the spine)
 
 1. **HEADLINE** — primary-color radial ground; `headline_words` slam in WORD-BY-WORD

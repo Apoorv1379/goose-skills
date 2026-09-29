@@ -6,7 +6,7 @@ Config-driven (reads config.json) so the same engine renders any brand:
 - one persistent orange SUBHEAD pill (trailing finger-down),
 - 3-4 green-CHECK proof pills (leading check), each auto-sized to its copy.
 
-The reference look (Origins Nutra / SpoiledChild E27) is: bold rounded pills,
+The reference look (the format's source reel + its worked example) is: bold rounded pills,
 Twemoji icons pasted as PNGs (PIL cannot render Apple Color Emoji), icons
 vertically centered on the pill middle. See SKILL.md Phase 3 for the rules.
 
@@ -129,6 +129,14 @@ def main():
     icons = Icons(icons_dir)
 
     ov = cfg["overlays"]
+    # The copy is per brand (the recipe ships it empty): fail clearly instead of
+    # rendering blank pills.
+    missing = [k for k, v in (("overlays.header.lines", ov.get("header", {}).get("lines")),
+                              ("overlays.subhead.lines", ov.get("subhead", {}).get("lines")),
+                              ("overlays.proof_points", ov.get("proof_points"))) if not v]
+    if missing:
+        raise SystemExit(f"[ov] missing copy: {', '.join(missing)}. Fill it with the brand's own, "
+                         f"operator-approved claims (see overlays._example_content for the shape).")
 
     # 1. white SCORE header (trailing medal on line index icon_line, default 0)
     h = ov["header"]

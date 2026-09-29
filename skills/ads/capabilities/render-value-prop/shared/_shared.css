@@ -1,26 +1,23 @@
-/* Som Sleep — Value Prop ad design tokens for 1080×1920 9:16 hyperframes
-   Brand: navy ink on white/cream, modern editorial-DTC for premium supplement
-   Typography: General Sans (display) + Switzer (body) via Fontshare
-   v5: swapped from Cabinet Grotesk → General Sans for closer brand-register match
-   to Som's site (Instrument Sans). Quieter modern geometric sans, less "magazine
-   confident", more "calm authority". */
+/* Value Prop ad design tokens for 1080×1920 9:16 hyperframes.
+   These :root colours are NEUTRAL fallbacks only. render_master.py overrides
+   --ink / --bg-white / --bg-cream from config.palette (background = the recipe's
+   choices.background, ink = the brand kit), and per-SKU accents are injected
+   inline from config.palette.sku_accents. The demo build used navy ink on white.
+   Typography: General Sans (display) + Switzer (body) via Fontshare. */
 
 @import url("https://api.fontshare.com/v2/css?f[]=general-sans@200,300,400,500,600,700&f[]=switzer@300,400,500,600,700&display=swap");
 
 :root {
   --bg-white:  #FFFFFF;
   --bg-cream:  #F7F4ED;
-  --ink:       #0B253C;
-  --ink-72:    rgba(11,37,60,0.72);
-  --ink-55:    rgba(11,37,60,0.55);
-  --ink-30:    rgba(11,37,60,0.30);
-  --ink-15:    rgba(11,37,60,0.15);
+  --ink:       #111111;
+  --ink-72:    rgba(17,17,17,0.72);
+  --ink-55:    rgba(17,17,17,0.55);
+  --ink-30:    rgba(17,17,17,0.30);
+  --ink-15:    rgba(17,17,17,0.15);
 
-  /* Per-flavor accent colors (from packaging) */
-  --berry:     #5BB4D9;
-  --cherry:    #4A2871;
-  --mango:     #F0C234;
-  --tangerine: #E8853A;
+  /* Per-SKU accent colours are NOT defined here — they come from
+     config.palette.sku_accents (one per real SKU of the brand). */
 
   --f-display: "General Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
   --f-body:    "Switzer", -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;

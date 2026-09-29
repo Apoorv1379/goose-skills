@@ -28,7 +28,7 @@ Confirm the fix-loop toolkit fetches and both scripts are runnable on a fresh ma
    ```
    python3 /tmp/gooseworks-scripts/ugc-fixloop/scripts/vet_seedance_prompt.py
    ```
-   On a machine WITHOUT `/Users/0xhbam/Desktop/Cursor/gtm-goose/.env` (cloud/CI/teammate), expect a clean `FATAL: ... not found` exit — this script is a direct-OpenAI, operator-machine-only helper and the fix loop should skip it there. On the operator machine with `OPENAI_API_KEY` set in that env file, expect a written `gpt55_seedance_review.md` and the review printed to stdout.
+   Without GooseWorks credentials (no `GW_MEDIA_PROXY_TOKEN` and no `~/.gooseworks/credentials.json`), expect exit code 3 and no output: the recipe then falls back to an inline self-review. With credentials, expect the review printed to stdout.
 
 ## Pass criteria
 - Both scripts resolve under `/tmp/gooseworks-scripts/ugc-fixloop/scripts/` after fetch.

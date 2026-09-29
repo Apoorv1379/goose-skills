@@ -19,8 +19,21 @@ creator's voice + lips are generated **together, natively** per beat — there i
 This capability is the **FREE, deterministic assembly** — build the per-beat overlay PNG, cover-scale
 the creator clip + composite the overlay, concat all beats, and burn the captions.
 
+## Choices
+
+The creative calls are the user's, asked by the format recipe before any paid step; this assembly
+renders whatever the config holds.
+
+- **creator** — who counts down the list (gender, age, look, wardrobe) → `creator.descriptor`.
+  *The demo used a young woman beauty creator.*
+- **setting** — where the creator films → `creator.setting` / the anchor prompt. *The demo used a
+  plain neutral wall.*
+- **tone** — bubbly, calm and honest, dry and funny, or fast expert → `beats[].dialogue`. *The demo
+  was chatty and enthusiastic.*
+
 `scripts/config.example.json` is the worked example (DIBS Beauty "5 products that replaced my whole
-makeup bag", ~46s 1080×1920 9:16, a hook + 5 product beats + a CTA); `scripts/PIPELINE.md` maps
+makeup bag", ~46s 1080×1920 9:16, a hook + 5 product beats + a CTA) — copy its structure, never its
+creative values; `scripts/PIPELINE.md` maps
 every config block to its source step and `scripts/README.md` documents the free assembly.
 
 ## Run

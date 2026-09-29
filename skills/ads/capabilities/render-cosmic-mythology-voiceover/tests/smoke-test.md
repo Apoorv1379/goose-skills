@@ -1,7 +1,7 @@
 # Smoke Test
 
 Given the spoken VO (atempo mp3) and N curated stills in ONE coherent look (the WishAstro demo is
-deep-indigo + gold cosmic; the look is brand-swappable), the per-cut weight array, and the ONE hook
+deep-indigo + gold cosmic; the look is the user's choice), the per-cut weight array, and the ONE hook
 line, `scripts/render.py` assembles the master: distribute the cuts across the VO duration by the
 weighted formula (`cut_dur = VO_dur × weight / Σweights`), Ken-Burns-render each still (fade-in
 first / fade-out last), ffmpeg-concat, composite the VO under the picture, fade the hook line on

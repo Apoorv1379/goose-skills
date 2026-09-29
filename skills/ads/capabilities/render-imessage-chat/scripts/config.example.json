@@ -1,5 +1,5 @@
 {
-  "_comment": "Example config for render-imessage-chat. The recipe binds a brand's own thread/product/end-card here at remix time. AUTHORING RULE (the text-bleed fix): keep every message SHORT — split any long line into multiple bubbles so each fits the bubble width (see the two 'spec' lines below). Attachments render as a real iMessage URL-preview rich link (image + gray meta card + domain + chevron).",
+  "_comment": "WORKED EXAMPLE ONLY (the Wonderbly Father's Day build). Creative fields — thread.participants (who is texting whom), thread.messages (story + tone), theme — come from the recipe's choices (relationship, story, tone, theme); brand fields (brand_name, attachment title/subtitle/src, end_card colours + copy) come from the brand kit. Never copy them as defaults. Example config for render-imessage-chat. The recipe binds a brand's own thread/product/end-card here at remix time. AUTHORING RULE (the text-bleed fix): keep every message SHORT — split any long line into multiple bubbles so each fits the bubble width (see the two 'spec' lines below). Attachments render as a real iMessage URL-preview rich link (image + gray meta card + domain + chevron).",
   "brand_name": "Wonderbly",
   "theme": "dark",
   "width": 1080,

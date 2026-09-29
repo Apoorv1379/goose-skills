@@ -10,10 +10,11 @@ an AI or paid call.
 
 ## The format in one line
 
-A silent, music-led tour of three "third-place" worlds — one per product/scent. Each
-world is a **two-shot pair**: a WIDE kinetic-calm ARRIVAL (environment dominates, bottle
-stays small) hard-cutting to a top-down MACRO product MOMENT (the sealed bottle nested
-with its botanical companion). The six clips land on a Pinterest-style brand end card.
+A silent, music-led tour of three "third-place" worlds — one per product/variant; the
+worlds, their look and the music are the user's choices (recipe `choices`), the demo's
+Primally Pure values are only a worked example. Each world is a **two-shot pair**: a WIDE
+kinetic-calm ARRIVAL (environment dominates, product stays small) hard-cutting to a
+top-down MACRO product MOMENT (the sealed product nested with its companion prop). The six clips land on a Pinterest-style brand end card.
 720×1280, ≈27.0s = `3×(arrival 4.5 + macro 3.5) + end-card 3.0`.
 
 ## What's FREE here
@@ -31,9 +32,9 @@ The paid NB2 step renders the **text-free flat-lay background only** (all three 
 bottles + their botanicals, generous negative space at top). The message text is composited
 FREE over it:
 
-- **Headline** — `overlay.headline` "FIND YOUR DAILY." (Inter 900, "DAILY" outlined via
-  `-webkit-text-stroke`, rise-in animation).
-- **Scent labels + arrows** — one handwritten Caveat-font `scent_labels[].label` per bottle,
+- **Headline** — `overlay.headline`, approved brand copy (demo: "FIND YOUR DAILY."; Inter
+  900, one key word outlined via `-webkit-text-stroke`, rise-in animation).
+- **Product labels + arrows** — one handwritten Caveat-font `scent_labels[].label` per product,
   each with a hand-drawn SVG arrow (staggered `drawArrow` animation) pointing at its bottle.
 - **Wordmark + URL** — `overlay.wordmark` (Playfair Display, two rows) + `overlay.url`.
 
@@ -73,6 +74,11 @@ clip (paid) when a scene itself is wrong.
   orchestrates them and gates the spend.
 
 ## GAP — the per-world clips need a Higgsfield-proxy capability that does not exist yet
+
+> **Update:** the current recipe sidesteps this — it makes the six clips with
+> `create-image-fal` (nano_banana_2 keyframe edit on the real `product_image`) →
+> `create-video-fal` (Kling 3.0 i2v). The gap below only matters for reproducing the demo's
+> Higgsfield build exactly.
 
 The source molecule fires the six per-world clips through **Higgsfield Marketing Studio**
 (`marketing_studio_video/product_showcase`), grounded on the brand's imported product

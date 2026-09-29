@@ -1,4 +1,6 @@
-"""Generate one music bed via fal-ai/elevenlabs/music, then mux into all 6 variants.
+"""Generate one music bed via fal-ai/elevenlabs/music, then mux it into every composited variant.
+
+The brief comes from config.music.prompt (the recipe's `music` choice).
 
 Per memory:
   feedback_ffmpeg_map_directive: when ffmpeg has two -i inputs, always pass -map 0:v -map 1:a
@@ -21,26 +23,56 @@ from fal_helpers import download, load_fal_key, subscribe  # noqa: E402
 FINALS = PROJECT_ROOT / "finals"
 MUSIC_DIR = PROJECT_ROOT / "assets" / "music"
 MUSIC_DIR.mkdir(parents=True, exist_ok=True)
-MUSIC_RAW = MUSIC_DIR / "mother-science-bed-raw.mp3"
-MUSIC_FINAL = MUSIC_DIR / "mother-science-bed-final.mp3"
+MUSIC_RAW = MUSIC_DIR / "music-bed-raw.mp3"
+MUSIC_FINAL = MUSIC_DIR / "music-bed-final.mp3"
 
-DURATION = 10.5
-TARGET_MUSIC_DUR = 12.0  # generate slightly longer than video
+# ── CONFIG ──────────────────────────────────────────────────────────────
+# Creative values come from config.json (copy scripts/config.example.json and fill it from the
+# recipe's `choices` + the brand kit). Lookup order: --config <path>, $VIGNETTE_CONFIG,
+# <project>/config.json, scripts/config.json.
 
-MUSIC_BRIEF = (
-    "Clinical-luxury skincare science vignette ad music bed. Slow-tempo ambient "
-    "minimal electronic with warm low pads and subtle high-end sparkle. "
-    "Instrumental only, no vocals, no lyrics. 90 BPM, sophisticated and quiet. "
-    "Begins with soft atmospheric pad and gentle resonant tones. Subtly builds "
-    "with a single sparkling synth note in the last 2 seconds for the end-card "
-    "brand reveal. Premium, restrained, Augustinus Bader / La Mer luxury "
-    "skincare commercial mood. 12 seconds total."
-)
 
-VARIANTS = [
-    "alpha-VEO", "alpha-KLING", "alpha-SEED",
-    "beta-VEO", "beta-KLING", "beta-SEED",
-]
+def load_config() -> dict:
+    import json
+    import os
+    candidates = []
+    if "--config" in sys.argv:
+        i = sys.argv.index("--config")
+        if i + 1 < len(sys.argv):
+            candidates.append(Path(sys.argv[i + 1]))
+    if os.environ.get("VIGNETTE_CONFIG"):
+        candidates.append(Path(os.environ["VIGNETTE_CONFIG"]))
+    candidates += [PROJECT_ROOT / "config.json", Path(__file__).resolve().parent / "config.json"]
+    for c in candidates:
+        if c.exists():
+            return json.loads(c.read_text())
+    sys.exit(
+        "No config.json found. Copy scripts/config.example.json to <project>/config.json and fill the "
+        "creative fields from the recipe's choices + the brand kit (or pass --config <path>)."
+    )
+
+
+def require(cfg: dict, dotted: str):
+    cur = cfg
+    for part in dotted.split("."):
+        if not isinstance(cur, dict) or cur.get(part) in (None, "", []):
+            sys.exit(f"config.{dotted} is missing — it comes from the recipe's choices / brand kit; set it in config.json.")
+        cur = cur[part]
+    return cur
+
+
+CFG = load_config()
+DURATION = float(CFG.get("duration_s", 10.5))
+# generate slightly longer than the video, then trim
+TARGET_MUSIC_DUR = float(CFG.get("music", {}).get("length_ms", 0)) / 1000 or round(DURATION * 1.2, 1)
+
+# The music brief is the user's `music` choice (recipe choices.music -> config.music.prompt).
+# Never hardcode a mood here, and never name brands in it (ElevenLabs rejects prompts that do).
+MUSIC_BRIEF = require(CFG, "music.prompt")
+
+# Every composited master in finals/ gets the same bed (one per BG concept x model).
+VARIANTS = sorted(p.stem.replace("master-9x16-", "") for p in FINALS.glob("master-9x16-*.mp4")
+                  if not p.stem.startswith("_tmp_"))
 
 
 def generate_music():
@@ -132,6 +164,9 @@ def main():
         return 1
 
     # 3. Mux into 6 variants in parallel
+    if not VARIANTS:
+        print("no finals/master-9x16-*.mp4 to mux into — run composite_variants.py first")
+        return 1
     print(f"\nmuxing music into {len(VARIANTS)} variants in parallel…")
     results = []
     with ThreadPoolExecutor(max_workers=len(VARIANTS)) as ex:

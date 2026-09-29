@@ -15,7 +15,8 @@ Pass when the assembly runs to a valid MP4 and:
 - each top clip is windowed (never looped into a sparse/black tail); the bottom
   zone is the creator lip-sync slice per the per-scene timing;
 - captions are word-level, transcribed from the ASSEMBLED cut (not the raw VO —
-  concat drops inter-scene silence), burned in the chosen style;
+  concat drops inter-scene silence), burned in the style set by `captions.style`
+  (any of the four; not tied to the worked example's `serif-accent`);
 - the end card is on the last sharp frame (no fade-to-black tail); the creator VO
   is the entire audio bed — no separate music;
 - **no paid call is made** — the VO, the anchor, and the VEED Fabric lip-sync take

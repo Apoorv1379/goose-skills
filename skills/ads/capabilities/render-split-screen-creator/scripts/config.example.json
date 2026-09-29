@@ -1,5 +1,5 @@
 {
-  "_comment": "Perplexity concept-10 'Bloomberg terminal' split-screen creator ad — THE WORKED EXAMPLE. Copy to config.json and edit. A ~40s 9:16 two-zone ad where an AI creator anchor (VEED Fabric lip-sync) fills the bottom ~48% and real Perplexity Computer UI screen-recordings run uncropped in the top ~52%, a 3px brand-color divider between. The creator delivers the WHOLE VO cold-to-camera and each top clip PROVES its VO line's claim. Pipeline: (1) lock the script into 6 scenes + ElevenLabs eleven_v3 with-timestamps VO + per-scene timing.json; (2) gpt-image creator anchor + ONE VEED Fabric 1.0 @720p lip-sync take of the whole VO (~$5.90); (3) source 16:9 top clips + the scene-1 hook graphic; (4) assemble.py two-zone composite (contain-fit + blurred-cover fill + 3px divider + creator slice), hard-concat + end card; (5) transcribe the ASSEMBLED cut + burn serif-accent word captions. Master 1080x1920 h264+aac 30fps, ~40.37s. See scripts/PIPELINE.md + clients/perplexity/ads/concept-10-bloomberg-terminal/HOW_TO.md.",
+  "_comment": "Worked example (the Perplexity concept-10 'Bloomberg terminal' build). Creative fields — creator.brief.*, creator.voice, creator.lipsync_output, voiceover.outputs.*, scenes[].vo / top_visual, captions.style / ass_sidecar, plus the brand identity (brand_name, campaign, title, layout.divider_color, endcard) — come from the calling recipe's choices (creator_gender, creator_age, creator_look, setting, tone, caption_style) and the user's brand; never copy them as defaults. Copy the STRUCTURE to config.json and fill it for this brand. A ~40s 9:16 two-zone ad where an AI creator anchor (VEED Fabric lip-sync) fills the bottom ~48% and real Perplexity Computer UI screen-recordings run uncropped in the top ~52%, a 3px brand-color divider between. The creator delivers the WHOLE VO cold-to-camera and each top clip PROVES its VO line's claim. Pipeline: (1) lock the script into 6 scenes + ElevenLabs eleven_v3 with-timestamps VO + per-scene timing.json; (2) gpt-image creator anchor + ONE VEED Fabric 1.0 @720p lip-sync take of the whole VO (~$5.90); (3) source 16:9 top clips + the scene-1 hook graphic; (4) assemble.py two-zone composite (contain-fit + blurred-cover fill + 3px divider + creator slice), hard-concat + end card; (5) transcribe the ASSEMBLED cut + burn serif-accent word captions. Master 1080x1920 h264+aac 30fps, ~40.37s. See scripts/PIPELINE.md + clients/perplexity/ads/concept-10-bloomberg-terminal/HOW_TO.md.",
   "brand_name": "Perplexity",
   "campaign": "Perplexity Computer",
   "title": "Perplexity Computer — the analyst that just does it",
@@ -23,6 +23,13 @@
   "creator": {
     "_comment": "ONE AI-creator anchor lip-synced to the WHOLE VO in ONE VEED Fabric 1.0 take @ 720p (480p reads soft). THE ANCHOR MUST BE a PHOTOREAL, candid MEDIUM chest-up shot at natural webcam distance (whole head with headroom + shoulders + upper chest, real lived-in room, anti-AI skin cues) — NOT a plain-background close-up headshot (reads as AI) and NOT a phone-selfie / arm-extended pose copied from another format (wrong for a fixed talking-head, and too-close can't be reframed). Watch the source video and match its creator distance. gpt-image-2, quality high, 1024x1536. VEED handles photoreal fine. VEED Fabric is a NO-ATOM paid step: image_url = the anchor, audio_url = voiceover/vo-arlo.mp3; ~$0.15/sec (~$5.90 for the 39s VO). Run its calls SEQUENTIALLY with sleep 3 — veed/fabric-1.0 storage-auth 403s under parallel load (trap L1). The example explored a 2nd voice (Brad) which DOUBLED the lip-sync spend (~+$6) — lock the voice first. Re-run VEED only when the anchor IMAGE changes; a crop/zoom tweak is a free re-assemble.",
     "anchor": "avatar/creator-anchor.png",
+    "brief": {
+      "_comment": "Asked of the user upstream (choices creator_gender / creator_age / creator_look / setting). These are the demo's answers — never reuse the demo creator.",
+      "gender": "man",
+      "age": "20s",
+      "look": "young South Asian man (demo only)",
+      "vibe_setting": "lived-in room, desk with a plant, window daylight"
+    },
     "anchor_model": "gpt-image-2",
     "anchor_shot": "medium chest-up, natural webcam distance, headroom + shoulders — not a tight close-up, not a phone selfie",
     "lipsync_engine": "veed/fabric-1.0",
@@ -133,7 +140,7 @@
     "hold_sec": 3.0
   },
   "captions": {
-    "_comment": "Word-level captions burned from the ASSEMBLED cut (transcribe master-precaption.mp4 with local faster-whisper, NOT vo-arlo.mp3 — concat drops inter-scene silence so the ad timeline != the VO timeline; trap L2). Sentence-aware chunking. concept-10 shipped serif-accent (after a kinetic-pop pass). Kept: master-precaption cut + captions/serif-accent.ass sidecar for restyle without re-render.",
+    "_comment": "Word-level captions burned from the ASSEMBLED cut (transcribe master-precaption.mp4 with local faster-whisper, NOT vo-arlo.mp3 — concat drops inter-scene silence so the ad timeline != the VO timeline; trap L2). Sentence-aware chunking. style comes from choices.caption_style (serif-accent / kinetic-pop / neon-glow / clean-bubble); concept-10 shipped serif-accent (after a kinetic-pop pass). Kept: master-precaption cut + captions/serif-accent.ass sidecar for restyle without re-render.",
     "source": "assembled-cut",
     "engine": "faster-whisper",
     "style": "serif-accent",
@@ -150,8 +157,8 @@
   },
   "post_production": {
     "vo": { "default": "on", "note": "the creator's ElevenLabs VO IS the audio bed; the lip-sync drives the mouth (no music)" },
-    "captions": { "default": "on", "note": "word-level captions burned from the ASSEMBLED cut (serif-accent), tracking the ad timeline not the raw VO" },
+    "captions": { "default": "on", "note": "word-level captions burned from the ASSEMBLED cut (in captions.style), tracking the ad timeline not the raw VO" },
     "divider": { "default": "on", "note": "a 3px brand-color divider between the two zones" },
-    "endcard": { "default": "on", "note": "the Perplexity Computer end card held on the last sharp frame ~3s" }
+    "endcard": { "default": "on", "note": "the brand's end card (Perplexity Computer in the demo) held on the last sharp frame ~3s" }
   }
 }

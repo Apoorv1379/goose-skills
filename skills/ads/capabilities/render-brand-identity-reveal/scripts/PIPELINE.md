@@ -11,7 +11,7 @@ working/
   scene.html            # 11 poster modules; one active via `.on` class (toggle by OPACITY)
   assets/products/*     # the brand's real product / lifestyle stills
   assets/brand/*        # wordmark png, brand-icon svg
-  bg/plate_sage_1.png   # PAID: create-image-fal environment plate (high-res, empty frame)
+  bg/plate_1.png        # PAID: create-image-fal environment plate (high-res, empty frame)
   bg/plate_final.png    # recrop.py output (camera distance)
   bg/corners.txt        # measure_frame.py output (the frame interior quad)
   art/art_std_01..11.png# render_art.py output (standalone posters, bare mode, 2x)
@@ -22,10 +22,14 @@ working/
 
 ## Steps (script → output)
 
-1. **Plate [PAID]** — `create-image-fal` (flux-pro ultra, 9:16) → `bg/plate_sage_1.png`.
-   `gen_plate.py` is the reference wrapper (loads FAL_KEY, prompt in `config.plate`). Pick a
-   `wall_style` color that complements the brand's dominant hue so the posters pop.
-2. **Camera** — `recrop.py <interior_width_frac> <top_frac>` → `bg/plate_final.png`. The plate
+1. **Plate [PAID]** — `create-image-fal` (flux-pro ultra, 9:16) → `bg/plate_1.png`.
+   `gen_plate.py` is the reference wrapper (loads FAL_KEY, prompt in `config.plate`; `--dry-run`
+   prints the prompt). `plate.setting` and `plate.wall_style` come from the recipe's `setting` and
+   `wall_style` choices (the Touchland demo used a boutique interior + sage subway tile — an
+   example, not a default). Tune the wall colour to complement the brand's dominant hue so the
+   posters pop.
+2. **Camera** — `recrop.py <interior_width_frac> <top_frac> [plate.png]` → `bg/plate_final.png`
+   (source defaults to the first `bg/plate_*.png`). The plate
    is high-res, so cropping closer costs no quality. `0.72 0.13` = frame ~72% of width.
 3. **Detect frame** — `measure_frame.py` → `bg/corners.txt` (bright + low-sat + near-neutral
    mask → largest component → 4 corners).

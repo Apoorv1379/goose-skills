@@ -12,17 +12,22 @@ Its `HOW_TO.md` + `LEARNINGS.md` are the authoritative v3 recipe (Kling i2v + Re
 overlay). Run the pipeline there (or port these scripts into a new brand's project
 folder), then bring the config here as the recipe of record.
 
+**The demo's creative values are examples, not defaults.** The host, setting, tone, narrator
+voice and music come from the recipe's `choices` (`host`, `setting`, `tone`,
+`narrator_voice`, `music`). The demo (a late-20s woman at a bathroom counter, faintly
+comedic, "Eryn" VO, lo-fi pop) is one worked example.
+
 ## Config field → source script
 
 | `config.json` field | Source script | Phase | Paid? |
 |---|---|---|---|
-| `character.anchor_prompt`, `character.keyframe_variants`, `scenes[].keyframe_prompt` | `working/gen_keyframes.py` | 1 — character lock + per-scene keyframes (nano-banana, flat-vector; re-render a FRESH anchor — never chain a photoreal ref) | **PAID** |
+| `character.anchor_prompt`, `character.keyframe_variants`, `scenes[].keyframe_prompt` | `working/gen_keyframes.py` | 1 — character lock (host from `choices.host`) + per-scene keyframes in the chosen setting (nano-banana, flat-vector; re-render a FRESH anchor — never chain a photoreal ref) | **PAID** |
 | (clean plates — strip baked text) | `working/clean_plate.py` | 2 — nano-banana edit removes chips/numerals/taglines/badges from character keyframes → clean plates for i2v | **PAID** |
 | `scenes[].motion`, `kling.*` | `working/kling_i2v.py` | 3 — Kling 2.5-turbo/pro i2v on character scenes only; cfg 0.5 + style-preserving negative + subtle motion; TEST one scene first | **PAID** |
 | `scenes[].overlay` (chips, numerals, taglines, slate, CTA) | `working/remotion/` (Remotion project) | 4 — imports each Kling clip as the moving base and composites ALL text as animated DOM ON TOP → animated silent master. Text is NEVER baked into a keyframe | free |
 | `product_grid.*` | `working/scripts/build_scene08.py` | 4 — PIL composite of the N real product webps on the brand ground (preserve each aspect; AI duplicates SKUs so this is PIL, not AI) | free |
-| `voice.*`, `scenes[].vo` | `working/scripts/render_vo.py` | 5 — ElevenLabs eleven_v3, `text-to-speech/with-timestamps`; full-sentence per-scene VO + char-level timestamps | **PAID** |
-| `music.*` | `working/gen_music.py` | 5 — ElevenLabs music bed, lo-fi pop, VO-forward loudnorm | **PAID** |
+| `voice.*`, `scenes[].vo` | `working/scripts/render_vo.py` | 5 — ElevenLabs eleven_v3, `text-to-speech/with-timestamps`, voice from `choices.narrator_voice`; full-sentence per-scene VO in the chosen tone + char-level timestamps | **PAID** |
+| `music.*` | `working/gen_music.py` | 5 — ElevenLabs music bed in the style from `choices.music` (demo: lo-fi pop), VO-forward loudnorm; skipped if the user chose no music | **PAID** |
 | (VO+music mix) | `working/scripts/mix_audio.sh` | 5 — place each VO line at its scene start, duck music under VO (sidechaincompress), `loudnorm I=-15`, VO-forward | free |
 | `captions.*` | `working/scripts/build_captions.py` | 5 — word-by-word burned captions from the VO char-timestamps (libass); suppress on slate/grid/CTA scenes | free |
 | (silent master assembly) | `working/scripts/build_silent.sh` | 4 — stitch the Remotion-composited scenes into `working/silent-master.mp4` (the ANIMATED master) | free |

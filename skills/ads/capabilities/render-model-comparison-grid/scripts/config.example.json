@@ -1,12 +1,22 @@
 {
-  "_comment": "This IS the shipped worked example: the 3-model image comparison (2026-07-08). Cell paths point at the source project; re-point them at your own media. Cells accept images (.png/.jpg/.webp) AND muted video clips (.mp4/.mov/.webm) interchangeably.",
-  "canvas": { "width": 1280, "height": 720, "fps": 30 },
+  "_comment": "This IS the shipped worked example: the 3-model image comparison (2026-07-08). Cell paths point at the source project; re-point them at your own media. Cells accept images (.png/.jpg/.webp) AND muted video clips (.mp4/.mov/.webm) interchangeably. Creative fields -- columns (the contenders), beats[].tag (axes), beats[].prompt (prompt subject), endcard.headline/subline and music.prompt -- come from the recipe's choices (contenders, axes, prompt_subject, music); never copy them as defaults.",
+  "canvas": {
+    "width": 1280,
+    "height": 720,
+    "fps": 30
+  },
   "beat_seconds": 4.5,
   "cell_aspect": "3:4",
   "columns": [
-    { "label": "GPT IMAGE 2" },
-    { "label": "NANO BANANA PRO" },
-    { "label": "SEEDREAM 5.0 PRO" }
+    {
+      "label": "GPT IMAGE 2"
+    },
+    {
+      "label": "NANO BANANA PRO"
+    },
+    {
+      "label": "SEEDREAM 5.0 PRO"
+    }
   ],
   "beats": [
     {

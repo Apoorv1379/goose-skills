@@ -15,10 +15,30 @@ This capability is the **FREE, deterministic assembly + captions** — the two-z
 composite (contain-fit + blurred-cover fill + divider + creator slice), the
 hard-concat, the end card, and the word-level caption burn from the assembled cut.
 
-`scripts/config.example.json` is the worked example (Perplexity concept-10
-"Bloomberg terminal", ~40s 1080×1920 9:16, 6 scenes + an end card);
+`scripts/config.example.json` is one worked example (Perplexity concept-10
+"Bloomberg terminal", ~40s 1080×1920 9:16, 6 scenes + an end card) — copy its
+structure, never its creative values;
 `scripts/PIPELINE.md` maps every config block to its source step and
 `scripts/README.md` documents the free assembly.
+
+## Choices
+
+The creative calls are made upstream by the user (the calling format's recipe
+`choices`) and arrive here as config. This capability never picks them.
+
+- **`creator_gender` / `creator_age` / `creator_look`** — who the creator is
+  (`creator.brief`); shapes the anchor and the voice upstream. Here it only
+  affects framing checks. The worked example used a man in his 20s.
+- **`setting`** — where the creator films from (`creator.brief.vibe_setting`).
+  The worked example used a lived-in room with window daylight.
+- **`tone`** — the script and VO delivery; upstream only. The worked example
+  was a confident, fast explainer.
+- **`caption_style`** — `captions.style` (`serif-accent`, `kinetic-pop`,
+  `neon-glow`, `clean-bubble`). Burned here. The worked example shipped
+  `serif-accent`.
+
+If a creative field is empty in the config, ask for it — don't fall back to the
+worked example's value.
 
 ## Run
 
@@ -71,8 +91,8 @@ master. Re-cuts reuse the existing VO / lip-sync / clips and cost **$0**.
 - **Caption the ASSEMBLED cut, not the raw VO.** Concat drops inter-scene
   silence, so the ad timeline ≠ the VO timeline; only the final cut's audio
   yields correct caption timing. Transcribe the assembled cut with local Whisper,
-  build word-level cues (sentence-aware chunking), burn the ASS in the chosen
-  style (`serif-accent`, `kinetic-pop`, …). Keep the `-precaption` cut + the
+  build word-level cues (sentence-aware chunking), burn the ASS in the style set
+  by `captions.style` (`serif-accent`, `kinetic-pop`, …). Keep the `-precaption` cut + the
   `.ass` sidecar so captions restyle without re-rendering the composite. If the
   host ffmpeg lacks libass, render the cues as timed PIL PNG overlays (ffmpeg
   `overlay=…:enable='between(t,st,en)'`) at the same placement.

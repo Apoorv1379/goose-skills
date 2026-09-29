@@ -1,13 +1,13 @@
 ---
 name: render-3d-product-showcase
-description: Assemble a premium 3D product-showcase ad from a config — four beat clips (an orbiting hero rotation, a macro push-in, a physics reveal, a typographic close) normalized to the brand-color canvas, hard-concatenated in order, closed on a deterministic Playwright brand end card, and mixed under one instrumental bed at loudnorm I=-16 (music-only, no VO). Ships the runnable build_endcard.py + build_masters.py; the rotation/macro clips are create-video-fal i2v seeded on a create-image-fal styled hero, the reveal is Veo3 i2v, and the bed is create-music-elevenlabs. Use for the 3d-product-showcase format.
+description: Assemble a premium 3D product-showcase ad from a config — four beat clips (an orbiting hero rotation, a macro push-in, a physics reveal, a typographic close) normalized to the chosen backdrop colour, hard-concatenated in order, closed on a deterministic Playwright brand end card, and mixed under one instrumental bed at loudnorm I=-16 (music-only, no VO). Ships the runnable build_endcard.py + build_masters.py; the rotation/macro clips are create-video-fal i2v seeded on a create-image-fal styled hero, the reveal is Veo3 i2v, and the bed is create-music-elevenlabs. Use for the 3d-product-showcase format.
 status: active
 ---
 
 # render-3d-product-showcase
 
 Assemble a premium **3D product-showcase** ad from a config: one real product floats centered
-on a clean seamless brand-color backdrop and sells itself across four beats — an orbiting hero
+on a clean seamless backdrop (colour and lighting chosen per brand) and sells itself across four beats — an orbiting hero
 rotation, a macro push-in on the surface detail, a physics reveal (`exploded_view` /
 `particle_disintegration` / `liquid_splash`, or `rotation_only`), then a typographic brand
 close. This capability is the **FREE, deterministic assembly** that stitches the delivered
@@ -17,6 +17,19 @@ beats into the master; it spends nothing.
 720×1280 9:16); `scripts/build_endcard.py` + `scripts/build_masters.py` are the runnable free
 assembly; `scripts/PIPELINE.md` maps every config block to its source step; `scripts/README.md`
 documents the assembly.
+
+## Choices
+
+The recipe asks these before any paid step; this capability only assembles their result. The
+demo's value is an example, never a default:
+
+- **`backdrop`** → `studio_look.bg` (the pad colour `build_masters.py` uses) + the beat prompts.
+  Demo: bubblegum pink `#F8B8C6`.
+- **`lighting_mood`** → `studio_look.lighting_preset` / `rim_light` + the beat prompts. Demo:
+  `luxe_botanical_warm` (warm rim light upper-right, warm bokeh).
+- **`reveal`** → `reveal_variant` + `beats[2]`. Demo: `exploded_view`.
+- **`music`** → `music.prompt` (the bed passed to `build_masters.py --music`). Demo: uplifting
+  pop-ambient, drop at 7s, 100 BPM.
 
 ## Run
 
@@ -46,9 +59,9 @@ Re-cuts reuse the existing beats and cost **$0**.
   once — it seeds the Veo3 Beat 3 AND backs the Beat 4 end-card hyperframe, so the product +
   lighting carry across all four beats and the geometry never AI-drifts.
 - **End card via Playwright from the real wordmark — never AI-render brand text.** The brand
-  close is a deterministic hyperframe (Beat 1 last frame + scrim + Playfair headline + the real
+  close is a deterministic hyperframe (Beat 1 last frame + scrim + serif headline — `--headline-font`, Playfair Display by default — + the real
   wordmark, recolored for contrast). `build_endcard.py` auto-picks a legible headline color from
-  the bg luminance and renders 1080×1920 then scales to 720×1280. Playfair is loaded from Google
+  the bg luminance and renders 1080×1920 then scales to 720×1280. The headline font is loaded from Google
   Fonts; bundle the .ttf if determinism offline matters. If the resolvable Playwright wants an
   uninstalled browser build, export `PW_CHROME=<installed Chromium binary>` (shoot.js honours it).
 - **Normalize each beat to the brand canvas, hard-concat.** Per beat: trim to the window, strip

@@ -1,7 +1,7 @@
 # render-cosmic-mythology-voiceover scripts — the FREE assembly
 
 `render-cosmic-mythology-voiceover` is the **deterministic, $0 assembly stage** of the
-cosmic-mythology-voiceover format. The paid stages (the spoken VO, the N cosmic hero stills) are
+cosmic-mythology-voiceover format. The paid stages (the spoken VO, the N hero stills) are
 separate capabilities — `create-vo-elevenlabs`, `create-image-fal`. This capability spends nothing
 (the caption burn has a free local Whisper + ffmpeg fallback): it takes the atempo VO + the stills
 + the per-cut weight array + the hook line and stitches the finished master. Re-cuts (re-weighted
@@ -9,7 +9,7 @@ windows, new hook timing, caption chunking, zoom params) reuse the existing VO /
 **$0**.
 
 `config.example.json` is the worked example (WishAstro "Saturn isn't your villain", ~31s
-1080×1920). `PIPELINE.md` maps every config block to its source step. This README documents the
+1080×1920) — its script, voice, look and shots are the demo's; the recipe's choices supply yours. `PIPELINE.md` maps every config block to its source step. This README documents the
 FREE assembly pieces that `render-cosmic-mythology-voiceover` owns.
 
 ## 0. Run it — `render.py` (config-driven, portable)
@@ -38,7 +38,7 @@ stills for **$0**.
 
 The delivered VO duration sets the timeline. For each cut in `sequence.cuts[]`, the cut duration is
 `cut_dur = VO_dur × weight / Σweights` — so heavier weights **hold longer** on the emotional beats
-(the open, the reframe, the "he builds you" close) and the lighter setup cuts run shorter. Every
+(in the demo: the open, the reframe, the "he builds you" close) and the lighter setup cuts run shorter. Every
 cut stays proportional to the whole VO; never trim the VO to a pre-planned grid. Stills are
 reusable — the sequence repeats a few across the ~10–12 cuts.
 
@@ -54,7 +54,7 @@ hard-join.
 - **Concat:** ffmpeg-concat the N Ken-Burns clips (`-c copy`) → the background.
 - **VO composite:** one ffmpeg pass composites the atempo VO under the picture (libx264 `crf 18` +
   aac 192k). The spoken VO IS the bed — no separate VO and no music bed by default.
-- **Hook overlay:** the ONE reframe line, alpha-faded over the **open** only (fade in ~0.5s, hold,
+- **Hook overlay:** the ONE hook line, alpha-faded over the **open** only (fade in ~0.5s, hold,
   fade out ~0.6s) — never a persistent caption, never in-world text. `render.py` renders the line to
   a transparent PIL PNG and fades it with ffmpeg `fade=…:alpha=1`, so it needs NO `drawtext` filter
   (stock Homebrew ffmpeg often lacks it). If your ffmpeg *has* `drawtext`, that's an equivalent

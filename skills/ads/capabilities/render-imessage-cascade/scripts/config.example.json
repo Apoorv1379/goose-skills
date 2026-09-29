@@ -1,7 +1,7 @@
 {
-  "_comment": "Illustrative example (the source Gooseworks 'inbound leads' remix). The recipe binds a NEW brand's own values here at remix time — EVERY brand-specific field is a placeholder to REPLACE, including end_card.accent (do NOT ship the Gooseworks orange #f05f22 for another brand; set the remixed brand's own accent).",
+  "_comment": "Illustrative example (the source Gooseworks 'inbound leads' remix) — copy the STRUCTURE, never the creative values. Where the phone lies (the plate), the message story (notifications[]) and the audio (bed or pops + swoosh only) come from the format recipe's choices (setting, message_story, audio); the demo was a desk in a dim home office, inbound leads, a soft music bed. The recipe binds a NEW brand's own values here at remix time — EVERY brand-specific field is a placeholder to REPLACE, including end_card.accent (do NOT ship the Gooseworks orange #f05f22 for another brand; set the remixed brand's own accent).",
   "title": "Gooseworks — Notification Cascade (inbound leads)",
-  "plate": "/abs/path/plate-phone-desk.png",
+  "plate": "/abs/path/plate-phone.png",
   "plate_ref": "/abs/path/source-frame-with-a-notification.jpg",
   "app_icon": "messages",
   "notifications": [

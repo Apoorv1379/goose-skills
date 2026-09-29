@@ -12,9 +12,23 @@ The delivered song sets the timeline; N tableaux (one keyframe → one image-to-
 lyric beat, all in a single look pack) are cut to their lyric windows and hard-concatenated
 on the beat, captions are built from the song's OWN word timings with the hook line landing
 on the chorus drop, and the spot closes on a PIL brand end card. It reads like a tiny animated
-music video, not a demo. `scripts/config.example.json` is the worked example (Loóna "Fall In
-Love With Sleep Again", 28s paper-craft 9:16); `scripts/PIPELINE.md` maps every config block
+music video, not a demo. `scripts/config.example.json` is one worked example (Loóna "Fall In
+Love With Sleep Again", 28s paper-craft 9:16) — its style, song, vocalist, mood, protagonist and
+setting are that demo's answers, not defaults; `scripts/PIPELINE.md` maps every config block
 to its step and `scripts/README.md` documents the free assembly.
+
+## Choices
+
+The creative calls are made upstream by the user (the recipe's `choices`) and arrive in the config;
+this assembly never picks them.
+
+- **visual_style** → `look_pack`, `clip_engine.motion_opener`. The demo used a paper-craft diorama
+  at night.
+- **song_genre** → `song.prompt` / `song.bpm`. The demo used a dreamy synth lullaby at ~80 BPM.
+- **vocalist** → `song.prompt`. The demo used a soft breathy female lead.
+- **mood** → `song.prompt`, the lyrics, `tableaux`. The demo went calm/dreamy.
+- **protagonist** → `look_pack.style_opener`. The demo used a young-woman paper-doll.
+- **setting** → `tableaux[].keyframe_prompt`. The demo went bedroom at night → moonlit paper village.
 
 ## Run
 
@@ -36,7 +50,7 @@ the existing song / keyframes / clips and cost **$0**.
   overshoots length; snap every tableau boundary to the lyric-phrase edges in the returned
   word timings (`timeline.json`) — never trim the song to a pre-planned grid.
 - **Captions from the song's OWN word timings, not Whisper (script-window).** Chunk
-  `audio/words.json` (~3 words at lyric boundaries); accent words get the warm-glow color.
+  `audio/words.json` (~3 words at lyric boundaries); accent words get `captions.accent_color`.
   Whisper on sung audio returns "🎵 Music Playing 🎵", so it can't caption lyrics.
 - **Land the hook on the chorus drop.** Exactly ONE hero tableau (`is_hook`) is timed so the
   payoff word (`song.hook_word`) sits on the chorus drop; accent that word in the captions.
@@ -44,9 +58,10 @@ the existing song / keyframes / clips and cost **$0**.
   every keyframe so N beats read as one film; no morph within a clip.
 - **Hard cuts on the beat.** Cut each clip to its lyric window and hard-concat — no dissolves
   (one optional match-cut into the hero reveal).
-- **PIL end card from the real app icon — never AI-render brand text.** The lockup is
+- **PIL end card from the brand's real asset (e.g. the app icon) — never AI-render brand text.** The lockup is
   composited deterministically (brand gradient + circular app icon + wordmark + tagline + CTA)
   from the brand's real asset; a diffusion model garbles a wordmark.
 - **FFmpeg composite, deterministic, FREE.** Burn the caption ASS, overlay the end-card PNG on
-  the final window, mux the song, boost the climax beat, loudnorm to −14 LUFS → 1080×1920
+  the final window, mux the song, boost the climax beat (`audio_mix.climax_beat_id` — set it to
+  this run's hook tableau; the demo's `T08` is example-only), loudnorm to −14 LUFS → 1080×1920
   h264+aac. No paid calls, no keys.

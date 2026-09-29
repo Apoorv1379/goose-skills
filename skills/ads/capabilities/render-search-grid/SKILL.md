@@ -1,6 +1,6 @@
 ---
 name: render-search-grid
-description: Render a 'search-grid' (Pinterest search-moodboard) video from a config — a real-DOM page with four continuous beats (masonry search grid + typing hook with counter-drift columns → 3 cards slide in from the right and stack → the top card box-grows to fullscreen then swipe-left ×2 through captioned feature shots → warm end card), frame-stepped via Chromium and encoded with FFmpeg — deterministic assembly, FREE (real brand photos + logo; the optional music bed comes from create-music-elevenlabs), so type/logo/photos stay pixel-crisp. Use for the search-grid format.
+description: Render a 'search-grid' (Pinterest search-moodboard) video from a config — a real-DOM page with four continuous beats (masonry search grid + typing hook with counter-drift columns → 3 cards slide in from the right and stack → the top card box-grows to fullscreen then swipe-left ×2 through captioned feature shots → end card), frame-stepped via Chromium and encoded with FFmpeg — deterministic assembly, FREE (real brand photos + logo; the optional music bed comes from create-music-elevenlabs), so type/logo/photos stay pixel-crisp. Use for the search-grid format.
 status: active
 ---
 
@@ -17,13 +17,13 @@ by `create-music-elevenlabs` and passed to `render.py --music`.
 1. **Search** (0–5s) — a 3-column masonry grid of the brand's catalog behind a Pinterest
    search bar; a believable phrase types in letter-by-letter. Side columns drift DOWN, the
    middle column drifts UP (counter-parallax).
-2. **Cards** (5–7s) — 3 room/product cards slide in from the RIGHT and stack over a warm
-   blurred backdrop.
+2. **Cards** (5–7s) — 3 room/product cards slide in from the RIGHT and stack over a
+   blurred backdrop (`stack_bg` + `stack_tint`).
 3. **Features** (7–14.5s) — the TOP card **physically expands** (its box grows from the
    stacked rect to full-screen, animating width/height — NOT `transform:scale`, which would
    stretch the image), then **swipe-left → swipe-left** through the SAME 3 rooms, each now
    full-bleed with a caption. The 3 cards ARE the 3 features.
-4. **End card** (14.5–18s) — hero + wordmark + tagline + CTA on a warm background.
+4. **End card** (14.5–18s) — hero + wordmark + tagline + CTA on `endcard.bg`.
 
 ## Scripts (all free / deterministic)
 
@@ -39,15 +39,31 @@ by `create-music-elevenlabs` and passed to `render.py --music`.
   fixes this format needs almost every time: crop baked-in white L/R margins off heroes, and
   key the white out of a black-on-white logo JPG to a transparent PNG.
 
-See `scripts/config.example.json` for the full config shape (a real worked example).
+See `scripts/config.example.json` for the full config shape (a real worked example — the
+Ruggable build; its warm beige backdrop, red caret and lo-fi music prompt are that demo's
+picks, never defaults).
+
+## Choices
+
+These look values are the caller's creative choices (the video-format recipe asks the user):
+
+- **Backdrop mood** → `endcard.bg`, `stack_bg`, `stack_tint`. The demo used a warm beige
+  radial gradient (#ecdfce → #d9c6ac) and a warm brown tint.
+- **Music** → the prompt for the optional bed (made upstream by `create-music-elevenlabs`).
+  The demo used warm nylon acoustic guitar + Rhodes, relaxed lo-fi.
+- `caret_color` is the brand's accent colour (brand kit), not a choice.
+
+When `caret_color`, `endcard.bg` or `stack_tint` is missing or still an unfilled
+`<input:…>` / `<brand:…>` placeholder, `build_html.py` uses a NEUTRAL value and prints a
+WARNING; an unfilled text/path field (`hook`, `rooms`, `endcard.hero`, …) is an error.
 
 ## Config contract (bound by the recipe/orchestrator at remix time)
 
 `canvas`, `hook`, `grid_cols` (3 columns × 6 distinct tiles), `rooms` (exactly 3
-`{image, caption}` — the cards AND the features), `stack_bg` (blurred warm backdrop),
+`{image, caption}` — the cards AND the features), `stack_bg` (blurred backdrop photo), optional `stack_tint` (CSS background over it),
 `endcard` (`hero`, `wordmark`, `tagline`, `cta`, `bg`). Craft rules the renderer assumes the
 inputs already honor: real brand assets only; 6 distinct tiles/column so the drift never
-repeats; warm (never near-white) backdrops; cropped hero margins; transparent-bg wordmark;
+repeats; intentional (never near-white) backdrops in the mood the caller picked; cropped hero margins; transparent-bg wordmark;
 captions/tagline/CTA are the brand's OWN approved copy (no invented claims).
 
 ## Prereqs

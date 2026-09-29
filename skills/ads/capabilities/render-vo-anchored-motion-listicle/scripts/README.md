@@ -1,16 +1,17 @@
 # render-vo-anchored-motion-listicle scripts — the FREE assembly
 
 `render-vo-anchored-motion-listicle` is the **deterministic, $0 assembly stage** of the
-VO-anchored motion-graphic listicle format. The paid/metered stages (the spoken expert VO, the low
-music bed, the stock B-roll) are separate capabilities — `create-vo-elevenlabs`,
-`create-music-elevenlabs`, `media-proxy`. This capability spends nothing: it takes the VO +
+VO-anchored motion-graphic listicle format. The paid/metered stages (the spoken VO, the low music
+bed, any AI breather clips) are separate capabilities — `create-vo-elevenlabs`,
+`create-music-elevenlabs`, `create-video-fal`. Creative calls (narrator, tone, list angle, visual
+style, music) come from the format recipe's `choices` via the config. This capability spends nothing: it takes the VO +
 `words-flat.json` + the N authored hyperframe beats + the color-graded B-roll windows + the brand
 wordmark SVG and stitches the finished master. Re-cuts (new caption chunking, re-timed beats, a
 swapped B-roll window, a different music-bed level) reuse the existing VO / beats / B-roll and cost
 **$0**.
 
 `config.example.json` is the worked example (Everself "doctor-educator" listicle, ~66s 1080×1920 at
-25fps). `PIPELINE.md` maps every config block to its source step. This README documents the FREE
+25fps) — copy its structure, never its creative values. `PIPELINE.md` maps every config block to its source step. This README documents the FREE
 assembly pieces that `render-vo-anchored-motion-listicle` owns.
 
 ## 1. Beat render — Playwright frame-by-frame, all beats at fps 25
@@ -30,8 +31,9 @@ order (ffmpeg demuxer) → `master-silent.mp4`. Beats and B-roll are all fps 25 
 
 ## 3. B-roll windows — color-graded, the only captioned windows
 
-Each B-roll window is a stock (via `media-proxy`) or brand/procedure clip, trimmed and color-graded
-to the palette, rendered at fps 25. These give the eye a rest between the dense motion-graphic beats
+Each breather window is a brand/procedure clip, a gated AI clip (`create-video-fal`, screen-free), or
+a free motion-graphic breather — there is no free stock-footage source — trimmed and color-graded to
+the palette, rendered at fps 25. These give the eye a rest between the dense motion-graphic beats
 and are the **only** windows where captions burn — on the beats themselves the on-screen type IS the
 caption.
 
@@ -47,7 +49,8 @@ dependency.
 
 ## 5. VO + music mix
 
-The VO is the spine at full level; the ElevenLabs Music bed sits ~0.18 vol under it (no ducking
+The VO is the spine at full level; the ElevenLabs Music bed (style from the music choice; skipped if
+`none`) sits ~0.18 vol under it (no ducking
 needed at that level). Mix → the master audio.
 
 ## 6. FFmpeg composite

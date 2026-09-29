@@ -35,11 +35,11 @@ build_endcard.py --bg beat1_last_frame.png --headline "YOUR SANCTUARY AT HOME" \
     --wordmark brand-logo.svg --out endcard.png [--headline-size 86] [--headline-color auto]
 ```
 
-Beat 1's stilled last frame + a scrim + a Playfair headline + the brand's **REAL** wordmark
+Beat 1's stilled last frame + a scrim + a serif headline (`--headline-font`, Playfair Display by default) + the brand's **REAL** wordmark
 (SVG inlined and recolored, or a PNG). It renders at 1080×1920 via `scripts/shoot.js` (Playwright)
 then ffmpeg-scales to 720×1280 (matching the viewport to the output dims clips the right edge).
 The brand text is **never** AI-rendered — a diffusion model garbles a wordmark. `--headline-color
-auto` picks warm-white on a dark/saturated bg and dark ink on a light/pastel bg. Playfair loads
+auto` picks warm-white on a dark/saturated bg and dark ink on a light/pastel bg. The headline font loads
 from Google Fonts (bundle the .ttf for offline determinism). If the resolvable Playwright wants an
 uninstalled browser build, `export PW_CHROME=<installed Chromium binary>`.
 

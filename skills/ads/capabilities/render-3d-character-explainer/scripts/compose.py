@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
 """compose.py — the deterministic FREE assembler for the 3d-character-explainer ad.
 
-Ports the validated compose recipe from the Bristle "Six Types" restyle run
-(clients/bristle-health/ad-runs/run-02-six-types/generated/_render_full.sh). This is the
+Ports the validated compose recipe from a "six types" listicle restyle reference run
+(its _render_full.sh). This is the
 "N types of X" listicle variant of the animated-explainer format: a recurring human
 protagonist plus a locked cast of N persona characters (one per list item) carry a
 narrated spot. Given the per-scene i2v clips + the per-scene target durations + the
 narration track (RESTYLE mode: the source ad's VO+music mix reused verbatim; ORIGINAL
 mode: fresh per-scene VO windows + optional music bed), it renders the master mp4:
+
+The art style (Pixar-style 3D, claymation, anime, paper-cut, felt...), narrator, tone,
+protagonist and music are the recipe's `choices` and live upstream in the clips / audio this
+script is handed; nothing here assumes one style.
 
   1. Per-scene retime  — each clip is trimmed to its scene target duration and normalized
      to identical WxH/fps/SAR:
@@ -32,12 +36,12 @@ hands them off. Captions are burned only if config.captions_ass points at a real
 """
 import argparse, json, os, subprocess, sys
 
-# ---- canvas / encode constants (validated on the Bristle reference run) ----
+# ---- canvas / encode constants (validated on the reference run) ----
 FPS = 30
 CRF_SEG = 18          # per-scene segment encode
 CRF_MASTER = 19       # final burn+mux encode
 PRESET = "medium"
-PAD_COLOR_DEFAULT = "0x1c2233"   # letterbox pad colour (Bristle deep-navy); config overridable
+PAD_COLOR_DEFAULT = "0x000000"   # neutral letterbox pad colour; set config.pad_color from the brand palette
 
 # ---- audio mix constants (ORIGINAL mode with a music bed; validated on absurdist) ----
 VO_LOUDNORM = "loudnorm=I=-14:TP=-1.5:LRA=11"

@@ -12,17 +12,19 @@
  * Usage:
  *   node render-end-card.js --config config.json [--out-dir .]
  *
- * end_card config (see config.example.json):
+ * end_card config (see config.example.json — values below are placeholders; colours
+ * and copy come from the brand kit, approved copy only):
  *   {
- *     "bg": "#fbf4e8", "fg": "#1e5751", "cta_bg": "#9fe778", "cta_fg": "#1e5751",
- *     "star_color": "#ffd15a",
+ *     "bg": "#ffffff", "fg": "#111111", "cta_bg": "#111111", "cta_fg": "#ffffff",
+ *     "star_color": "#ffc83d",
  *     "logo_svg": "<svg …>…</svg>",   // preferred; else "wordmark_text": "BRAND"
  *     "stars": 5,                      // 0 hides the proof row
- *     "proof_text": "69,000 families",
- *     "trust_trio": [ {"label":"Easy to\npersonalize","icon":"pencil"}, … ],
- *     "cta_text": "Personalize his book",
+ *     "proof_text": "<approved proof line>",
+ *     "trust_trio": [ {"label":"<benefit>","icon":"check"}, … ],
+ *     "cta_text": "<approved CTA>",
  *     "dwell_sec": 2.5
  *   }
+ * Missing colours fall back to a neutral white/black card (never a demo brand's palette).
  * Relative paths (logo_svg_path) resolve against the config's directory.
  */
 
@@ -93,11 +95,11 @@ function main() {
     : '';
 
   const html = tpl
-    .replace('{{BG}}', ec.bg || '#fbf4e8')
-    .replace('{{FG}}', ec.fg || '#1e5751')
-    .replace('{{CTA_BG}}', ec.cta_bg || '#9fe778')
-    .replace('{{CTA_FG}}', ec.cta_fg || '#1e5751')
-    .replace('{{STAR}}', ec.star_color || '#ffd15a')
+    .replace('{{BG}}', ec.bg || '#ffffff')
+    .replace('{{FG}}', ec.fg || '#111111')
+    .replace('{{CTA_BG}}', ec.cta_bg || '#111111')
+    .replace('{{CTA_FG}}', ec.cta_fg || '#ffffff')
+    .replace('{{STAR}}', ec.star_color || '#ffc83d')
     .replace('{{WORDMARK}}', wordmark)
     .replace('{{PROOF}}', proof)
     .replace('{{TRIO}}', trio)

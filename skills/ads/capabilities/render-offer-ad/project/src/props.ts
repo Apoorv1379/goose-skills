@@ -66,30 +66,31 @@ export function beatLayout(beat_split_sec: [number, number, number, number]) {
 // Re-exported so scenes can pull the beat grid off the current bpm if needed.
 export { FPS, beatFrames };
 
-// Safe fallback used when no input props are supplied (Remotion Studio preview
-// with an empty --props). Mirrors config.example.json (brand-neutral).
+// Safe fallback used ONLY when no input props are supplied (Remotion Studio preview
+// with an empty --props). Neutral placeholders — render.py always passes the real
+// config; the headline angle and copy are the user's choice (recipe choices.headline_angle).
 export const DEFAULT_PROPS: OfferAdProps = {
   palette: {
-    primary_ground: "#C96E2F",
+    primary_ground: "#3A3F4B",
     light_ground: "#FAFAFA",
     ink: "#0A0B0D",
-    highlight_chip: "#F2C9C2",
+    highlight_chip: "#E6E8EC",
   },
   copy: {
-    headline_words: ["POWDER", "IS", "OVER."],
-    subline: "the new way",
-    motif_chip: "DRINKABLE",
+    headline_words: ["YOUR", "HEADLINE", "HERE."],
+    subline: "sub-line",
+    motif_chip: "CHIP",
     claim_lines: [
-      { big: "10g", small: "protein" },
-      { big: "1", small: "spoon" },
-      { big: "0", small: "mess" },
+      { big: "1", small: "proof point" },
+      { big: "2", small: "proof point" },
+      { big: "3", small: "proof point" },
     ],
-    cta_label: "Try it",
+    cta_label: "Call to action",
     cta_url: "yourbrand.com",
     wordmark: "your brand",
   },
   product_image: "product.png",
-  mechanism_prop: "spoon",
+  mechanism_prop: "accent",
   bpm: 115,
   beat_split_sec: [3.0, 3.5, 3.0, 2.5],
   fonts: { display: "ArchivoBlack", body: "Inter" },

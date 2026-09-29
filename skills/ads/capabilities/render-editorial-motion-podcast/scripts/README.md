@@ -8,7 +8,8 @@ the motion layer: it takes the clipped audio + `words.json` + the per-beat keyfr
 brand wordmark PNG and stitches the finished master. Re-cuts (new beat windows, added micro-cuts,
 re-timed caption ranges, a swapped end card) reuse the existing audio / keyframes and cost **$0**.
 
-`config.example.json` is the worked example (Klarify "Rat Park", ~40.8s 1080×1920). `PIPELINE.md`
+`config.example.json` is the worked example (Klarify "Rat Park", ~40.8s 1080×1920; its look pack,
+palette and Rat Park metaphor are that demo's answers to the recipe choices — never defaults). `PIPELINE.md`
 maps every config block to its source step. This README documents the FREE assembly pieces that
 `render-editorial-motion-podcast` owns.
 

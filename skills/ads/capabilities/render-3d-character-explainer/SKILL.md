@@ -1,13 +1,13 @@
 ---
 name: render-3d-character-explainer
-description: Assemble a glossy 3D-character animated-explainer video ad (~77s, 9:16) built on an "N types of X" listicle spine — a recurring human protagonist plus a locked cast of N persona characters, one per list item. Given the per-scene i2v clips + a per-scene target-duration table + a narration track, it trims each clip to its scene window, re-encodes every segment to identical 1080x1920/30fps/libx264/yuv420p (decrease+pad, never crop) so the concat demuxer never drops frames, concats, and muxes audio — in RESTYLE mode the source ad's VO+music mix is reused verbatim, in ORIGINAL mode fresh per-scene VO (loudnorm I=-14) is mixed under an optional music bed (loudnorm I=-26). A static-still fallback loops a scene's keyframe when its clip is missing/failed, so the master always assembles; libass captions are burned last. FREE deterministic assembly (Python + ffmpeg, no bash, no paid calls); the recipe supplies the clips, keyframes, VO or source audio, and caption table and gates the paid cast-anchor/keyframe/Kling-i2v/VO/music calls to their own capabilities. Use for the 3d-character-explainer listicle format.
+description: Assemble an animated character-explainer video ad (any art style — Pixar-style 3D, claymation, anime, paper-cut, felt) (~77s, 9:16) built on an "N types of X" listicle spine — a recurring human protagonist plus a locked cast of N persona characters, one per list item. Given the per-scene i2v clips + a per-scene target-duration table + a narration track, it trims each clip to its scene window, re-encodes every segment to identical 1080x1920/30fps/libx264/yuv420p (decrease+pad, never crop) so the concat demuxer never drops frames, concats, and muxes audio — in RESTYLE mode the source ad's VO+music mix is reused verbatim, in ORIGINAL mode fresh per-scene VO (loudnorm I=-14) is mixed under an optional music bed (loudnorm I=-26). A static-still fallback loops a scene's keyframe when its clip is missing/failed, so the master always assembles; libass captions are burned last. FREE deterministic assembly (Python + ffmpeg, no bash, no paid calls); the recipe supplies the clips, keyframes, VO or source audio, and caption table and gates the paid cast-anchor/keyframe/Kling-i2v/VO/music calls to their own capabilities. Use for the 3d-character-explainer listicle format.
 status: active
 ---
 
 # render-3d-character-explainer
 
-The free, deterministic renderer for the **3d-character-explainer** video ad format — the
-glossy Pixar-style 3D spot built on an **"N types of X" listicle** spine, where a recurring
+The free, deterministic renderer for the **3d-character-explainer** video ad format — an
+animated character spot (art style is the user's choice; the demo was glossy Pixar-style 3D) built on an **"N types of X" listicle** spine, where a recurring
 human protagonist plus a locked cast of **N persona characters (one per list item)** carry a
 hook → "deeper story" → cast-reveal → one beat per list item → kicker → product test →
 relieved payoff. This capability is the **FREE assembly stage only**. All generative work
@@ -15,15 +15,33 @@ relieved payoff. This capability is the **FREE assembly stage only**. All genera
 or a source ad's audio reused verbatim) happens upstream in the recipe and is handed to this
 capability as files.
 
-It ports the validated compose recipe from the Bristle "Six Types" restyle run
-(`_render_full.sh` — per-scene trim → normalize 1080×1920/fps30 → concat -c copy → mux the
+It ports the validated compose recipe from the worked example — a "six types" Pixar-style 3D
+listicle restyle (`_render_full.sh` — per-scene trim → normalize 1080×1920/fps30 → concat -c copy → mux the
 source audio, with a static-still fallback on any failed clip). The assembly is
 deterministic — iterate the cut for free, re-roll only the offending paid beat.
+
+## Choices
+
+The recipe asks these of the user before any paid step; this capability assembles whatever
+comes back. None of them is fixed by the format.
+
+- `visual_style` — the art style of the anchors, keyframes and Kling motion prompts (Pixar-style
+  3D, claymation, anime, paper-cut, felt). Asked of the user; the demo used glossy Pixar-style 3D.
+- `narrator` — who tells the story and in whose POV the lines / captions are written. Asked of
+  the user; the demo used an off-screen storyteller.
+- `narrator_voice` — the VO voice (ORIGINAL mode only). Asked of the user; the demo used one
+  ElevenLabs narrator.
+- `tone` — cute/comedic, sincere, educational, dramatic, punchy; shapes the style prefix, the
+  delivery and the script. Asked of the user; the demo was cute and comedic.
+- `protagonist` — the human's age, gender, look and outfit (locked via the world lock). Asked of
+  the user; the demo used a young protagonist in a single tee.
+- `music` — the bed under the VO, or none (ORIGINAL mode → `music_bed`). Asked of the user; the
+  demo used a light instrumental underscore.
 
 ## Two modes
 
 - **Restyle mode** (`audio_mode: "restyle"`, the reference run) — re-tell a finished source
-  ad, beat for beat, as 3D character comedy. The source ad's **audio mix (VO + music bed) is
+  ad, beat for beat, as an animated character story in the chosen style and tone. The source ad's **audio mix (VO + music bed) is
   reused VERBATIM** (`source_audio`), and the per-scene `target_sec` table is inherited from
   the source's scene timing. No new VO or music is rendered. The trims must sum to the source
   audio length.
@@ -64,7 +82,8 @@ deterministic — iterate the cut for free, re-roll only the offending paid beat
   (static-still fallback on missing clips) → concat → audio (restyle verbatim / original
   mix) → burn captions → master mp4.
 - `scripts/config.example.json` — the shape of the `config` the recipe binds (the
-  brand-neutralised "Six Types" restyle values as a worked reference).
+  brand-neutralised "six types" restyle values as a worked example; captions, audio and
+  music are the demo's, never defaults).
 
 ## Inputs (all via `--config` + a runtime work dir — NO hardcoded paths)
 
@@ -73,7 +92,8 @@ keyframe, target_sec, caption?, vo?, atempo?}` where `target_sec` is the source-
 window in restyle mode or the **measured** VO window in original mode, and `keyframe` is the
 static-still fallback source), `source_audio` (restyle), `music_bed` + `music_volume` +
 `atempo` (original), `width`/`height` (default 1080×1920), `pad_color` (letterbox colour),
-`captions_ass`, and `caption_style`. See `config.example.json`.
+`captions_ass`, and `caption_style`. See `config.example.json`. `pad_color` defaults to neutral
+black; set it from the brand palette.
 
 ## Craft rules (load-bearing — faithful to the source molecule + reference run)
 

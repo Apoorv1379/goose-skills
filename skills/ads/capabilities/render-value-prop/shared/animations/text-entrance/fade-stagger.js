@@ -1,6 +1,6 @@
 // text-entrance/fade-stagger.js
 // Eyebrow → rule scaleX → headline translateY → sub fade. Staggered.
-// Validated on Som Sleep v5 (sleep_wellness preset).
+// Validated on the demo build (sleep_wellness preset).
 //
 // Contract: animate(t, elements, params?) → void
 //   elements: { eyebrow, rule, headline, sub } — getElementById refs

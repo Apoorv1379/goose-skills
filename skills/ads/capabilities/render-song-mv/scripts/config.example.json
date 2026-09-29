@@ -1,5 +1,5 @@
 {
-  "_comment": "Lo\u00f3na 'Fall In Love With Sleep Again' song-driven music-video \u2014 the worked example. Copy to config.json and edit. A ~28s paper-craft (DREAMSCAPE_NIGHT) 9:16 music video where a GENERATED SUNG SONG carries the whole narrative (NO separate VO). Pipeline: (1) ElevenLabs music_v1 song from song.structure -> mp3 + words.json; (2) one Higgsfield gpt_image_2 keyframe per tableau (2k 9:16, one look_pack); (3) one Higgsfield kling3_0 i2v clip per tableau; (4) captions from the song's WORD timings, hook word landing on the chorus drop; (5) hard-cut assembly + PIL brand end card + song mux, -14 LUFS. Master 1080x1920 (keyframes rendered at 2k ~= 1520x2688 then downscaled in assembly). See scripts/PIPELINE.md for the source scripts.",
+  "_comment": "Lo\u00f3na 'Fall In Love With Sleep Again' song-driven music-video \u2014 Worked example (the Lo\u00f3na paper-craft lullaby build). Creative fields \u2014 song.prompt, song.bpm, song.structure[].lines / lyrics_md / hook_line / hook_word, look_pack (name, style_opener incl. the protagonist, palette_anchors, negative_tail), clip_engine.motion_opener, tableaux[] (keyframe_prompt, motion_hint, caption), captions.accent_words, audio_mix.climax_beat_id (plus brand_name/title/campaign/end_card, which come from the brand) \u2014 come from the recipe's choices (visual_style, song_genre, vocalist, mood, protagonist, setting); never copy them as defaults. Copy to config.json and edit. A ~28s paper-craft (DREAMSCAPE_NIGHT) 9:16 music video where a GENERATED SUNG SONG carries the whole narrative (NO separate VO). Pipeline: (1) ElevenLabs music_v1 song from song.structure -> mp3 + words.json; (2) one Higgsfield gpt_image_2 keyframe per tableau (2k 9:16, one look_pack); (3) one Higgsfield kling3_0 i2v clip per tableau; (4) captions from the song's WORD timings, hook word landing on the chorus drop; (5) hard-cut assembly + PIL brand end card + song mux, -14 LUFS. Master 1080x1920 (keyframes rendered at 2k ~= 1520x2688 then downscaled in assembly). See scripts/PIPELINE.md for the source scripts.",
   "brand_name": "Lo\u00f3na",
   "campaign": "fall in love with sleep again",
   "title": "Fall In Love With Sleep Again",
@@ -10,7 +10,7 @@
   "keyframe_resolution": "2k",
   "aspect_ratio": "9:16",
   "song": {
-    "_comment": "Generated FIRST. The song carries the narration \u2014 there is NO separate voiceover. The delivered track sets the timeline; snap every tableau boundary to its lyric window (see the run's working/timeline.json). No artist names in the prompt (ElevenLabs Music ToS filter).",
+    "_comment": "prompt/bpm/structure lines below are the DEMO song (lullaby, soft female vocal, ~80 BPM) \u2014 build them from choices.song_genre + choices.vocalist + choices.mood. Generated FIRST. The song carries the narration \u2014 there is NO separate voiceover. The delivered track sets the timeline; snap every tableau boundary to its lyric window (see the run's working/timeline.json). No artist names in the prompt (ElevenLabs Music ToS filter).",
     "provider": "elevenlabs",
     "model": "music_v1",
     "lyrics_md": "source/lyrics-locked.md",
@@ -66,6 +66,7 @@
     }
   },
   "look_pack": {
+    "_comment": "DEMO look pack (paper-craft night, young-woman paper-doll protagonist). Build ONE pack per run from choices.visual_style + choices.protagonist + the brand palette.",
     "name": "DREAMSCAPE_NIGHT",
     "palette_anchors": [
       "lavender night",
@@ -87,6 +88,7 @@
     "batch_size": 3
   },
   "clip_engine": {
+    "_comment": "motion_opener below is the DEMO's paper-craft wording \u2014 rewrite it to keep choices.visual_style (clay stays clay, watercolor stays watercolor).",
     "provider": "higgsfield",
     "model": "kling3_0",
     "duration_sec": 5,
@@ -275,6 +277,7 @@
     ]
   },
   "audio_mix": {
+    "_comment": "climax_beat_id T08 is the DEMO's hook tableau \u2014 set it to this run's HOOK_HERO tableau id.",
     "loudness_lufs": -14,
     "climax_beat_id": "T08",
     "climax_boost_db": 2.0,

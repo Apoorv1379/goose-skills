@@ -1,6 +1,6 @@
 ---
 name: render-cinematic-music-video
-description: Assemble a cinematic live-action-style music-video ad from a config — an original sung anthem carries the whole narrative while N 35mm-film-look i2v clips are each cut to their lyric window and hard-concatenated on the beat as a 3-act arc, the anthem muxed at loudnorm I=-14, cinematic lower-third serif captions built from the song's OWN word timings (never Whisper) with the hook line landing on the chorus drop, and closed on a brand end card composited from the real asset — never AI-rendered text. This is the FREE deterministic assembly stage (cut-to-window + hard concat + anthem mux + captions + end card); the anthem, keyframes, and clips come from create-music-elevenlabs / create-image-fal / create-video-fal. Use for the cinematic-music-video format.
+description: Assemble a cinematic live-action-style music-video ad from a config — an original sung anthem carries the whole narrative while N 35mm-film-look i2v clips are each cut to their lyric window and hard-concatenated on the beat as a 3-act arc, the anthem muxed at loudnorm I=-14, cinematic lower-third serif captions built from the song's OWN word timings (never Whisper) with the hook line landing on the chorus drop, and closed on a brand end card composited from the real asset — never AI-rendered text. This is the FREE deterministic assembly stage (cut-to-window + hard concat + anthem mux + captions + end card); the anthem, keyframes, and clips come from create-music-elevenlabs / create-image-gpt-image-fal / create-video-fal. Use for the cinematic-music-video format.
 status: active
 ---
 
@@ -8,13 +8,13 @@ status: active
 
 Assemble a **cinematic music-video** ad from a config: a live-action-STYLE short film where an
 original sung anthem is the score and every visual beat is a shot-on-film tableau (Kodak Portra
-grain, light leaks, golden hour, handheld imperfection) timed to the lyrics, arranged as a
-3-act arc (morning → peak → twilight) with the hook line on the chorus drop. This capability is
+grain, light leaks, natural light, handheld imperfection) timed to the lyrics, arranged as a
+3-act arc (its shape is the user's `story_arc` choice) with the hook line on the chorus drop. This capability is
 the **FREE, deterministic assembly** — cut-to-window, hard-concat, anthem mux, caption burn,
 and the brand end card.
 
 `scripts/config.example.json` is the worked example (Hype and Vice "Game Day Girls", ~28s
-1080×1920 9:16, 14 tableaux); `scripts/PIPELINE.md` maps every config block to its source step
+1080×1920 9:16, 14 tableaux) — copy its structure, never its creative values; `scripts/PIPELINE.md` maps every config block to its source step
 and `scripts/README.md` documents the free assembly.
 
 ## Run
@@ -22,11 +22,28 @@ and `scripts/README.md` documents the free assembly.
 This is the **FREE, deterministic** assembly stage — it spends nothing. The paid inputs are
 separate capabilities: the sung anthem (`create-music-elevenlabs`, `force_instrumental` false —
 the lyrics ARE the script, returns mp3 + `words_timestamps`); one 35mm-film keyframe per beat
-in one look pack (`create-image-fal`); and one Kling 3.0 i2v clip per beat (`create-video-fal`).
+in one look pack (`create-image-gpt-image-fal`); and one Kling 3.0 i2v clip per beat (`create-video-fal`).
 Given the delivered anthem + `words.json` + one clip per beat + the brand end-card asset,
 `render-cinematic-music-video` cuts each clip to its lyric window, hard-concats on the beat,
 muxes the anthem, burns the cinematic lower-third captions, and overlays the end card → the
 master. Re-cuts reuse the existing anthem / keyframes / clips and cost **$0**.
+
+## Choices
+
+The creative content this stage assembles is decided upstream by the format's `choices`, asked
+of the user before any paid step. The worked example's values are examples, never defaults:
+
+- **song_style** — the anthem's genre, mood, BPM and arrangement. The demo used a triumphant
+  120-BPM indie-pop cinematic anthem.
+- **vocalist** — who sings it. The demo used a confident-but-warm female lead.
+- **cast** — who is on screen in the tableaux. The demo used four young college women.
+- **setting** — place + time of day (drives the look pack's light and palette). The demo used an
+  American college town on game day, autumn, golden hour.
+- **story_arc** — the 3-act shape of the tableaux and lyrics. The demo used one game day,
+  morning → stadium peak → twilight, with an origin-story wink.
+
+This assembly reads them only through the config (`tableaux[]` windows + captions, the anthem,
+`captions.accent_words`, `end_card.*`); it hardcodes none of them.
 
 ## Contract (the free assembly)
 

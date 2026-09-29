@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """make_captions.py — emit a libass .ass, one caption pill per scene (v1).
 
-Ports the validated caption recipe from the Soteri run (production/make_captions.py).
+Ports the validated caption recipe from the format's reference runs.
 Reads the SAME config.json compose.py reads, so the per-scene target seconds are the
 single source of truth — the caption windows are derived from the compose scene table,
 guaranteeing they stay in lockstep with the cut.

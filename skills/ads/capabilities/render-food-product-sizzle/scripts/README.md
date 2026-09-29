@@ -29,7 +29,7 @@ Two short diegetic hits are synthesized with ffmpeg lavfi `anoisesrc` (NO AI): a
 
 ## 3. Music bed — no vocals, no sparse intro
 
-The supplied / generated acoustic-bluegrass bed (no vocals — no VO to duck under) opens sparse; the
+The supplied / generated instrumental bed (the `music` choice; the demo's was bluegrass) (no vocals — no VO to duck under) opens sparse; the
 upstream step trims the ~2.5s intro so it kicks in from frame 0. The assembly `loudnorm`s it and
 fades it in / out to the master length, playing it UNDER the end card with a fade tail (no silent
 tail).

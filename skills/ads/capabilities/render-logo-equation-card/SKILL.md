@@ -28,6 +28,23 @@ python measure_motion.py ad.mp4 --cta-at 2.0              # exit 1 = reject
  "cta": "Try it free at example.com"}
 ```
 
+The Slack standup card above is an illustration of the schema, not a default: the headline,
+the partner and the steps come from the user's brand and choices.
+
+## Choices
+
+The recipe asks these before any paid step; this renderer only draws what `card.json` and the
+flags say. The demo's value is an example, never a default:
+
+- **`headline_angle`** — what the "= …" headline promises (time saved, a pain removed, a new
+  ability, one workflow in one place). Sets `card.json` `headline` + `steps`. Demo: time saved
+  ("= your standup, written before anyone opens Slack").
+- **`broll_subject`** — what the timelapse b-roll shows (the product in use, the team working,
+  a workspace, customers). Picks the `--broll` clip and window. Demo: the brand's own footage of
+  work happening.
+- **`music`** — the optional `--bed` (built from the music choice, instrumental, no artist
+  names) or none (ship silent). Demo: driving minimal electronic, ~144 BPM.
+
 ## Guardrails (enforced by render_card.py)
 
 Two logos side by side already imply a link between the companies. The platform names

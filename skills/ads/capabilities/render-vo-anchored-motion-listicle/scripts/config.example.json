@@ -1,5 +1,5 @@
 {
-  "_comment": "Everself 'doctor-educator' listicle — THE WORKED EXAMPLE. Copy to config.json and edit. A ~66s 9:16 (1080x1920, 25fps, h264 crf18 + aac 192k) EXPERT motion-graphic LISTICLE where a CLONED authoritative clinician VO narrates a numbered listicle and every beat reveal is anchored to the VO's word-level timestamps. Pipeline: (1) lock the VO (ElevenLabs clone, eleven_v3, atempo) — it sets the timeline; (2) Groq whisper-large-v3 word-level -> working/whisper/words-flat.json; (3) author N hyperframe beats (HTML + Web Animations window.renderAt(t)) in ONE design system (_shared.css / _shared.js); (4) periodic color-graded B-roll windows for breath; (5) render each beat frame-by-frame via Playwright (render_hf.py, ALL beats fps 25), concat, mix the VO under a low music bed, composite + burn window-masked captions (build_master_v4.py) -> finals/everself-v4-master.mp4. NO lipsync — the still headshot is kept only for a future lipsync variant. See scripts/PIPELINE.md for the source scripts.",
+  "_comment": "Worked example (the Everself 'doctor-educator' build) — copy its STRUCTURE and field names, never its creative values. Creative fields — voice.mode / voice.voice_id / voice.reference_sample (choices.narrator), the script + beats[].headline/body/callout (choices.list_angle + choices.tone), design.name / design.callout_style / design.accents / design.background_tiles (choices.visual_style; palette + fonts from the brand kit), music.prompt (choices.music), broll[].ai_prompt, brand_name / campaign / title / wordmark — come from the recipe's choices and the brand; never copy them as defaults. A ~66s 9:16 (1080x1920, 25fps, h264 crf18 + aac 192k) EXPERT motion-graphic LISTICLE where a CLONED authoritative clinician VO narrates a numbered listicle and every beat reveal is anchored to the VO's word-level timestamps. Pipeline: (1) lock the VO (ElevenLabs clone, eleven_v3, atempo) — it sets the timeline; (2) Groq whisper-large-v3 word-level -> working/whisper/words-flat.json; (3) author N hyperframe beats (HTML + Web Animations window.renderAt(t)) in ONE design system (_shared.css / _shared.js); (4) periodic color-graded B-roll windows for breath; (5) render each beat frame-by-frame via Playwright (render_hf.py, ALL beats fps 25), concat, mix the VO under a low music bed, composite + burn window-masked captions (build_master_v4.py) -> finals/everself-v4-master.mp4. NO lipsync — the still headshot is kept only for a future lipsync variant. See scripts/PIPELINE.md for the source scripts.",
   "brand_name": "Everself",
   "campaign": "doctor-educator listicle",
   "title": "What your dermatologist wishes you knew",
@@ -27,7 +27,7 @@
     }
   },
   "design": {
-    "_comment": "ONE branded design system for all N beats. _shared.css holds the tokens (palette, type, alternating background tiles, decorative SVG accents, glass-pill callout); _shared.js holds initRenderer + revealWords + easing. Alternate ONLY the background tile per beat; keep the big hero numerals, body type, accents, and pills CONSISTENT so the reel reads as one designed piece.",
+    "_comment": "ONE branded design system for all N beats. Demo look (EVERSELF_EDUCATOR, glass-pill callouts) — the look comes from choices.visual_style, colours/fonts from the brand kit. _shared.css holds the tokens (palette, type, alternating background tiles, decorative accents, callout style); _shared.js holds initRenderer + revealWords + easing. Alternate ONLY the background tile per beat; keep the big hero numerals, body type, accents, and callouts CONSISTENT so the reel reads as one designed piece.",
     "name": "EVERSELF_EDUCATOR",
     "heading_font": "Editorial serif (heading)",
     "body_font": "Grotesk sans (body)",
@@ -51,8 +51,8 @@
     { "id": "BCTA", "role": "cta", "anchor_word": "start", "anchor_t": 58.0, "hero_numeral": "", "headline": "Build a routine that actually works", "body": "", "callout": "everself.com", "wordmark": "brand-assets/logos/everself-wordmark.svg", "accent": "cream-tile", "_comment": "CTA / end beat — Everself wordmark composited from the real SVG (NEVER AI-rendered text)." }
   ],
   "broll": [
-    { "id": "broll[0]", "source": "media-proxy", "query": "close-up serum drop skincare macro", "brand_clip": "", "t_start": 12.2, "t_end": 16.8, "graded": true, "captioned": true, "_comment": "Stock macro via media-proxy, trimmed + color-graded to the palette. Captions burn ONLY inside this window." },
-    { "id": "broll[1]", "source": "media-proxy", "query": "woman applying sunscreen morning bathroom", "brand_clip": "", "t_start": 32.0, "t_end": 36.6, "graded": true, "captioned": true, "_comment": "Second stock breath window, graded to the palette; captioned." }
+    { "id": "broll[0]", "source": "ai-video", "ai_prompt": "screen-free candid clinician in a bright modern clinic, shallow depth of field, no text", "query": "", "brand_clip": "", "t_start": 12.2, "t_end": 16.8, "graded": true, "captioned": true, "_comment": "Breather window. source is brand-clip | ai-video (create-video-fal, PAID — gate it) | motion-graphic. NO free stock source exists (media-proxy only wraps FAL/ElevenLabs/Whisper). If ai-video: SCREEN-FREE footage only (AI garbles on-screen UI text). Trim + color-grade to the palette. Captions burn ONLY inside this window. HOW MANY / WHERE = taste calls, not fixed." },
+    { "id": "broll[1]", "source": "ai-video", "ai_prompt": "screen-free candid person, bright bathroom morning routine, shallow depth of field, no text", "query": "", "brand_clip": "", "t_start": 32.0, "t_end": 36.6, "graded": true, "captioned": true, "_comment": "Second breather window — same source options; screen-free if ai-video; graded + captioned." }
   ],
   "captions": {
     "_comment": "Built from the VO word timings (working/whisper/words-flat.json), kept ONLY inside the B-roll windows (broll[0], broll[1]), 2-word chunks, closing a cue on any >0.4s word gap. The ASS `Format:` header MUST include a `Name` field or the leading-comma bug eats the first field and captions silently drop. The motion-graphic beats are NOT captioned — their on-screen type IS the caption.",
@@ -96,8 +96,8 @@
     "shared_js": "working/hyperframes-v4/_shared.js"
   },
   "post_production": {
-    "voiceover": { "default": "on", "note": "the cloned/cast expert VO IS the spine and sets the timeline" },
-    "music": { "default": "on", "note": "low ElevenLabs Music bed (~0.18 vol) under the VO" },
+    "voiceover": { "default": "on", "note": "the cloned/cast VO (choices.narrator) IS the spine and sets the timeline" },
+    "music": { "default": "on", "note": "low ElevenLabs Music bed (~0.18 vol) under the VO, style from choices.music; off if the user picks none" },
     "captions": { "default": "on", "note": "window-masked (B-roll only), 2-word chunks, close on >0.4s gaps, ASS Name-field header" },
     "end_card": { "default": "on", "note": "CTA beat uses the brand's real wordmark, never AI-rendered text" }
   }

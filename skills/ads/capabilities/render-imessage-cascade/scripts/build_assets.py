@@ -25,7 +25,7 @@ SIDE = (CANVAS_W - BODY_W) // 2      # 135
 PAD = 60
 ROW_CANVAS_H = BANNER_H + PAD * 2    # 296
 RADIUS = 40
-# warm cream, TRANSLUCENT — over a warm desk this reads as the source greige (~220,197,186)
+# warm cream, TRANSLUCENT — over the demo's warm desk this reads as the source greige (~220,197,186)
 FILL = (246, 228, 219, 205)
 SHADOW = (30, 22, 16)                # warm-dark soft box-shadow
 

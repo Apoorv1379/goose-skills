@@ -1,5 +1,5 @@
 {
-  "_comment": "Illustrative worked example — brand-neutralised from the validated 'drinkable collagen' offer-ad run. The recipe binds a NEW brand's own product photo / palette / copy / music here. Replace every /abs/or/working/... path with a REAL absolute path or a runtime working/ path. ALL text is typeset in the engine (never AI-rendered). The ONLY composited bitmap is the REAL product photo (objectFit:contain, never stretched) — an AI-rendered packshot is an instant fail.",
+  "_comment": "Illustrative worked example — brand-neutralised from the validated 'drinkable collagen' offer-ad run. Copy the STRUCTURE, never the creative values: the headline angle (copy.headline_words / subline / motif_chip — the demo used the category-killer 'X IS OVER. the new way') and the music mood (music.prompt — the demo used punchy lo-fi pop, 115 BPM) come from the format recipe's choices (headline_angle, music); palette, product photo, claims and CTA are brand facts. The recipe binds a NEW brand's own product photo / palette / copy / music here. Replace every /abs/or/working/... path with a REAL absolute path or a runtime working/ path. ALL text is typeset in the engine (never AI-rendered). The ONLY composited bitmap is the REAL product photo (objectFit:contain, never stretched) — an AI-rendered packshot is an instant fail.",
   "_notes": {
     "cta_label": "Do NOT end cta_label with an arrow — Scene04 appends its own '→' (render.py also strips a stray trailing arrow, but keep the source clean).",
     "mechanism_prop": "One of TWO engine presets only: 'spoon' (drinkable/liquid) or 'accent' (neutral bar; use for SaaS/software & anything non-CPG). Not arbitrary SVG.",
@@ -44,6 +44,8 @@
   "aspects": ["9:16", "1:1"],
 
   "music": {
+    "prompt": "punchy lo-fi pop, confident, brand-forward, 115 BPM, instrumental only, no vocals",
+    "_prompt_note": "prompt is for create-music-elevenlabs (from choices.music); render.py only reads bed.",
     "bed": "/abs/or/working/audio/music-bed.mp3",
     "fade_out_frames": 18
   }

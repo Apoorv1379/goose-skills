@@ -6,17 +6,35 @@ status: active
 
 # render-absurdist-explainer
 
-The free, deterministic renderer for the **absurdist-explainer** video ad format — the
-bright Pixar/Disney 3D spot where a personified villain (the problem) narrates the whole
-ad in one voice, teaches the product's ownable mechanism through cartoon biology, lists
-the damage, then watches its own scheme collapse when the product arrives. This
+The free, deterministic renderer for the **absurdist-explainer** video ad format — an
+animated spot where the problem is a personified villain, the ad teaches the product's
+ownable mechanism through cartoon biology, lists the damage, then collapses the villain's
+scheme when the product arrives. One narrator voice carries the whole spot. This
 capability is the **FREE assembly stage only**. All generative work (nano-banana
 keyframes, Seedance i2v clips, ElevenLabs VO + music) happens upstream in the recipe and
 is handed to this capability as files.
 
-It ports the validated compose recipe from two reference runs (HUM "Big Chill" cortisol
-absurdism and Soteri "Eczema, the pH villain"). The recipe is deterministic — iterate the
-cut for free, re-roll only the offending paid beat.
+It ports the validated compose recipe from two reference runs (a cortisol/stress
+supplement and a baby-eczema cream). The recipe is deterministic — iterate the cut for
+free, re-roll only the offending paid beat.
+
+## Choices
+
+The creative calls are made upstream by the recipe's `choices` and arrive here only as
+files and config values. This renderer is style-agnostic: it never assumes a look, a
+narrator or a music style.
+
+- **`story_shape`** — how the story is told. Reaches this capability as the per-scene
+  `caption` text and the VO files. Asked of the user; the demo used "the villain narrates
+  its own defeat".
+- **`narrator`** — who speaks the single VO track. Arrives as the `scenes[].vo` files.
+  Asked of the user; the demo used the villain.
+- **`visual_style`** — the art style of the i2v clips (`scenes[].clip`). Asked of the
+  user; the demo used Pixar-style 3D. Nothing here depends on it.
+- **`narrator_voice`** — the voice cast for the VO. Asked of the user; the demo used a
+  characterful male villain voice.
+- **`music`** — the bed at `music_bed`. Asked of the user; the demo used whimsical
+  pizzicato + woodwinds + xylophone. The mix constants below apply to any style.
 
 ## What it does (the deterministic recipe)
 
@@ -48,8 +66,10 @@ cut for free, re-roll only the offending paid beat.
   (or point `config.captions_ass` at nothing to skip captions).
 - `scripts/compose.py` — the assembler: per-scene retime + identical 30fps re-encode →
   concat → Ken-Burns end card → VO/music loudnorm mix → burn captions → master mp4.
-- `scripts/config.example.json` — the shape of the `config` the recipe binds (the
-  brand-neutralised Soteri values as a worked reference).
+- `scripts/config.example.json` — the shape of the `config` the recipe binds. Its values
+  are a worked example (the demo build: villain-narrated eczema story, placeholder brand).
+  Captions, end-card copy and palette come from the user's brand and choices — never copy
+  them as defaults.
 
 ## Inputs (all via `--config` + a runtime work dir — NO hardcoded paths)
 
@@ -70,16 +90,16 @@ read slow), `captions_ass`, and `caption_style`. See `config.example.json`.
   concat demuxer silently drops frames.
 - **`target_sec` is the MEASURED VO duration** (ffprobe each VO mp3), never a planned word
   count — VO drives the per-scene timing.
-- **Mix constants are validated** — VO -14 LUFS, music -26 LUFS then `volume≈0.62` (Soteri)
-  to `0.70` (Big Chill), `amix normalize=0`. Master target -14.5..-13.5 LUFS,
+- **Mix constants are validated** — VO -14 LUFS, music -26 LUFS then `volume≈0.62` to `0.70`
+  (the two reference runs), `amix normalize=0`. Master target -14.5..-13.5 LUFS,
   true-peak ≤ -1.5 dBFS.
 - **Caption `start = scene_start + 0.08s`**, suppressed on the end card (its typeset copy
   carries the message — two text layers at one spot are both unreadable).
 
 ## Requires
 
-`watch` (QC the final master — confirm the villain silhouette holds, the single voice
-carries the whole spot, the motif lands ≥3×, no AI brand text leaked into a cartoon
+`watch` (QC the final master — confirm every character's silhouette holds, the single
+narrator voice carries the whole spot, the motif lands ≥3×, no AI brand text leaked into a cartoon
 background, the end card is the real product, and duration is within ±0.1s of the summed
 windows). The recipe gates the paid `create-image-fal` (keyframes), `create-video-fal`
 (Seedance i2v), `create-vo-elevenlabs`, and `create-music-elevenlabs` calls to their own

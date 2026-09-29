@@ -1,14 +1,14 @@
 ---
 name: render-imessage-cascade
-description: Assemble an iMessage notification-cascade video ad (≈14s, 9:16) from a phone-on-desk plate + 3–5 messages — authentic Apple Messages banners composited in PIL (SF Pro text, green Messages icon, warm translucent-greige fill, soft shadow) spring in one-by-one at the BOTTOM and push the stack UP, a right-aligned Show-less/X pill rides above, the X clears the stack, then a serif end card resolves. FREE assembly (PIL + ffmpeg); the recipe supplies the per-brand plate, notifications, and end-card config and gates the paid plate-clean/music calls to their own capabilities. Use for the imessage-notification-cascade format.
+description: Assemble an iMessage notification-cascade video ad (≈14s, 9:16) from a plate of a phone lying face-up (setting chosen by the user) + 3–5 messages — authentic Apple Messages banners composited in PIL (SF Pro text, green Messages icon, warm translucent-greige fill, soft shadow) spring in one-by-one at the BOTTOM and push the stack UP, a right-aligned Show-less/X pill rides above, the X clears the stack, then a serif end card resolves. FREE assembly (PIL + ffmpeg); the recipe supplies the per-brand plate, notifications, and end-card config and gates the paid plate-clean/music calls to their own capabilities. Use for the imessage-notification-cascade format.
 status: active
 ---
 
 # render-imessage-cascade
 
 The free, deterministic renderer for the **imessage-notification-cascade** video ad
-format — the viral iOS trend where a phone sits on a desk and Apple Messages
-notifications STACK IN one after another. The signature mechanic is the **bottom-up
+format — the viral iOS trend where a phone lies face-up (the source: on a desk) and Apple
+Messages notifications STACK IN one after another. The signature mechanic is the **bottom-up
 push**: each new banner springs in at the bottom (nearest the phone) and shoves every
 existing one UP a row; the iOS grouped "⌄ Show less / ✕" pill rides above the stack;
 the ✕ clears the stack; then a serif end card resolves.
@@ -20,6 +20,19 @@ The template recipe supplies the per-brand `plate`, `notifications`, and `end_ca
 config and gates the only paid steps — cleaning the plate (→ `create-image-fal`) and
 the music bed/pop (→ `create-music-elevenlabs`) — to their own capabilities. This
 capability itself makes **no paid calls**.
+
+## Choices
+
+The creative calls are the user's, asked by the format recipe before any paid step; this
+renderer draws whatever the config holds.
+
+- **setting** — where the phone lies (the plate). *The demo used a desk in a dim, moody home
+  office.*
+- **message_story** — what the messages tell (inbound leads, a friend's texts, order alerts, a
+  group chat, a problem solved) → `notifications[]`. *The demo used inbound leads.*
+- **audio** — pops + swoosh only, or a bed (lo-fi / upbeat / tense) + pops → `config.audio`.
+  With no `bed`, `compose.py` plays the pops + swoosh over silence; `--no-audio` is fully silent.
+  *The demo used a soft music bed.*
 
 ## Scripts (free)
 
@@ -33,7 +46,7 @@ capability itself makes **no paid calls**.
 - `scripts/compose.py` — Ken-Burns push-in on the plate → each banner springs in at the
   BOTTOM while later arrivals push the stack UP (FFmpeg overlay `y` expressions) → pill
   rides above → ✕-clear swipes the stack up + fades → serif end card fades in → optional
-  audio (bed + pop per arrival + a free FFmpeg swoosh on the clear) → encode h264 + aac.
+  audio (optional bed + pop per arrival + a free FFmpeg swoosh on the clear) → encode h264 + aac.
 - `scripts/config.example.json` — the shape of the brand `config` the recipe binds.
 
 ## Geometry contract (load-bearing — build_assets.py and compose.py MUST share it)

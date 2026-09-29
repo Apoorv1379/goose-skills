@@ -6,21 +6,33 @@ status: active
 
 # render-podcast-skit
 
-Assemble a **two-host fake-podcast skit** ad from a config: a skeptic and a believer at an
-absurd themed podcast desk do a snappy back-and-forth about the product (the set is
-deliberately unrelated — that is the joke). Each line is its own lipsync clip so the edit can
+Assemble a **two-host podcast skit** ad from a config: a skeptic and a believer at a podcast
+desk do a snappy back-and-forth about the product. Each line is its own lipsync clip so the edit can
 cut on the dialogue beat (~1.8s avg); this capability is the **FREE, deterministic assembly**
 that concatenates those clips, renders the WHITE captions, and appends the brand end card.
 
+## Choices
+
+The creative calls are the user's, asked by the format recipe before any paid step — this
+assembly just renders whatever the config holds:
+
+- **tone** — comedy banter, sincere, deadpan, hype, or calm/informative; shapes the script and
+  voice style. Don't force humour: jokes only for the comedy tone. *The demo used funny banter.*
+- **set** — home studio, living room, café, office, or an absurd product-irrelevant set (where the
+  mismatch is the joke). *The demo used a 24hr laundromat at 2am.*
+- **skeptic_host / believer_host** — each host's gender, age, look. `voices.HER` / `voices.HIM`
+  and `who: HER|HIM` are only the skeptic and believer SLOTS, not genders. *The demo used a young
+  woman skeptic and a young man believer.*
+
 `scripts/config.example.json` is the worked example (Ladder run-02 "Laundromat 2am", ~49s
-1080×1920 9:16, ~22 lines); `scripts/PIPELINE.md` maps every config block to its source step
+1080×1920 9:16, ~22 lines) — copy its structure, never its creative values; `scripts/PIPELINE.md` maps every config block to its source step
 and `scripts/README.md` documents the free assembly.
 
 ## Run
 
 This is the **FREE, deterministic** assembly stage — it spends nothing. The paid inputs are
 separate capabilities: one ElevenLabs **with-timestamps** VO per line (one voice per host) via
-`create-vo-elevenlabs`; two photoreal base stills at the themed desk plus ~10 expression variants
+`create-vo-elevenlabs`; two photoreal base stills at the chosen set's desk plus ~10 expression variants
 (mouths NEUTRAL/CLOSED, **gpt-image-2 quality=high**, not nano-banana) via
 `create-image-gpt-image-fal`; and one lipsync clip per (still, VO) pair via `create-video-fal`.
 Given the per-line clips + their VO timestamps + the brand wordmark SVG, `render-podcast-skit`

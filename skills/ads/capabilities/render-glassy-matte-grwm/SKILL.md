@@ -7,7 +7,7 @@ status: active
 # render-glassy-matte-grwm
 
 Assemble a **multi-scene GRWM beauty-demo** ad from a config — a locked-identity creator applies
-~5 makeup/skincare products step by step at a vanity, a **separate** ElevenLabs voiceover
+~5 makeup/skincare products step by step in a chosen setting, a **separate** ElevenLabs voiceover
 narrates the routine, and every scene cut is snapped to the VO's product-name word-starts, with
 ~5 Playwright product overlay cards on the product-name beats, a ducked music bed, burned
 captions, and a flat-lay end card. This capability is the **FREE, deterministic assembly** —
@@ -21,6 +21,22 @@ timeline is driven by a SEPARATE VO and the scenes are re-cut to its word-starts
 `scripts/config.example.json` is the worked example (DIBS Beauty "5-Step Glassy Matte Routine",
 ~32s 1080×1920 9:16, 12 VO-snapped cuts + 5 product cards); `scripts/PIPELINE.md` maps every
 config block to its source step and `scripts/README.md` documents the free assembly.
+
+## Choices
+
+The creative calls come from the recipe's `choices`, asked of the user before any paid step. The
+demo's picks are examples, never defaults. This capability only assembles what those choices
+produced; it hardcodes none of them.
+
+- **creator** — who does the routine (`assets.creator_anchor`, the look in the scene beats). The
+  demo used a young woman.
+- **voice** — the VO voice (`vo.voice_id` / `vo.voice_name`). The demo used ElevenLabs Karri.
+- **setting** — where the routine happens (`assets.vanity_world`). The demo used a sage-green vanity.
+- **tone** — how the VO talks (`vo.script`, `vo.style`). The demo was upbeat and friendly.
+- **music** — the bed under the VO (`music.prompt`; "none" = VO only, skip the music mix). The demo
+  used a warm acoustic bed.
+
+Card colours come from `palette` (the brand kit), not the demo's cream + pink.
 
 ## Run
 
@@ -54,7 +70,7 @@ flat-lay end card → the master. Re-cuts reuse the existing VO / clips / cutout
   need `-loop 1 -t <dur>`** — without it the PNG emits one frame at t=0 and the fade/enable filters
   silently no-op (cards go invisible).
 - **VO leads the ducked music bed.** Mix the SEPARATE VO on top of the ducked music (the VO is the
-  lead), `loudnorm I=-14`. If the host ffmpeg lacks a filter, apad/atrim to length before the mix.
+  lead), `loudnorm I=-14`. When `choices.music` is "none", loudnorm the VO alone. If the host ffmpeg lacks a filter, apad/atrim to length before the mix.
 - **Captions — clean-white, override the preset.** Clean-white captions from the VO's Whisper
   words, overridden to 3 words/cue, ~3.0% font, ~20% margin, NO pill, NO shadow (the default
   5-words/4.5%/18% reads too dense). Burn last. If the host ffmpeg lacks libass, render the cues as

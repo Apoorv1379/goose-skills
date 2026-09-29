@@ -2,7 +2,7 @@
 """build_endcard.py — the deterministic Beat-4 brand close (FREE, no AI text).
 
 Composites a typographic end card: the stilled Beat-1 last frame + a scrim +
-a Playfair Display headline + the brand's REAL wordmark (recolored for
+a serif headline (Playfair Display by default, --headline-font) + the brand's REAL wordmark (recolored for
 contrast). Renders at 1080x1920 via Playwright, then ffmpeg-scales to 720x1280
 (matching the viewport to the output dims clips the right edge). The brand text
 is NEVER AI-rendered — a diffusion model garbles a wordmark, so the lockup is
@@ -17,6 +17,7 @@ Playwright wants an uninstalled browser build, export PW_CHROME=<installed
 Chromium binary> — shoot.js honours it.
 """
 import argparse
+import urllib.parse
 import base64
 import html as htmlmod
 import os
@@ -49,6 +50,8 @@ def main():
     ap.add_argument("--out", required=True, help="output PNG (scaled to 720x1280)")
     ap.add_argument("--headline-size", type=int, default=86)
     ap.add_argument("--headline-color", default="auto", help="'auto' | hex")
+    ap.add_argument("--headline-font", default="Playfair Display",
+                    help="Google Fonts family for the headline (default Playfair Display; pick one that fits the brand)")
     ap.add_argument("--width", type=int, default=1080)
     ap.add_argument("--height", type=int, default=1920)
     ap.add_argument("--scale-w", type=int, default=720)
@@ -77,7 +80,7 @@ def main():
     doc = f"""<!doctype html><html><head><meta charset="utf-8">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family={urllib.parse.quote_plus(a.headline_font)}:wght@600;700&display=swap" rel="stylesheet">
 <style>
   * {{ margin:0; padding:0; box-sizing:border-box; }}
   html,body {{ width:{a.width}px; height:{a.height}px; overflow:hidden; }}
@@ -87,7 +90,7 @@ def main():
       rgba(10,14,12,.30) 0%, rgba(10,14,12,0) 34%, rgba(6,10,8,.12) 60%, rgba(4,8,6,.82) 100%); }}
   .lockup {{ position:absolute; left:0; right:0; bottom:150px; display:flex; flex-direction:column;
       align-items:center; gap:52px; padding:0 90px; }}
-  .headline {{ font-family:'Playfair Display', Georgia, serif; font-weight:600; text-transform:uppercase;
+  .headline {{ font-family:'{a.headline_font}', Georgia, serif; font-weight:600; text-transform:uppercase;
       color:{color}; font-size:{a.headline_size}px; line-height:1.16; letter-spacing:.09em;
       text-align:center; text-shadow:0 3px 30px rgba(0,0,0,.55); max-width:900px; }}
   .wordmark {{ width:340px; opacity:.98; filter:drop-shadow(0 2px 14px rgba(0,0,0,.5)); }}

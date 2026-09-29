@@ -8,7 +8,8 @@ the ordered plate PNGs + per-plate holds + the end-card hero BG + the brand logo
 track and stitches the finished master. Re-cuts (re-timed holds, a re-ordered cycle, a swapped end
 card, a different track) reuse the existing plates and cost **$0**.
 
-`config.example.json` is the worked example (DIBS Beauty "Pick Your Match", ~16.6s 1080×1920).
+`config.example.json` is the worked example (DIBS Beauty "Pick Your Match", ~16.6s 1080×1920) —
+its hand, background, surface and music are the demo's; the recipe's choices supply yours.
 `PIPELINE.md` maps every config block to its source step. This README documents the FREE assembly
 pieces that `render-stopmotion-hand-swatch-cycle` owns.
 

@@ -1,5 +1,5 @@
 {
-  "_comment": "Pair Eyewear 'RANGE' mosaic-grid-reveal — the worked example. Copy to config.json (in a dir with an assets/ folder) and edit. Canvas 1080x1920 9:16. FULL-BLEED 3x3 mosaic of REAL product tiles pops in one at a time (scatter order), clears, then the REAL brand wordmark builds line-by-line + tagline + CTA. Real DOM text/SVG only — never AI-render the wordmark or copy. Copy slots = the brand's OWN approved lines; never invent claims/customers/results.",
+  "_comment": "Pair Eyewear 'RANGE' mosaic-grid-reveal — the worked example. Copy to config.json (in a dir with an assets/ folder) and edit. Canvas 1080x1920 9:16. FULL-BLEED 3x3 mosaic of REAL product tiles pops in one at a time (scatter order), clears, then the REAL brand wordmark builds line-by-line + tagline + CTA. Real DOM text/SVG only — never AI-render the wordmark or copy. Copy slots = the brand's OWN approved lines; never invent claims/customers/results. Creative fields — tiles[].image/name, tiles[].bg/ink, palette.bg, end_card copy, music.prompt — are the Pair build's answers to the recipe's choices (range, tile_look, music); never copy them as defaults.",
   "brand_name": "Pair Eyewear",
   "width": 1080,
   "height": 1920,

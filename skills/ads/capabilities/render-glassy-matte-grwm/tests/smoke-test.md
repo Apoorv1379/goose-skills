@@ -10,7 +10,7 @@ ducked music, burn clean-white captions, close on the flat-lay end card → 1080
 
 Pass when the assembly runs to a valid MP4 and:
 - ~12 scene segments, each hard-cut on its "step N" word-start (no crossfades); the ONE locked
-  creator + vanity hold across every scene;
+  creator + setting (whatever the user chose) hold across every scene;
 - ~5 product cards, each animating in on its product-NAME word-start (~1s after the scene cut) with
   the RIGHT white-bg cutout + a PDP-verified tagline; every PNG overlay used `-loop 1 -t <dur>`;
 - captions are clean-white 3-words/cue (no pill, no shadow); the flat-lay end card holds ~4s on the

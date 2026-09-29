@@ -2,13 +2,22 @@
 """Re-crop the high-res plate tighter (closer camera) so the frame is bigger.
 Detects the poster interior in the original, then crops a 9:16 window that puts the
 interior at a target width fraction, keeping wall above and the plant in the corner."""
-import sys, numpy as np
+import glob, os, sys, numpy as np
 from PIL import Image
 from scipy import ndimage
 
-SRC = "bg/plate_sage_1.png"
 FRAC = float(sys.argv[1]) if len(sys.argv) > 1 else 0.72   # interior width / output width
 TOP_FRAC = float(sys.argv[2]) if len(sys.argv) > 2 else 0.13  # interior top as frac of output H
+# Source plate: optional 3rd arg, else the first bg/plate_*.png (gen_plate.py writes
+# bg/plate_1.png; older runs named it after the wall, e.g. bg/plate_sage_1.png).
+if len(sys.argv) > 3:
+    SRC = sys.argv[3]
+else:
+    cands = sorted(p for p in glob.glob("bg/plate_*.png") if os.path.basename(p) != "plate_final.png")
+    if not cands:
+        sys.exit("recrop.py: no bg/plate_*.png found — generate the plate first or pass its path as arg 3")
+    SRC = cands[0]
+print("source plate:", SRC)
 
 im = Image.open(SRC).convert("RGB")
 W0, H0 = im.size

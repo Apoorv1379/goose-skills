@@ -11,6 +11,11 @@ locked voice + anchor drive the ONE VEED Fabric lip-sync take, the brand clips
 fill the top zone, assembly stitches the two zones, and captions come from the
 ASSEMBLED cut (not the raw VO).
 
+The creator (gender, age, look), setting, tone and caption style are the user's
+choices, made upstream. The Perplexity values in `config.example.json` (creator,
+`arlo` voice, script, `#20808D` divider, `serif-accent`) are the worked example's
+build — never defaults.
+
 ## Field → source-step map
 
 | Config field | Phase | Source step | Paid? |
@@ -34,7 +39,8 @@ second voice doubles the VEED spend downstream. This is upstream of the capabili
 
 ## 2. Creator anchor + lip-sync (config `creator`) — PAID, no-atom VEED step
 
-A **photoreal MEDIUM chest-up** `gpt-image-2` anchor at a natural webcam distance —
+A **photoreal MEDIUM chest-up** `gpt-image-2` anchor of the user-chosen creator
+(`creator.brief`: gender, age, look, setting) at a natural webcam distance —
 whole head with headroom, shoulders + upper chest, real lived-in room, anti-AI skin
 cues — **not** a plain-background close-up headshot and **not** a phone-selfie pose
 (borrow another format's realism, never its arm-extended framing). Watch the source
@@ -75,7 +81,7 @@ the concatenated creator VO slices; append the end card holding the last sharp f
 **Caption the ASSEMBLED cut, not the raw VO** — concat drops inter-scene silence, so
 the ad timeline ≠ the VO timeline; only the final cut's audio yields correct caption
 timing. Transcribe `master-precaption.mp4` with local `faster-whisper`, build
-word-level cues (sentence-aware chunking), and burn the ASS in the chosen style
+word-level cues (sentence-aware chunking), and burn the ASS in `captions.style`
 (`serif-accent`, `kinetic-pop`, `neon-glow`, `clean-bubble`) → `concept-<n>-final-ad.mp4`.
 Keep the `-precaption` cut + the `.ass` sidecar so captions restyle without
 re-rendering the composite. If the host ffmpeg lacks libass, render the cues as timed

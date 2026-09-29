@@ -6,10 +6,10 @@ status: active
 
 # render-myth-vs-fact
 
-The free, deterministic renderer for the **myth-vs-fact** video ad format — the calm,
+The free, deterministic renderer for the **myth-vs-fact** video ad format — the
 sound-off-safe kinetic-typography explainer that busts N common myths and hands the viewer
 a credible resolution. Red-strike **MYTH** cards flip to teal-check **FACT** cards over a
-calm-authority VO, then a "what actually works" **turn** + an optional **proof reveal** + a
+VO (voice + tone are the caller's choice; the demo used a calm-authority expert), then a "what actually works" **turn** + an optional **proof reveal** + a
 **punch** line + a static brand **end card**.
 
 Every on-screen word is a **deterministic HTML hyperframe** — **no AI image/video gen, no
@@ -74,7 +74,22 @@ duration, captions, cues{...}}` plus the role's copy:
 
 The recipe's `myth_fact_pairs`, `hook_line`, `turn_slate`, `punch_line`, `palette`,
 `end_card_png`, and optional `actives_or_proof` map onto these beats 1:1. See
-`config.example.json`.
+`config.example.json` (a worked example — the Clinikally acne build; its copy and palette
+are that brand's, never defaults).
+
+## Choices
+
+The creative calls the caller makes upstream (the video-format recipe asks the user). This
+renderer never picks them — it only consumes the rendered files and copy:
+
+- **Narrator voice** → the `vo` file (made by `create-vo-elevenlabs`). The demo used a calm
+  expert voice.
+- **Tone** → the VO direction + the hook / turn / punch copy. The demo was calm-authority,
+  warm, plain-language.
+- **Music** → the optional `music` file (made by `create-music-elevenlabs`). The demo used a
+  calm clinical pad + sparse warm keys, no drums.
+
+The palette is a brand fact (brand kit), not a choice.
 
 ## Craft rules (load-bearing — faithful to the source molecule)
 

@@ -24,10 +24,10 @@ deterministic** — the only paid step of the format (the music bed) is a separa
 - `width`, `height`, `fps` — canvas + frame rate (default 1080×1920, 30).
 - `wordmark` — brand logo SVG (full `<svg>` or bare `<path>` markup) or PNG path. Real DOM,
   recolored via `palette.ink`. Never AI-render it. `wordmark_viewbox`, `wordmark_width` tune it.
-- `palette` — `bg` (warm off-white), `accent` + `accent_deep` (brand color), `ink`, `cap`.
+- `palette` — `bg` (page colour; the demo used a warm off-white), `accent` + `accent_deep` (brand color), `ink`, `cap`.
 - `grid` — `cols`/`rows` (default 3×3), `inset` (outer margin), `gap`.
 - `tiles` — one per cell (length must equal `cols*rows`): `image` (real variant still),
-  `name` (caption), `bg` (soft pastel echoing the variant), `ink` (deep caption color).
+  `name` (caption), `bg` (tile colour, from `choices.tile_look` — the demo used a soft pastel echoing each variant), `ink` (deep caption color).
 - `pop_order` — scatter order across cells (default corners → center → edges).
 - `timing` — `grid_in0`, `cadence`, `pop`, `hold`, `clear` (seconds).
 - `end_card` — `sub`, `tagline_top`, `tagline_bottom` (bold), `cta`, `url`. Brand's own approved copy only.
@@ -35,6 +35,15 @@ deterministic** — the only paid step of the format (the music bed) is a separa
 
 `scripts/config.example.json` is a filled example (the Pair Eyewear "RANGE" worked example);
 the tile `image`/`wordmark` paths are brand inputs bound by the orchestrator at remix time.
+Its tiles, tile colours, end-card copy and music prompt are Pair's answers, not defaults.
+
+## Choices
+
+The recipe asks the user these before any paid step; the renderer draws whatever the config says.
+
+- `range` — which 9 products/variants fill the grid → `tiles[].image`, `tiles[].name`. Asked of the user; the demo used 9 eyewear colourways.
+- `tile_look` — tile backgrounds → `tiles[].bg`, `tiles[].ink`, `palette.bg`. Asked of the user; the demo used a soft pastel per variant.
+- `music` — the bed's genre/mood → `music.prompt` (consumed by `create-music-elevenlabs`). Asked of the user; the demo used light upbeat marimba.
 
 ## Run
 

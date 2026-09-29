@@ -1,4 +1,5 @@
 {
+  "_comment": "Placeholder shape (Acme / sku-a..d), not defaults. palette.bg comes from the recipe's choices.background, palette.ink from the brand kit, music_brief from choices.music (null = silent); skus, sku_accents, copy and logo are the brand's own.",
   "width": 1080,
   "height": 1920,
   "fps": 30,

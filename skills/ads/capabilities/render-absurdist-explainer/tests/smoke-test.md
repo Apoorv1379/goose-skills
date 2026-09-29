@@ -16,6 +16,8 @@ mkdir -p /tmp/absurdist-smoke
 #   - scenes[].vo    : the per-scene VO mp3s (target_sec = ffprobe of each)
 #   - end_card.product_image : a real retail product photo (>=1000px)
 #   - music_bed      : an instrumental bed (or set to null to run VO-only)
+#   - captions + end_card copy + brand_palette : your brand's (the example's are a
+#     worked example, not defaults)
 cp config.example.json /tmp/absurdist-smoke/config.json
 ```
 
@@ -48,8 +50,9 @@ python3 compose.py --config /tmp/absurdist-smoke/config.json \
 - `compose.py` prints per-scene retime lines, the total runtime, and a final
   `WROTE ... (expected ~Xs, delta ±...)`. `master.mp4` is 1080×1920, 30fps; its duration is
   within ±0.1s of `sum(scenes[].target_sec) + end_card.dwell_sec`.
-- Run the `watch` skill on `master.mp4`: the villain silhouette holds across scenes, the
-  single villain voice carries the whole spot, the motif word lands ≥3×, no AI brand text
+- Run the `watch` skill on `master.mp4`: every character's silhouette holds across scenes,
+  the single narrator voice (whoever the recipe's `choices.narrator` picked) carries the
+  whole spot, the motif word lands ≥3×, no AI brand text
   leaked into a cartoon background, captions don't collide with on-screen text, and the end
   card is the real product with legible copy.
 

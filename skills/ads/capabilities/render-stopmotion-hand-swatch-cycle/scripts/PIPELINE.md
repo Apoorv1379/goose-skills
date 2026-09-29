@@ -15,7 +15,7 @@ cadence, the plate mp4s concat into a silent master, and the end card + music cl
 
 | Config field | Phase | Source step / script | Paid? |
 |---|---|---|---|
-| `anchor`, `background`, `plate_engine` | 1 Master-anchor | `generate_plates.py` → `gpt-image-2` hand + barrel + EMPTY cream-patch on the brand BG (`plates-v3.json` `v2-p01`) | **PAID** |
+| `anchor`, `background`, `plate_engine` | 1 Master-anchor | `generate_plates.py` → `gpt-image-2` hand + barrel + EMPTY test surface on the chosen BG (`plates-v3.json` `v2-p01`) | **PAID** |
 | `plates[].prompt`, `plates[].anchors` (shade) | 2 Shade plates | `generate_plates.py` → `gpt-image-2` EDIT, each anchored to `[master-anchor, shade-swatch, shade-hero]` | **PAID** |
 | `plates[].prompt` (half-painted / motion) | 2 Motion plates | `generate_plates.py` → `gpt-image-2` EDIT mid-swipe plates, anchored to the master-anchor only | **PAID** |
 | `plates[]` (hand-exits / all-swatches / hero-pick) | 3 Finale | `generate_plates.py` → `gpt-image-2` EDIT anchored to master-anchor + the all-variants family ref | **PAID** |
@@ -26,9 +26,9 @@ cadence, the plate mp4s concat into a silent master, and the end card + music cl
 
 ## 1. Master-anchor plate → `gpt-image-2`  (config: `anchor`, `background`, `plate_engine`)  [PAID]
 
-**Generate the master-anchor FIRST — it locks the frame.** One `gpt-image-2` render: the fair hand
-in the lower-left third holding the barrel, the EMPTY cream skin-patch in the upper-right third, on
-the saturated brand background, grounded on a product-hero ref. The `background.hand` + `.skin_patch`
+**Generate the master-anchor FIRST — it locks the frame.** One `gpt-image-2` render: the chosen hand
+(the demo's fair hand) in the lower-left third holding the barrel, the EMPTY test surface (the demo's
+cream skin-patch) in the upper-right third, on the chosen background (the demo's bubblegum pink), grounded on a product-hero ref. The `background.hand` + `.skin_patch`
 + `.lighting` + `.camera` constants are held **verbatim** here and in every subsequent plate so the
 frame never moves. This plate is the LOCK for the whole cycle.
 

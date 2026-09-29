@@ -8,7 +8,8 @@ the N Seedance i2v clips) are separate capabilities — `create-music-elevenlabs
 finished master. Re-cuts (new caption chunking, a swapped end card, re-timed windows, a logo-bug
 toggle) reuse the existing song / keyframes / clips and cost **$0**.
 
-`config.example.json` is the worked example (Coinbase "Bet on anything", ~55s 1080×1920).
+`config.example.json` is the worked example (Coinbase "Bet on anything", ~55s 1080×1920); its felt look,
+character, story and song are that demo's answers to the recipe choices — never defaults).
 `PIPELINE.md` maps every config block to its source step. This README documents the FREE assembly
 pieces that `render-cartoon-music-video` owns.
 
@@ -56,7 +57,7 @@ master. Deterministic, no paid calls, no keys.
 The assembly is faithful, but the upstream keyframe/i2v can slip two defects that a sparse-still
 watch misses in a ~55s master:
 
-- **Character drift felt → smooth-3D "man"** partway through (lives in the KEYFRAME; regenerate the
+- **Character drift off the chosen look** (in the felt demo: felt → smooth-3D "man") partway through (lives in the KEYFRAME; regenerate the
   drifted bar's keyframe, don't re-cut).
 - **Hallucinated hands** — realistic fingers in a hand macro, a pointing finger on a "tap the
   phone" shot, or a disembodied hand from the frame edge.

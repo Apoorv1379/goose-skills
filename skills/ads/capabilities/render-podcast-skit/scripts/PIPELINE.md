@@ -7,6 +7,11 @@ produced by per-step driver scripts that live in
 the whole run via `video-orchestrator-with-control-plane` (variant mode — this format has no
 specialised orchestrator).
 
+**Choices, not defaults.** The tone, the set and both hosts come from the format recipe's
+`choices` (`tone`, `set`, `skeptic_host`, `believer_host`). The Ladder values quoted below
+(comedy tone, laundromat set, Brittney/Brad, lime end card) are the worked example only. `HER` /
+`HIM` are the skeptic / believer slots, not genders.
+
 The steps run **in order** because each depends on the last: the script sets the timeline, the VO
 gives the per-line timings, the timings + set drive the stills, the stills seed the lipsync clips,
 the VO's timestamps drive the captions, and the stitch stitches all of it + the end card.
@@ -17,7 +22,7 @@ the VO's timestamps drive the captions, and the stitch stitches all of it + the 
 |---|---|---|---|---|
 | `voices.HER` / `voices.HIM` | one voice per host, `eleven_multilingual_v2` with-timestamps | `render_vo.py` | 1 | **PAID** (ElevenLabs, ~22 lines) |
 | `scenes[].text` | the per-line VO copy (intonation-marked) | `render_vo.py` | 1 | **PAID** |
-| `set_description` | the themed set fed into the base-still prompts | (hand-generated bases) | 2 | — |
+| `set_description` | the chosen set fed into the base-still prompts | (hand-generated bases) | 2 | — |
 | `characters.bases[]` (2) | two base stills, mouth closed, at the desk | (skeptic first, believer on skeptic's still as ref) | 2 | **PAID** (`gpt-image-2` quality=high, 2 imgs — NOT nano-banana, which reads AI-stock) |
 | `characters.variant_template` + `expression_variants[]` | ~10 edit-anchored expression variants, base as SOLE ref | `render_variants.py` | 2 | **PAID** (`gpt-image-2/edit` quality=high, ~10 imgs, sequential; append `realism_suffix`, QC for hallucinated hair-lock/hands) |
 | `scenes[].still` | which still each line lipsyncs from | `render_clips.py` (reads `script.json`) | 3 | — |
@@ -39,7 +44,7 @@ sync to — do NOT Whisper.** Lines are intonation-marked (`...` pause, ` — ` 
 ## 2. Base stills + variants → gpt-image-2 (quality=high)  (config: `characters`)  [PAID]
 
 - **Two bases** (hand-generated): tight bust, broadcast mic foreground, over-ear headphones, at
-  the themed desk, **mouth NEUTRAL/CLOSED** (an open-mouth still breaks the lipsync driver).
+  the chosen set's desk, **mouth NEUTRAL/CLOSED** (an open-mouth still breaks the lipsync driver).
   Generate the skeptic base FIRST, then the believer using the skeptic's still as a background
   reference so the set matches.
   Generate with **gpt-image-2 quality=high** and append `characters.realism_suffix` — NOT
@@ -68,7 +73,7 @@ Its `--stills-dir` / `--clips-dir` are relative to the script's own `working/` r
 ## 4. Captions + end card + assembly → `stitch.py` + `build_end_card.py`  (config: `captions`, `end_card`, `assembly`)
 
 - `working/build_end_card.py` renders the brand lockup via **Playwright** from the REAL brand
-  wordmark SVG (Ladder wordmark pulled from `run-01-app-sizzle/source/brand/ladder-wordmark-white.svg`):
+  wordmark SVG, with the brand kit's colours / CTA / URL (the Ladder demo: wordmark pulled from `run-01-app-sizzle/source/brand/ladder-wordmark-white.svg`):
   black background + lime (`#DBFF00`) wordmark + lime "Start free trial" pill + `joinladder.com` →
   an HTML file → screenshot to a 1080×1920 PNG → a **2.5s** silent mp4 at `clips/end-card.mp4`.
   **Never AI-render brand text.**

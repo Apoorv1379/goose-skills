@@ -25,7 +25,7 @@
  * config.json shape (see config.example.json):
  *   {
  *     "thread":   { ...iMessage thread JSON (participants + messages) },  // or "thread_path"
- *     "theme":    "dark" | "light",            // default "dark"
+ *     "theme":    "dark" | "light",            // the user's theme choice; falls back to "dark"
  *     "background_image": "assets/bg.jpg",     // optional flat-lay behind the phone
  *     "width": 1080, "height": 1920, "zoom": 2.10,   // output geometry (defaults)
  *     "timing": { ...optional per-kind overrides }   // see TIMING below

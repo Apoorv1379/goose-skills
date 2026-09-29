@@ -27,7 +27,7 @@ renders as Regular in PIL — always the `/static/` file):
   reserved for the hero stat and the CTA.
 - **Slam-with-shake** — scale 0.3→1.10 cubic-ease + sin/cos shake decaying over ~0.20s for
   a killer-stat reveal.
-- **Color / inversion flash** — full-frame BG↔type swap (Soundboks: black↔orange) for the
+- **Color / inversion flash** — full-frame BG↔type swap (bg↔accent; demo: black↔orange) for the
   CTA energy and the mid-clip art moment; invert the type too or legibility drops.
 
 Cards rendered per `config.text_cards`: an intro ("INTRODUCING", italic + outline echo),
@@ -78,8 +78,8 @@ Verify `ffprobe` audio bit_rate ≈ 192000 (NOT 1000).
 - Spec cards carry every fact (no VO); outline echoes stay ≤1.08× so nothing bleeds off
   frame; use the static Space Grotesk Bold TTF.
 - The paid steps — ONE Seedance 2.0 hypermotion i2v (the 5-block prompt with the mandatory
-  ABSOLUTE CONSTRAINTS block, or the geometry drifts mid-clip) + one ElevenLabs 124 BPM
-  bass bed — are separate capabilities (create-video-fal, create-music-elevenlabs); the
+  ABSOLUTE CONSTRAINTS block, or the geometry drifts mid-clip) + one ElevenLabs music bed
+  (genre + BPM from the recipe's choices) — are separate capabilities (create-video-fal, create-music-elevenlabs); the
   recipe orchestrates them and gates the spend.
 
 See `PIPELINE.md` for the full config-field → source-step map and beat-structure variants.

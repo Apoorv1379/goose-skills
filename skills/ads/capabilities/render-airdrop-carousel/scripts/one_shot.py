@@ -11,8 +11,8 @@ Config schema (see scripts/config.example.json):
   "message": "would like to share a candle",
   "tagline": "The bestselling collection - 4.9 stars",
   "wordmark_svg": "/abs/path/logo.svg",     # optional; else text wordmark = brand
-  "accent": "#d98695",                       # Accept-button / brand accent
-  "band_color": "#f5e9da",
+  "accent": "#0A84FF",                       # Accept-button: the BRAND accent (brand kit)
+  "band_color": "#F2F2F7",                   # band: the BRAND color (brand kit)
   "images": ["/abs/p1.png", "/abs/p2.png", ...],   # ordered carousel (real product photos)
   "final_image": "/abs/lineup.jpg",          # payoff held at the end
   "width": 1080, "height": 1920,             # optional (default 9:16 1080x1920)
@@ -65,8 +65,8 @@ def main():
     # 1. card HTML
     cmd = [sys.executable, os.path.join(HERE, "build_card.py"),
            "--brand", cfg["brand"], "--message", cfg["message"],
-           "--tagline", cfg.get("tagline", ""), "--accent", cfg.get("accent", "#d98695"),
-           "--band-color", cfg.get("band_color", "#f5e9da"), "--out-dir", work]
+           "--tagline", cfg.get("tagline", ""), "--accent", cfg.get("accent") or "#0A84FF",
+           "--band-color", cfg.get("band_color") or "#F2F2F7", "--out-dir", work]
     if cfg.get("wordmark_svg"):
         cmd += ["--wordmark-svg", cfg["wordmark_svg"]]
     if cfg.get("wordmark_text"):

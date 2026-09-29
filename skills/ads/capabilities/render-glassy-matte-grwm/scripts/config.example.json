@@ -1,5 +1,5 @@
 {
-  "_comment": "DIBS Beauty '5-Step Glassy Matte Routine' — THE WORKED EXAMPLE. Copy to config.json and edit. A ~32s 9:16 (1080x1920, 30fps) MULTI-SCENE GRWM beauty demo where a locked-identity creator applies 5 DIBS products step-by-step at a sage vanity, a SEPARATE locked ElevenLabs Karri VO narrates the routine, and every scene cut is snapped to the VO's 'step N' / product-name word-starts (Whisper), with 5 Playwright product overlay cards (real PDP taglines) on the product-name beats, a warm acoustic music bed ducked under the VO, clean-white 3-words/cue captions, closing on a gpt-image-2 flat-lay end card. Pipeline: (1) lock creator anchor + sage-vanity world + hook keyframe + Karri VO (atempo 1.15x -> ~27.5s); (2) 7 Seedance 2.0 scene clips (720p, --no-audio) + the flat-lay still; (3) Groq whisper-large-v3 word-level on the VO; (4) re-cut + hard-concat to the 12 VO cuts (build_v4.py, -crf 20 re-encode); (5) 5 white-bg gpt-image-2 product cutouts (PDP-verified taglines) + Playwright cards (render_cards.py); (6) composite cards on the product-name beats (composite_cards.py, -loop 1 -t) + mix VO/music + burn captions + flat-lay end card (build_master.py). Master 1080x1920 h264+aac, ~32s. See scripts/PIPELINE.md for the source scripts.",
+  "_comment": "Worked example (the DIBS Beauty '5-Step Glassy Matte Routine' build). Creative fields — assets.creator_anchor + assets._note_creator + scene_clips.clips[].beat (choices.creator), assets.vanity_world (choices.setting), vo.voice_id + vo.voice_name + vo.source (choices.voice), vo.script + vo.style (choices.tone), music.prompt (choices.music) — come from the recipe's choices; never copy them as defaults. palette + products + cards come from the brand kit / PDPs, not this file. Copy to config.json and edit. A ~32s 9:16 (1080x1920, 30fps) MULTI-SCENE GRWM beauty demo where a locked-identity creator applies 5 DIBS products step-by-step at a sage vanity, a SEPARATE locked ElevenLabs Karri VO narrates the routine, and every scene cut is snapped to the VO's 'step N' / product-name word-starts (Whisper), with 5 Playwright product overlay cards (real PDP taglines) on the product-name beats, a warm acoustic music bed ducked under the VO, clean-white 3-words/cue captions, closing on a gpt-image-2 flat-lay end card. Pipeline: (1) lock creator anchor + sage-vanity world + hook keyframe + Karri VO (atempo 1.15x -> ~27.5s); (2) 7 Seedance 2.0 scene clips (720p, --no-audio) + the flat-lay still; (3) Groq whisper-large-v3 word-level on the VO; (4) re-cut + hard-concat to the 12 VO cuts (build_v4.py, -crf 20 re-encode); (5) 5 white-bg gpt-image-2 product cutouts (PDP-verified taglines) + Playwright cards (render_cards.py); (6) composite cards on the product-name beats (composite_cards.py, -loop 1 -t) + mix VO/music + burn captions + flat-lay end card (build_master.py). Master 1080x1920 h264+aac, ~32s. See scripts/PIPELINE.md for the source scripts.",
   "brand_name": "DIBS Beauty",
   "campaign": "5-Step Glassy Matte Routine",
   "title": "5 products, one finish",
@@ -14,13 +14,13 @@
   },
   "assets": {
     "creator_anchor": "assets/characters/grwm-creator.png",
-    "_note_creator": "26yo brunette w/ caramel highlights, black satin headband, white ribbed tank, in a sage-green bathroom. Identity + wardrobe + setting held across every scene clip.",
+    "_note_creator": "EXAMPLE ONLY (set from choices.creator + choices.setting). Demo creator: 26yo brunette w/ caramel highlights, black satin headband, white ribbed tank, in a sage-green bathroom. Identity + wardrobe + setting held across every scene clip.",
     "vanity_world": "assets/worlds/sage-vanity.png",
     "hook_keyframe": "assets/keyframes/five-pink-barrels.png",
-    "_note_hook": "Creator holding 5 pink DIBS barrels fanned near her face. Doubles as the payoff-smile beat (s07a)."
+    "_note_hook": "Creator holding the ~5 products fanned near the face (demo: 5 pink DIBS barrels). Doubles as the payoff-smile beat (s07a)."
   },
   "vo": {
-    "_comment": "SEPARATE locked ElevenLabs Karri VO — NOT a native Seedance take. Whispered FIRST; the word-starts set the timeline. atempo 1.15x makes it end at ~27.5s (NOT 45s). Script written clean (no eleven_v3 audio tags).",
+    "_comment": "SEPARATE locked ElevenLabs VO (voice from choices.voice, delivery from choices.tone; the demo used Karri) — NOT a native Seedance take. Whispered FIRST; the word-starts set the timeline. atempo 1.15x makes it end at ~27.5s (NOT 45s). Script written clean (no eleven_v3 audio tags).",
     "source": "user_supplied",
     "provider": "elevenlabs",
     "model": "eleven_v3",
@@ -33,8 +33,8 @@
     "script": "okay, my five-step glassy matte routine. step one, Love Beam Perfector. it's basically skincare you put on first. step two, Desert Island Duo. blush and bronzer in one stick. step three, Glow Tour for contour. step four, Love Beam Powder. it brightens and blurs. step five, Setting Mist. that's the lock. five products, one finish. about three minutes.",
     "actual_duration_s": 27.5,
     "outputs": {
-      "audio": "working/voiceovers/locked/karri-full-atempo115.mp3",
-      "word_timings": "working/voiceovers/locked/karri-full-atempo115.words.json"
+      "audio": "working/voiceovers/locked/vo-full-atempo115.mp3",
+      "word_timings": "working/voiceovers/locked/vo-full-atempo115.words.json"
     },
     "_word_starts": {
       "_comment": "Whisper-verified word-starts for this exact atempo'd mp3. Scene cuts snap to the 'step N' starts; cards snap to the product-NAME starts.",
@@ -47,6 +47,7 @@
     }
   },
   "scene_clips": {
+    "_beat_rule": "beat = THIS brand's product N applied by the creator from choices.creator (soft verbs: dabs / swirls / dusts). The beats below are the DIBS demo's.",
     "_comment": "7 Seedance 2.0 clips (create-video-seedance-fal, Fal direct, 720p, 9:16, --no-audio) off the locked anchor + world. Softer verbs — s05 powder used 'swirls'/'dusts' after a 422 on 'press'/'brush her face'. ~$12.60 total.",
     "provider": "fal",
     "model": "seedance_2_0",
@@ -95,7 +96,7 @@
     "_note_taglines": "Taglines above are the card lines used in the worked example; ALWAYS re-verify against the live PDP before shipping a new brand — do not carry these forward."
   },
   "cards": {
-    "_comment": "5 Playwright cards from working/product-card.html.tmpl at 2x scale (render_cards.py): warm cream card (#F8EEDE gradient) + pink accent bar (#E879A6) + cutout thumb + Georgia name + uppercase pink tagline. Composited (composite_cards.py) snapped to the product-NAME word-start (~1s after the scene cut), 1s fade-in. PNG overlays NEED -loop 1 -t <dur>.",
+    "_comment": "5 Playwright cards from working/product-card.html.tmpl at 2x scale (render_cards.py): palette.card_bg card + palette.accent bar from the brand kit (demo: warm cream #F8EEDE + pink #E879A6) + cutout thumb + Georgia name + uppercase pink tagline. Composited (composite_cards.py) snapped to the product-NAME word-start (~1s after the scene cut), 1s fade-in. PNG overlays NEED -loop 1 -t <dur>.",
     "template": "working/product-card.html.tmpl",
     "playwright_scale": 2,
     "fade_in_s": 1.0,
@@ -109,7 +110,7 @@
     ]
   },
   "music": {
-    "_comment": "Warm acoustic instrumental bed (ElevenLabs Music, 45s — only ~32s consumed), ducked under the VO. No artist names in the prompt (ElevenLabs ToS filter).",
+    "_comment": "Instrumental bed from choices.music — prompt below is the demo's warm acoustic pick; skip the bed if the user chose none (ElevenLabs Music, 45s — only ~32s consumed), ducked under the VO. No artist names in the prompt (ElevenLabs ToS filter).",
     "provider": "elevenlabs",
     "prompt": "Warm acoustic instrumental, soft nylon guitar + light percussion, gentle and aspirational, easygoing morning-routine energy, no vocals.",
     "source": "working/music/music.mp3",
@@ -117,14 +118,14 @@
     "force_instrumental": true
   },
   "audio_mix": {
-    "_comment": "The SEPARATE Karri VO is the lead; the music sits well under it. loudnorm I=-14.",
+    "_comment": "The SEPARATE VO is the lead; the music sits well under it. loudnorm I=-14.",
     "loudness_lufs": -14,
     "vo_lead": true,
     "music_duck": true
   },
   "captions": {
     "_comment": "Clean-white captions from the VO's Whisper words. OVERRIDE the clean-white preset: 3 words/cue, 3.0% font, 20% from the bottom, NO pill, NO shadow (default 5-words/4.5%/18% is too dense). Built in cue_builder.py within build_master.py.",
-    "source": "working/voiceovers/locked/karri-full-atempo115.words.json",
+    "source": "working/voiceovers/locked/vo-full-atempo115.words.json",
     "style": "clean_white",
     "chunk_words": 3,
     "font_size_pct": 3.0,

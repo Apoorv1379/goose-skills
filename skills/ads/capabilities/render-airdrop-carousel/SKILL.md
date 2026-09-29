@@ -38,6 +38,15 @@ Default output ≈ **6–8s**, 1080×1920, h264 + aac. Duration is DERIVED, not 
 - `scripts/config.example.json` — the shape of the brand `config` the recipe binds
   (brand-neutral worked defaults; replace every `/abs/path/...` placeholder).
 
+## Inputs the recipe binds (choices vs brand facts)
+
+- **From the user's choices** (asked by the recipe, never defaulted): the share
+  `message`, the product `images` + order, the `final_image` payoff, and `timing.per`
+  (pace).
+- **From the brand kit:** `brand`, `wordmark_svg`, `tagline` (a real stated proof
+  point only), `accent` and `band_color`. If not passed, the scripts fall back to a
+  neutral iOS blue `#0A84FF` / light grey `#F2F2F7` — pass the brand's own colors.
+
 ## Chroma contract (load-bearing — build_card.py and compose_carousel.py MUST share it)
 
 `#00e000` **green** = page background, keyed to the card's alpha. `#ff00ff` **magenta**

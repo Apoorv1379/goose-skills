@@ -1,6 +1,6 @@
 # Smoke Test
 
-Given N still plates (a master-anchor hand + barrel + empty cream-patch, then per-shade / motion /
+Given N still plates (a master-anchor hand + barrel + empty test surface, then per-shade / motion /
 finale plates with ONE locked hand + crop + background), an end-card hero BG + brand logo SVG, and a
 pre-sourced music track, `render-stopmotion-hand-swatch-cycle` assembles the master: loop-encode each
 plate at its own stop-motion hold, concat-demux with HARD cuts into a silent body master, append a

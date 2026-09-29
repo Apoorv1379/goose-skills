@@ -4,13 +4,14 @@
 Takes the plate + the PNGs build_assets.py produced (nb-*.png, pill.png, endcard.png)
 and renders the signature mechanic:
 
-  - Ken Burns push-in on a clean phone-on-desk plate.
+  - Ken Burns push-in on a clean plate of the phone (setting from the recipe's choices.setting).
   - Each notification SPRINGS IN AT THE BOTTOM (by the phone); every already-present
     banner is PUSHED UP one row. The "Show less / X" pill rides above the stack.
   - At the clear time, the X is pressed: the whole stack + pill swipe up and fade.
-  - The serif end card fades in over the clean desk.
+  - The serif end card fades in over the clean plate.
 
-Optional audio: a music bed, a soft pop at each arrival, a swipe swoosh on the clear.
+Optional audio (per choices.audio): a music bed, a soft pop at each arrival, a swipe swoosh on
+the clear. With no bed, the pops + swoosh play over silence (the 'pops + swoosh only' choice).
 
 Geometry constants MUST match build_assets.py.
 """
@@ -83,12 +84,17 @@ def main():
 
     # ---- optional audio ----
     audio = cfg.get("audio", {}) or {}
-    have_audio = (not a.no_audio) and audio.get("bed") and os.path.exists(audio.get("bed", ""))
+    _ok = lambda k: bool(audio.get(k)) and os.path.exists(audio.get(k, ""))
+    have_audio = (not a.no_audio) and (_ok("bed") or _ok("pop") or _ok("swoosh"))
     aud_inputs = []
     if have_audio:
-        bed = audio["bed"]; pop = audio.get("pop"); swoosh = audio.get("swoosh")
+        bed = audio.get("bed"); pop = audio.get("pop"); swoosh = audio.get("swoosh")
         base_i = idx_ec + 1
-        aud_inputs += ["-i", bed]; bed_i = base_i
+        if _ok("bed"):
+            aud_inputs += ["-i", bed]
+        else:  # no music bed chosen: silent base so the pops + swoosh still play
+            aud_inputs += ["-f", "lavfi", "-t", str(DUR), "-i", "anullsrc=r=44100:cl=stereo"]
+        bed_i = base_i
         pop_i = swoosh_i = None
         nxt = base_i + 1
         if pop and os.path.exists(pop):

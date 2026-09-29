@@ -1,12 +1,14 @@
 {
+  "_comment": "Worked example (the Touchland build). Creative fields — plate.setting, plate.wall_style, music.direction — come from the recipe's choices (setting, wall_style, music); never copy them as defaults. Brand fields (end_card, assets) come from the brand kit.",
   "canvas": { "width": 1080, "height": 1920, "fps": 30 },
 
   "plate": {
-    "_comment": "PAID: generated once via create-image-fal (fal-ai/flux-pro/v1.1-ultra). Empty lit poster frame in a real space. Pick a wall color that makes the brand's poster colors POP (complement of the dominant brand hue).",
+    "_comment": "PAID: generated once via create-image-fal (fal-ai/flux-pro/v1.1-ultra). Empty lit poster frame in a real space. `setting` + `wall_style` fill the {setting}/{wall_style} slots in `prompt` (gen_plate.py). Tune the wall color so it makes the brand's poster colors POP (complement of the dominant brand hue).",
     "model": "fal-ai/flux-pro/v1.1-ultra",
     "aspect_ratio": "9:16",
+    "setting": "premium boutique interior",
     "wall_style": "soft sage-green glossy subway tiles with fine grout lines",
-    "prompt": "Photorealistic vertical 9:16 photograph, cinematic soft light, shallow depth of field. A single empty poster frame mounted flat on a wall, viewed nearly straight-on with only slight perspective. Slim brushed/wood snap poster frame with a thin bevel and soft drop shadow. The poster panel inside is a BLANK plain matte off-white surface, evenly and brightly lit like an illuminated lightbox, completely empty with NO text/logo/image. Lower-left foreground: a real potted plant with green leaves thrown heavily out of focus (creamy bokeh), leaves rising to about the bottom edge of the frame. Gentle dappled leaf shadows on the wall upper area. Premium boutique interior, warm inviting light, subtle vignette. {wall_style}."
+    "prompt": "Photorealistic vertical 9:16 photograph, cinematic soft light, shallow depth of field. A single empty poster frame mounted flat on a wall, viewed nearly straight-on with only slight perspective. Slim brushed/wood snap poster frame with a thin bevel and soft drop shadow. The poster panel inside is a BLANK plain matte off-white surface, evenly and brightly lit like an illuminated lightbox, completely empty with NO text/logo/image. Lower-left foreground: a real potted plant with green leaves thrown heavily out of focus (creamy bokeh), leaves rising to about the bottom edge of the frame. Gentle dappled leaf shadows on the wall upper area. {setting}, warm inviting light, subtle vignette. The wall is {wall_style}."
   },
 
   "camera": {

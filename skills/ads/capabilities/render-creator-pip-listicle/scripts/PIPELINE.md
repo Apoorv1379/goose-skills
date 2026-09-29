@@ -37,8 +37,9 @@ whole on its beat.
 
 One **Seedream v5 Pro** candid portrait — `create-image-fal`, model
 `bytedance/seedream/v5/pro/text-to-image` (**no `fal-ai/` prefix**). A plain, calm, candid
-head-and-shoulders portrait on a neutral wall — un-retouched (pores, freckles, fine lines, no perfect
-teeth), soft even indoor daylight. AVOID "beautiful/perfect/8k/hyperreal/studio". Gate on realism →
+head-and-shoulders portrait of the creator from `choices.creator` in the place from
+`choices.setting` (the DIBS demo: a young woman on a neutral wall) — un-retouched (pores, fine
+lines, no perfect teeth), soft natural light. AVOID "beautiful/perfect/8k/hyperreal/studio". Gate on realism →
 `anchor.png`. **CRITICAL:** Seedance 2.0's partner-validation gate REJECTS photoreal faces from
 **gpt-image-2 AND Seedream v4** ("may contain likenesses of real people") — Seedream v5 Pro **passes**.
 Use a **FRESHLY generated** image (reusing an existing photoreal face also trips the gate). The

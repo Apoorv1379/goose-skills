@@ -1,5 +1,5 @@
 // sachet-entrance/fade-stagger.js
-// Calm fade + slide-up, staggered. Validated on Som Sleep v5 (sleep_wellness preset).
+// Calm fade + slide-up, staggered. Validated on the demo build (sleep_wellness preset).
 //
 // Contract: animate(t, elements, params?) → void
 //   t        — beat-local time in seconds (driven by initRenderer in _shared.js)

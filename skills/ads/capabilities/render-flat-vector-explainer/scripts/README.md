@@ -5,7 +5,9 @@ documented recipe, not a runnable end-to-end app. There are no standalone script
 `--config` and fire. Instead this folder ships:
 
 - **`config.example.json`** — the full config schema (the Spoiled Child "Perfect Morning
-  Routine = 4 Products" worked example). Copy to `config.json` and edit.
+  Routine = 4 Products" worked example). Copy its structure to `config.json`; fill the
+  creative fields (host, setting, tone, voice, music) from the recipe's choices and the
+  brand fields (palette, products, copy) from the new brand — never the demo's values.
 - **`PIPELINE.md`** — the field-by-field map from every `config.json` key to the real,
   runnable source script that produced the worked example (in the source project's
   `working/`), and which phase / paid-or-free it is.

@@ -1,5 +1,7 @@
 # Animation registry — maps preset IDs → JS modules + metadata
 # Read this at build time to wire shot-list animation choices to actual JS implementations.
+# `fits` / brand_register_defaults pick motion by the BRAND's register (from its brand kit),
+# not the demo's: sleep_wellness was only the demo build's register.
 
 sachet_entrance:
 
@@ -13,7 +15,7 @@ sachet_entrance:
       ease: easeOut
       offset_y_px: 60
     fits: [sleep_wellness, premium_clinical]
-    status: validated   # Som v5
+    status: validated   # demo build v5
 
   slide-in-lateral:
     file: sachet-entrance/slide-in-lateral.js
@@ -24,7 +26,7 @@ sachet_entrance:
       offset_x_px: 320
       ease: cubic-bezier(.2,.7,.2,1)
     fits: [sport_active, energy_cpg, tech_active]
-    status: validated   # Som v6
+    status: validated   # demo build v6
 
   springScale-pop:
     file: sachet-entrance/springScale-pop.js
@@ -65,14 +67,14 @@ text_entrance:
     description: "Eyebrow → rule scaleX → headline translateY → sub fade. Staggered."
     energy: calm
     fits: [sleep_wellness, premium_clinical, luxury_editorial]
-    status: validated   # Som v5
+    status: validated   # demo build v5
 
   word-by-word:
     file: text-entrance/word-by-word.js
     description: "Each headline word fades + translates individually, 80ms apart."
     energy: punchy
     fits: [sport_active, energy_cpg, tech_active]
-    status: validated   # Som v6
+    status: validated   # demo build v6
 
   type-on:
     file: text-entrance/type-on.js
