@@ -95,7 +95,9 @@ def age_note(age):
 
 def build(a):
     eth = a.ethnicity.strip()
-    art = "an" if eth[:1].lower() in "aeiou" else "a"
+    # By SOUND, not first letter: "a European", not "an European".
+    low_e = eth.lower()
+    art = "an" if (low_e[:1] in "aeiou" and not low_e.startswith(("eu", "uk", "uni", "one"))) else "a"
     ident = "%s %s %s aged %d" % (art, eth, a.gender.strip(), a.age)
 
     skin = a.skin_tone or SKIN.get(a.ethnicity.strip().lower())
@@ -152,7 +154,12 @@ def main():
     ap.add_argument("--scene", required=True, help="where they are and what is behind them")
     # craft defaults: the formula's job, not the user's
     ap.add_argument("--skin-tone", default=None, help="override; normally derived from ethnicity")
-    ap.add_argument("--framing", default="head and shoulders, squared to camera, looking into the lens")
+    # Head-and-SHOULDERS reads as a tight crop at 9:16 and the room disappears; the reviewer's
+    # first reaction to it was to ask for a different aspect ratio, when the ratio was already
+    # 9:16. Upper chest plus explicit space is the same ratio and reads as a room.
+    ap.add_argument("--framing", default="head and upper chest, with clear space above the head "
+                                         "and on both sides so the room reads around them, "
+                                         "squared to camera, looking into the lens")
     ap.add_argument("--expression", default="mid-sentence, mouth slightly open on a word, eyes "
                                             "steady on the lens, no held smile")
     ap.add_argument("--face-fill", default="45 to 55 percent")
