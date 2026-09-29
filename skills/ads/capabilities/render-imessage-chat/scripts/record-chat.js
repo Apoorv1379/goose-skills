@@ -72,7 +72,7 @@ function isEmojiOnly(text) {
   const s = text.trim();
   if (!s) return false;
   const re = /^(\p{Extended_Pictographic}|\p{Emoji_Presentation}|️|‍|\s)+$/u;
-  return re.test(s) && [...s.replace(/\s/g, '')].length <= 6;
+  return re.test(s) && [...new Intl.Segmenter('en', { granularity: 'grapheme' }).segment(s.replace(/\s/g, ''))].length <= 3; // iMessage: 1-3 emoji alone render large
 }
 
 // ── build the animation timeline from the thread (one source of truth) ────────
@@ -198,15 +198,36 @@ function injectedStyle({ zoom, logicalH, theme, bgCss }) {
       content: '\\203A'; position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
       font-size: 22px; font-weight: 300; color: ${chevron}; line-height: 1;
     }
+    img.ae { width: 1.2em; height: 1.2em; vertical-align: -0.22em; display: inline-block; }
   </style>`;
 }
 
 // ── the driver: paced by the timeline, runs inside the recorded page ──────────
-function makeDriverScript(timeline) {
+function makeDriverScript(timeline, emojiMap = {}) {
   return `
   <script>
   (() => {
     const TIMELINE = ${JSON.stringify(timeline)};
+    const EMOJI = ${JSON.stringify(emojiMap)};
+    const SEG = new Intl.Segmenter('en', { granularity: 'grapheme' });
+    function emojiNode(g) {
+      if (!EMOJI[g]) return document.createTextNode(g);
+      const img = document.createElement('img');
+      img.className = 'ae'; img.alt = g; img.src = EMOJI[g];
+      return img;
+    }
+    function emojify(root) {
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      const nodes = []; while (walker.nextNode()) nodes.push(walker.currentNode);
+      for (const n of nodes) {
+        const parts = [...SEG.segment(n.nodeValue)].map(x => x.segment);
+        if (!parts.some(g => EMOJI[g])) continue;
+        const frag = document.createDocumentFragment();
+        for (const g of parts) frag.appendChild(emojiNode(g));
+        n.replaceWith(frag);
+      }
+    }
+    document.querySelectorAll('.bubble').forEach(emojify);
     const sleep = ms => new Promise(r => setTimeout(r, ms));
     function findRow(id) { return document.querySelector('[data-anim-id="' + id + '"]'); }
     function scroller() { return document.querySelector('.conversation'); }
@@ -222,7 +243,11 @@ function makeDriverScript(timeline) {
       const id = row.getAttribute('data-anim-id');
       if (id) {
         const cap = document.querySelector('.delivered-caption[data-cap-id="' + id + '"]');
-        if (cap) { cap.removeAttribute('data-pending'); cap.classList.remove('pop-pending'); cap.classList.add('pop-now'); }
+        if (cap) {
+          // Real iMessage shows "Delivered" only under the most recent sent message.
+          document.querySelectorAll('.delivered-caption.pop-now').forEach(c => { if (c !== cap) c.style.display = 'none'; });
+          cap.removeAttribute('data-pending'); cap.classList.remove('pop-pending'); cap.classList.add('pop-now');
+        }
       }
       if (row.classList.contains('row') && row.classList.contains('pop-pending')) {
         row.classList.remove('pop-pending'); row.classList.add('pop-now');
@@ -269,9 +294,10 @@ function makeDriverScript(timeline) {
       const span = composerSpan();
       if (!span) return;
       span.textContent = '';
-      const perChar = (durSec * 1000) / Math.max(1, text.length);
-      for (const ch of text) {
-        span.textContent += ch;
+      const graphemes = [...SEG.segment(text)].map(x => x.segment);
+      const perChar = (durSec * 1000) / Math.max(1, graphemes.length);
+      for (const g of graphemes) {
+        span.appendChild(emojiNode(g));
         await sleep(perChar * (0.7 + Math.random() * 0.6));
       }
     }
@@ -284,6 +310,10 @@ function makeDriverScript(timeline) {
     }
 
     async function run() {
+      // Sync marker: the curtain is visible from load until now. The recorder finds the
+      // first frame without it and trims there, so video t=0 is exactly this moment.
+      const curtain = document.getElementById('__sync');
+      if (curtain) curtain.remove();
       const t0 = performance.now();
       for (const ev of TIMELINE) {
         const target = t0 + ev.t * 1000;
@@ -301,10 +331,60 @@ function makeDriverScript(timeline) {
       }
     }
 
+    const sync = document.createElement('div');
+    sync.id = '__sync';
+    sync.style.cssText = 'position:fixed;inset:0;background:#ff00ff;z-index:2147483647';
+    document.body.appendChild(sync);
     window.__driverReady = true;
     window.__startDriver = run;
   })();
   </script>`;
+}
+
+// First frame (at 100 fps) whose centre is no longer the magenta sync curtain.
+function findSyncFrame(videoPath) {
+  const FPS = 100;
+  const buf = execSync(`ffmpeg -v error -i "${videoPath}" -vf "fps=${FPS},scale=4:4" -f rawvideo -pix_fmt rgb24 -`,
+    { maxBuffer: 1 << 28 });
+  const px = 4 * 4 * 3;
+  let seen = false;
+  for (let f = 0; f * px < buf.length; f++) {
+    const o = f * px + (2 * 4 + 2) * 3;
+    const magenta = buf[o] > 200 && buf[o + 1] < 70 && buf[o + 2] > 200;
+    if (magenta) seen = true;
+    else if (seen) return f / FPS;
+  }
+  return null;
+}
+
+// ── Apple Color Emoji ─────────────────────────────────────────────────────────
+// Chromium on Windows/Linux draws Segoe/Noto emoji, an instant "fake" tell. Swap every
+// emoji in the thread for Apple's glyph (emoji-datasource-apple PNGs), inlined so the
+// page has no network dependency while recording. Cached on disk between runs.
+const EMOJI_CDN = 'https://cdn.jsdelivr.net/npm/emoji-datasource-apple@15.1.2/img/apple/64/';
+const isPictographic = g => /\p{Extended_Pictographic}|\p{Regional_Indicator}/u.test(g);
+async function appleEmojiMap(texts) {
+  const seg = new Intl.Segmenter('en', { granularity: 'grapheme' });
+  const cacheDir = path.join(os.tmpdir(), 'imsg-apple-emoji');
+  fs.mkdirSync(cacheDir, { recursive: true });
+  const map = {};
+  for (const t of texts) for (const { segment: g } of seg.segment(t || '')) {
+    if (map[g] || !isPictographic(g)) continue;
+    const full = [...g].map(c => c.codePointAt(0).toString(16)).join('-');
+    const names = [full, full.replace(/-fe0f/g, '')];
+    for (const n of names) {
+      const file = path.join(cacheDir, n + '.png');
+      if (!fs.existsSync(file)) {
+        const r = await fetch(EMOJI_CDN + n + '.png');
+        if (!r.ok) continue;
+        fs.writeFileSync(file, Buffer.from(await r.arrayBuffer()));
+      }
+      map[g] = dataURI(file);
+      break;
+    }
+    if (!map[g]) console.warn(`emoji  ${g} (${full}): no Apple glyph found, system font used`);
+  }
+  return map;
 }
 
 function buildCueList(timeline) {
@@ -353,7 +433,7 @@ async function main() {
   const logicalH = Math.round(OUT_H / ZOOM);
   let html = renderHTML(thread, { mode: 'with-iphone-frame' });
   html = html.replace('</head>', injectedStyle({ zoom: ZOOM, logicalH, theme, bgCss }) + '\n</head>');
-  html = html.replace('</body>', makeDriverScript(timeline) + '\n</body>');
+  html = html.replace('</body>', makeDriverScript(timeline, await appleEmojiMap((thread.messages || []).map(m => m.text || ''))) + '\n</body>');
 
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'imessage-chat-'));
   const browser = await chromium.launch();
@@ -369,6 +449,9 @@ async function main() {
   await page.setContent(html, { waitUntil: 'load' });
   await page.waitForFunction(() => window.__driverReady === true, { timeout: 5000 });
   const paintOffsetSec = (Date.now() - ctxCreateTime) / 1000;
+  // Hold the sync curtain long enough for the screencast to capture it (it only emits
+  // frames on change, so a curtain that lives a few ms never reaches the video).
+  await page.waitForTimeout(600);
   await page.evaluate(() => window.__startDriver());
   await page.waitForTimeout(total * 1000);
   const videoPath = await page.video().path();
@@ -378,16 +461,20 @@ async function main() {
   const outDir = path.resolve(args.outDir);
   fs.mkdirSync(outDir, { recursive: true });
   const outMp4 = path.join(outDir, 'master-chat.mp4');
+  const syncSec = findSyncFrame(videoPath);
+  const startSec = syncSec != null ? syncSec : paintOffsetSec;
   execSync(
-    `ffmpeg -y -ss ${paintOffsetSec.toFixed(3)} -i "${videoPath}" -t ${total} -r 30 ` +
+    `ffmpeg -y -ss ${startSec.toFixed(3)} -i "${videoPath}" -t ${total} -r 30 ` +
     `-vf "scale=${OUT_W}:${OUT_H}" -c:v libx264 -pix_fmt yuv420p -movflags +faststart "${outMp4}"`,
     { stdio: 'pipe' }
   );
   const cues = buildCueList(timeline);
   fs.writeFileSync(outMp4.replace(/\.mp4$/, '.sfx.json'), JSON.stringify(cues, null, 2));
-  fs.rmSync(tmpDir, { recursive: true, force: true });
+  if (process.env.IMSG_KEEP_RAW) console.log(`raw  → ${videoPath}`); else fs.rmSync(tmpDir, { recursive: true, force: true });
 
-  console.log(`paint offset: ${paintOffsetSec.toFixed(3)}s (trimmed from MP4 head)`);
+  console.log(syncSec != null
+    ? `sync: curtain dropped at ${syncSec.toFixed(3)}s in the raw capture (trimmed there)`
+    : `sync: marker NOT found, fell back to paint offset ${paintOffsetSec.toFixed(3)}s (SFX may drift)`);
   console.log(`mp4  → ${path.relative(process.cwd(), outMp4)}`);
   console.log(`sfx  → ${cues.length} cues`);
   console.log(`duration → ${total}s`);

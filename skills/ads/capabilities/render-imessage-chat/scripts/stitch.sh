@@ -18,6 +18,7 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 SFX_DIR="$HERE/../assets/sfx"
 MUSIC=""
 ALSO_1X1=0
+SFX_LEAD=0.04   # seconds each sound leads its bubble; a hair early reads as "on it"
 CHAT="" END="" SFX_JSON="" OUT=""
 
 while [ $# -gt 0 ]; do
@@ -28,6 +29,7 @@ while [ $# -gt 0 ]; do
     --out) OUT="$2"; shift 2;;
     --music) MUSIC="$2"; shift 2;;
     --sfx-dir) SFX_DIR="$2"; shift 2;;
+    --sfx-lead) SFX_LEAD="$2"; shift 2;;
     --also-1x1) ALSO_1X1=1; shift;;
     *) echo "unknown arg: $1" >&2; exit 1;;
   esac
@@ -46,19 +48,33 @@ END_DUR=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$END")
 XFADE=0.30
 TOTAL=$(python3 -c "print($CHAT_DUR + $END_DUR - $XFADE)")
 XSTART=$(python3 -c "print($CHAT_DUR - $XFADE)")
-TMP_VIDEO=$(mktemp -t imsg-stitch).mp4
+TMP_VIDEO=$(mktemp -t imsg-stitch.XXXXXX).mp4
 ffmpeg -y -i "$CHAT" -i "$END" \
   -filter_complex "[0:v][1:v]xfade=transition=fade:duration=${XFADE}:offset=${XSTART}[v]" \
   -map "[v]" -an -c:v libx264 -pix_fmt yuv420p -movflags +faststart "$TMP_VIDEO" >/dev/null 2>&1
 echo "  video stitched, ${TOTAL}s"
 
 # 2) Build the audio mix (deterministic SFX cues [+ optional ducked music bed]).
-TMP_AUDIO=$(mktemp -t imsg-audio).m4a
+TMP_AUDIO=$(mktemp -t imsg-audio.XXXXXX).m4a
 MUSIC_ARG="${MUSIC:-NONE}"
-python3 - "$SFX_JSON" "$SFX_DIR" "$MUSIC_ARG" "$TOTAL" "$TMP_AUDIO" <<'PY'
-import json, sys, subprocess
+python3 - "$SFX_JSON" "$SFX_DIR" "$MUSIC_ARG" "$TOTAL" "$TMP_AUDIO" "$SFX_LEAD" <<'PY'
+import json, sys, subprocess, array
 sfx_json, sfx_dir, music, total, out = sys.argv[1], sys.argv[2], sys.argv[3], float(sys.argv[4]), sys.argv[5]
+lead = float(sys.argv[6])
 cues = json.load(open(sfx_json))
+
+def onset(path):
+    # Seconds of lead-in before the sound is audible (mp3 encoder delay + any padding).
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", path, "-ac", "1", "-ar", "48000", "-f", "s16le", "-"],
+                         capture_output=True, check=True).stdout
+    a = array.array("h"); a.frombytes(raw[: len(raw) // 2 * 2])
+    peak = max((abs(x) for x in a), default=0)
+    thr = peak * 0.05
+    for i, x in enumerate(a):
+        if abs(x) > thr:
+            return i / 48000
+    return 0.0
+ONSET = {}
 has_music = music != "NONE"
 # Base: a silent stereo bed of the full length so amix always has an anchor.
 inputs = ["-f", "lavfi", "-t", str(total), "-i", "anullsrc=r=44100:cl=stereo"]
@@ -77,7 +93,10 @@ if has_music:
 for c in cues:
     sfx_file = f"{sfx_dir}/imessage-{c['name']}.mp3"
     inputs += ["-i", sfx_file]
-    delay = int(c['t'] * 1000)
+    if c['name'] not in ONSET:
+        ONSET[c['name']] = onset(sfx_file)
+    # The audible start of the sound lands `lead` seconds before the bubble appears.
+    delay = max(0, int(round((c['t'] - ONSET[c['name']] - lead) * 1000)))
     vol = 0.55 if c.get('soft') else 0.95
     filter_parts.append(f"[{idx}:a]adelay={delay}|{delay},volume={vol}[s{idx}]")
     mix_labels.append(f"[s{idx}]")
@@ -90,7 +109,8 @@ filter_parts.append(
 fc = ";".join(filter_parts)
 cmd = ["ffmpeg", "-y"] + inputs + ["-filter_complex", fc, "-map", "[aout]", "-c:a", "aac", "-b:a", "192k", out]
 subprocess.run(cmd, check=True, stderr=subprocess.DEVNULL)
-print(f"  audio: {'1 music bed + ' if has_music else ''}{len(cues)} sfx cues")
+print(f"  audio: {'1 music bed + ' if has_music else ''}{len(cues)} sfx cues, lead {lead:.3f}s, onsets " +
+      ", ".join(f"{k} {v*1000:.0f}ms" for k, v in ONSET.items()))
 PY
 
 # 3) Mux video + audio → 9:16 master.
