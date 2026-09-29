@@ -99,8 +99,8 @@ for that input's own ingredient_key + digest first, or the digest never matches.
   poll `queue.fal.run` directly (401 + burns credits).
 - **FAL inputs that are local files must be PUBLIC urls.** The orchestrator hosts a
   local image/audio via the MCP `get_upload_url` → `get_download_url` presigned URL and
-  passes THAT url in. This module does not do MCP uploads (prefer the presigned url;
-  `fal-storage-proxy` may 404).
+  passes THAT url in, or call `fal_upload(path)`, which puts the file on the fal CDN
+  through the fal-storage-proxy (free, verified 2026-09-28) and returns its public url.
 - **Only the final `*.fal.media` url is a real public URL** — everything else is behind
   the proxy.
 
