@@ -37,10 +37,14 @@ python align_beats.py --beats cutlist.json --words work/creator.words.json \
 
 ```json
 {"image": "character.png",
- "identity": "a man in his late 20s, South Asian, dark curly hair, charcoal t-shirt",
- "environment": "a warm plain room, a framed print behind him, window daylight",
- "delivery": "optional: how they speak"}
+ "identity": "<age + gender + look from the user's brief>, <hair>, <wardrobe>",
+ "environment": "<the real room in the approved still>, window daylight",
+ "delivery": "optional: how they speak. For talking-head ads pass a calm, conversational tone; the energetic default can give a constant grin and busy hands that read as AI."}
 ```
+
+**The user chooses who the creator is.** Ask for gender, age and look (or ethnicity) before
+making any still, and build `identity` from their answer. There is no default person: never
+copy a look from an example, a reference build or a demo reel.
 
 `identity` and `environment` go into every take **word for word**. Write them once from the
 approved still, then never retype them: a person described two ways drifts between takes.
