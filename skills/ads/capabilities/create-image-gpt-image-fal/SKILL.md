@@ -45,7 +45,8 @@ Credentials (proxy-routed — NOT a raw FAL key):
 ## Preflight
 
 ```bash
-test -f ~/.gooseworks/credentials.json || { echo "Missing credentials — run: gooseworks login"; exit 1; }
+# Cloud sandbox: GW_MEDIA_PROXY_TOKEN is injected. Local: the CLI writes credentials.json.
+[ -n "$GW_MEDIA_PROXY_TOKEN" ] || test -f ~/.gooseworks/credentials.json || { echo "Missing credentials — run: gooseworks login"; exit 1; }
 python3 -c "import requests" || pip3 install requests
 ```
 
