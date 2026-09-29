@@ -169,6 +169,9 @@ function injectedStyle({ zoom, logicalH, theme, bgCss }) {
       ${bgCss} }
     body.framed .stage { height: 100%; min-height: 100%; }
     body.framed .status-bar { color: ${statusColor}; }
+    ${dark ? '' : `body.framed .conv-header .left, body.framed .conv-header .right,
+    body.framed .conv-header .left .back-btn, body.framed .conv-header .right .facetime-btn { color: #000; }
+    body.framed .conv-header .left .badge-pill, body.framed .conv-header .center .name-pill { background: #E9E9EB; color: #000; }`}
     body.framed .conv-header { min-height: 66px; }
     body.framed .conv-header .center { transform: translate(-50%, -50%); }
     body.framed .conv-header .center .avatar { width: 42px; height: 42px; font-size: 17px; }
@@ -179,7 +182,7 @@ function injectedStyle({ zoom, logicalH, theme, bgCss }) {
     /* ---- URL-preview rich-link card (the iMsg #1 fix) ---- */
     body.framed .row.attachment { gap: 0; }
     body.framed .row.attachment .attachment-card {
-      max-width: 62%; border-radius: 16px 16px 0 0; overflow: hidden; background: transparent;
+      max-width: 62%; width: 62%; border-radius: 16px 16px 0 0; overflow: hidden; background: ${dark ? '#3a3a3c' : '#f2f2f7'}; /* a cut-out PNG sits on the card, like a real preview */
     }
     body.framed .row.attachment .attachment-card img { max-height: none; display: block; }
     body.framed .row.attachment .attachment-meta {
@@ -412,11 +415,37 @@ async function main() {
   thread.theme = theme; // config theme wins
   inlineAttachments(thread, cfgDir);
 
+  // ── authoring guards: fail before recording, not after a bad render ──
+  const selfIds = new Set((thread.participants || []).filter(p => p.self).map(p => p.id));
+  const problems = [];
+  const ids = new Set();
+  for (const m of thread.messages || []) {
+    if (m.id) { if (ids.has(m.id)) problems.push(`duplicate id ${m.id}`); ids.add(m.id); }
+    if (m.text && /[—–]/.test(m.text)) problems.push(`${m.id}: em/en dash in "${m.text}" (nobody texts those)`);
+    if (m.type === 'typing' && selfIds.has(m.from)) problems.push(`${m.id}: self typing dots (you never see your own)`);
+    if (m.type === 'attachment') {
+      if (!m.src) problems.push(`${m.id}: attachment has no src`);
+      else if (!m.src.startsWith('data:') && fs.statSync(path.resolve(cfgDir, m.src)).size < 2048)
+        problems.push(`${m.id}: ${m.src} is under 2 KB (a git-LFS pointer?)`);
+    }
+    // Real iMessage marks every sent message Delivered; the driver shows only the newest.
+    if (selfIds.has(m.from) && (m.type === 'text' || m.type === 'attachment') && m.delivered !== false) m.delivered = true;
+  }
+  const nMsgs = (thread.messages || []).filter(m => m.type === 'text' || m.type === 'attachment').length;
+  if (problems.length) { console.error('THREAD REJECTED: ' + problems.join(' | ')); process.exit(2); }
+  if (nMsgs > 16) console.warn(`warn: ${nMsgs} messages; the format reads best at 10-16 (runtime grows ~1.6 s each)`);
+
   // Everything starts hidden; the driver pops each piece in on cue.
   for (const m of thread.messages || []) {
     if (m.type === 'text' || m.type === 'typing' || m.type === 'attachment') m.popState = 'pending';
   }
   thread.composer = { text: '' };
+  // The status-bar clock matches the conversation ("Today 2:14 AM" -> 2:14), unless set.
+  if (!thread.status_time) {
+    const ts = (thread.messages || []).find(m => m.type === 'timestamp');
+    const hit = ts && /(\d{1,2}:\d{2})/.exec(`${ts.light || ''} ${ts.label || ''}`);
+    thread.status_time = hit ? hit[1] : '9:41';
+  }
 
   const { timeline, total } = buildTimeline(thread, T);
 
@@ -451,6 +480,24 @@ async function main() {
   const paintOffsetSec = (Date.now() - ctxCreateTime) / 1000;
   // Hold the sync curtain long enough for the screencast to capture it (it only emits
   // frames on change, so a curtain that lives a few ms never reaches the video).
+  // Text-bleed guard: measure every bubble with everything temporarily visible.
+  const bleed = await page.evaluate(() => {
+    const out = [];
+    document.querySelectorAll('.bubble').forEach(b => {
+      const row = b.closest('[data-anim-id]');
+      const was = row && row.getAttribute('data-pending');
+      if (row) row.removeAttribute('data-pending');
+      // Compare the TEXT box with the bubble box (scrollWidth also counts the tail pseudo-element).
+      const r = document.createRange(); r.selectNodeContents(b);
+      const t = r.getBoundingClientRect(), bb = b.getBoundingClientRect();
+      const screen = (b.closest('.screen, .iphone, .phone') || document.body).getBoundingClientRect();
+      if (t.width && (t.right > bb.right + 1 || t.left < bb.left - 1 || bb.right > screen.right + 1 || bb.left < screen.left - 1))
+        out.push((row && row.getAttribute('data-anim-id')) || b.textContent.slice(0, 30));
+      if (row && was) row.setAttribute('data-pending', was);
+    });
+    return out;
+  });
+  if (bleed.length) { console.error('TEXT BLEED in: ' + bleed.join(', ') + ' (split the line into two bubbles)'); process.exit(3); }
   await page.waitForTimeout(600);
   await page.evaluate(() => window.__startDriver());
   await page.waitForTimeout(total * 1000);
@@ -462,7 +509,11 @@ async function main() {
   fs.mkdirSync(outDir, { recursive: true });
   const outMp4 = path.join(outDir, 'master-chat.mp4');
   const syncSec = findSyncFrame(videoPath);
-  const startSec = syncSec != null ? syncSec : paintOffsetSec;
+  if (syncSec == null) {
+    console.error('SYNC MARKER NOT FOUND in the raw capture; refusing to guess (sounds would drift).');
+    process.exit(4);
+  }
+  const startSec = syncSec;
   execSync(
     `ffmpeg -y -ss ${startSec.toFixed(3)} -i "${videoPath}" -t ${total} -r 30 ` +
     `-vf "scale=${OUT_W}:${OUT_H}" -c:v libx264 -pix_fmt yuv420p -movflags +faststart "${outMp4}"`,

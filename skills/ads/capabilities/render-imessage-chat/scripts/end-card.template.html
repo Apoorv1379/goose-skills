@@ -21,8 +21,9 @@ html, body {
   font-family: 'Helvetica Neue', Arial, sans-serif; overflow: hidden;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
 }
-.wordmark { width: 560px; max-width: 640px; max-height: 300px; margin-bottom: 90px; text-align: center; }
+.wordmark { width: {{WORDMARK_W}}px; max-width: 640px; max-height: 300px; margin-bottom: 90px; text-align: center; }
 .wordmark svg { width: 100%; height: auto; max-height: 300px; fill: var(--fg); }
+.wordmark img { width: 100%; height: auto; max-height: 300px; object-fit: contain; }
 .wordmark .text { font-size: 96px; font-weight: 800; letter-spacing: -1px; color: var(--fg); }
 
 .proof-row { display: flex; flex-direction: column; align-items: center; gap: 18px; margin-bottom: 100px; }
@@ -39,6 +40,9 @@ html, body {
 
 .cta-pill { background: var(--cta-bg); color: var(--cta-fg); padding: 32px 80px; border-radius: 80px;
   font-family: Georgia, 'Times New Roman', serif; font-weight: 700; font-size: 48px; letter-spacing: 0.5px; }
+.url { margin-top: 40px; font-size: 34px; font-weight: 600; letter-spacing: 0.5px; color: var(--fg); opacity: 0.85; }
+.footnote { position: absolute; left: 90px; right: 90px; bottom: 310px; font-size: 22px; line-height: 1.35;
+  text-align: center; color: var(--fg); opacity: 0.7; }
 </style>
 </head>
 <body>
@@ -46,6 +50,8 @@ html, body {
   {{PROOF}}
   {{TRIO}}
   <div class="cta-pill">{{CTA}}</div>
+  {{URL}}
+  {{FOOTNOTE}}
 <script>
 // Signal Playwright when a frame has painted (fonts have started).
 requestAnimationFrame(() => {

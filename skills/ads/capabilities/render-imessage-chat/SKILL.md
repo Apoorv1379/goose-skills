@@ -50,24 +50,34 @@ copy only). Missing end-card colours fall back to a neutral white/black card.
 ## Run
 
 ```bash
-cd scripts && npm install            # once — installs Playwright for the recorders
-node record-chat.js    --config config.json --out-dir <work>   # → master-chat.mp4 + .sfx.json
-node render-end-card.js --config config.json --out-dir <work>  # → scene-end-endcard.mp4
-bash stitch.sh --chat <work>/master-chat.mp4 --end <work>/scene-end-endcard.mp4 \
-     --sfx <work>/master-chat.sfx.json --out <work>/master-final.mp4 \
-     [--music <work>/music-bed.mp3] [--also-1x1]
+cd scripts && npm install && npx playwright install chromium   # once
+bash render.sh --config config.json --out <work>/final.mp4 [--music bed.mp3] [--also-1x1]
 ```
 
-1. **`record-chat.js`** — reads `config.json` (`thread` + `theme` + geometry +
-   optional `background_image`), derives a believable per-message timeline
-   (received bubbles pop after an optional `…`; sent bubbles are typed out in the
-   composer then popped + Delivered; attachments dwell so a rich link lands),
-   records it as one continuous MP4, and emits a deterministic SFX cue list.
-2. **`render-end-card.js`** — fills `end-card.template.html` from `config.end_card`
-   (wordmark/`logo_svg`, stars, proof text, trust trio, CTA, colors) → still MP4.
-3. **`stitch.sh`** — crossfades chat → end card, layers the send/receive SFX (from
-   the cue list; the mp3s ship in `assets/sfx`), optionally ducks a music bed
-   under it, and optionally derives a 1:1 variant. All FREE ffmpeg.
+One command: `record-chat.js` -> `render-end-card.js` -> `stitch.sh` -> `check-render.py`.
+It exits non-zero on any failure, so a bad video never looks finished. The steps can still
+be run one by one (same flags as before).
+
+**What it guarantees (and checks on the finished file):**
+- **Sound on the bubble.** A magenta sync curtain is shown until the chat starts and the
+  capture is trimmed at its first missing frame. Each sound is placed by its measured
+  onset and leads its bubble by 40 ms (`stitch.sh --sfx-lead`). A sound is cut (40 ms
+  fade) where the next one starts, as a phone restarts the alert. `check-render.py`
+  fails the render if any cue's onset is outside -150..+20 ms of its bubble.
+- **Real-phone details.** Apple Color Emoji glyphs (not Segoe/Noto); "Delivered" only under
+  the newest sent message (text or link); 1-3 emoji alone render large; sent bubbles rise
+  from the text field; the status-bar clock follows the thread's timestamp line; light
+  theme header icons are dark; link images sit on a grey card.
+- **Authoring guards (fail before recording):** em/en dashes, self typing dots, duplicate
+  ids, attachment files under 2 KB (git-LFS pointers), text overflowing its bubble. Over
+  16 messages warns (each adds ~1.6 s; 10-16 lands at 20-27 s).
+- **End card:** `logo_svg` / `logo_svg_path`, or `logo_image_path` (PNG/JPG) for brands
+  with no SVG; `wordmark_width` (default 560); a logo under 3:1 contrast with the card is
+  recoloured to `fg`; `url_text` under the CTA; `footnote` for legal lines (the FDA
+  disclaimer every supplement benefit claim needs), kept inside the 4:5 safe zone.
+
+Put `{ "type": "timestamp", "bold": "iMessage", "light": "Today 7:12 AM" }` first in the
+thread; real conversations open with it and the clock is read from it.
 
 ## Contract
 
@@ -96,3 +106,18 @@ bash stitch.sh --chat <work>/master-chat.mp4 --end <work>/scene-end-endcard.mp4 
   at it.
 - Requires **ffmpeg/ffprobe** on PATH and Playwright Chromium (`npx playwright
   install chromium`) — `gooseworks doctor` checks both.
+
+## Critical knowledge
+
+1. **Never trim the capture by a clock guess.** `Date.now()` around `newContext()` put every
+   sound a median 204 ms late (range -450..+236 ms) on the Graza audit run. The sync
+   curtain + first-missing-frame trim fixed it; the curtain must be held ~600 ms or the
+   screencast (it only emits frames on change) never records it.
+2. **Measure each SFX file's onset.** `imessage-send.mp3` has 99 ms of lead-in; placing the
+   file at the cue made the send sound late even with perfect video sync.
+3. **The receive tone is ~1.4 s at full level.** Two received messages 0.75 s apart blurred
+   into one sound until each sound was cut where the next begins.
+4. **`scrollWidth` is not a text-bleed test.** Bubble tails are pseudo-elements that stick out
+   by design; compare the text's Range box with the bubble box instead.
+5. **Chromium on Windows/Linux draws Segoe/Noto emoji** and the render reads fake instantly.
+6. **BSD `mktemp -t name`** (no XXXXXX) fails on GNU/Git Bash; use a template.

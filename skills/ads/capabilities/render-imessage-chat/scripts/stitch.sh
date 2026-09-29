@@ -90,15 +90,27 @@ if has_music:
         f"highpass=f=60,volume=0.30,afade=t=out:st={max(0,total-1.5)}:d=1.5[mus]")
     mix_labels.append("[mus]")
     idx += 1
-for c in cues:
+def start_ms(c):
+    f = f"{sfx_dir}/imessage-{c['name']}.mp3"
+    if c['name'] not in ONSET:
+        ONSET[c['name']] = onset(f)
+    return max(0, int(round((c['t'] - ONSET[c['name']] - lead) * 1000)))
+starts = [start_ms(c) for c in cues]
+for n, c in enumerate(cues):
     sfx_file = f"{sfx_dir}/imessage-{c['name']}.mp3"
     inputs += ["-i", sfx_file]
-    if c['name'] not in ONSET:
-        ONSET[c['name']] = onset(sfx_file)
     # The audible start of the sound lands `lead` seconds before the bubble appears.
-    delay = max(0, int(round((c['t'] - ONSET[c['name']] - lead) * 1000)))
+    delay = starts[n]
     vol = 0.55 if c.get('soft') else 0.95
-    filter_parts.append(f"[{idx}:a]adelay={delay}|{delay},volume={vol}[s{idx}]")
+    # A phone restarts the alert for each message: cut this sound (40 ms fade) where the
+    # next one starts, or a long receive tone masks the next bubble's sound entirely.
+    cut = ""
+    if n + 1 < len(cues):
+        room = (starts[n + 1] - delay) / 1000
+        room -= 0.005  # silent by 5 ms before the next sound starts
+        if room > 0.05:
+            cut = f"atrim=0:{room:.3f},afade=t=out:st={max(0, room - 0.04):.3f}:d=0.04,"
+    filter_parts.append(f"[{idx}:a]{cut}adelay={delay}|{delay},volume={vol}[s{idx}]")
     mix_labels.append(f"[s{idx}]")
     idx += 1
 n = len(mix_labels)

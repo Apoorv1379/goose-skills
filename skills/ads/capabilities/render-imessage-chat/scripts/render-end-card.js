@@ -75,9 +75,16 @@ function main() {
   // Wordmark: prefer an inline SVG (or a path to one), else a bold text fallback.
   let logoSvg = ec.logo_svg || '';
   if (!logoSvg && ec.logo_svg_path) logoSvg = fs.readFileSync(path.resolve(cfgDir, ec.logo_svg_path), 'utf-8');
-  const wordmark = logoSvg
-    ? logoSvg
-    : `<div class="text">${esc(ec.wordmark_text || cfg.brand_name || 'BRAND')}</div>`;
+  // A raster logo (PNG/JPG) is inlined as a data URI for brands with no official SVG.
+  let logoImg = '';
+  if (!logoSvg && ec.logo_image_path) {
+    const f = path.resolve(cfgDir, ec.logo_image_path);
+    const ext = path.extname(f).slice(1).toLowerCase();
+    const mime = (ext === 'jpg' || ext === 'jpeg') ? 'image/jpeg' : `image/${ext}`;
+    logoImg = `<img src="data:${mime};base64,${fs.readFileSync(f).toString('base64')}" alt="">`;
+  }
+  const wordmark = logoSvg || logoImg ||
+    `<div class="text">${esc(ec.wordmark_text || cfg.brand_name || 'BRAND')}</div>`;
 
   // Proof row (⭐ + text) — omit entirely if stars is 0/absent.
   const starCount = ec.stars == null ? 5 : ec.stars;
@@ -103,7 +110,12 @@ function main() {
     .replace('{{WORDMARK}}', wordmark)
     .replace('{{PROOF}}', proof)
     .replace('{{TRIO}}', trio)
-    .replace('{{CTA}}', esc(ec.cta_text || 'Learn more'));
+    .replace('{{CTA}}', esc(ec.cta_text || 'Learn more'))
+    .replace('{{WORDMARK_W}}', String(ec.wordmark_width || 560))
+    .replace('{{URL}}', ec.url_text ? `<div class="url">${esc(ec.url_text)}</div>` : '')
+    // Legal line (e.g. the FDA disclaimer every supplement benefit claim needs). Sits
+    // above y=1635 so it stays inside the 4:5 safe zone.
+    .replace('{{FOOTNOTE}}', ec.footnote ? `<div class="footnote">${esc(ec.footnote)}</div>` : '');
 
   const outDir = path.resolve(args.outDir);
   fs.mkdirSync(outDir, { recursive: true });
@@ -120,6 +132,30 @@ function main() {
     await page.goto('file://' + htmlPath, { waitUntil: 'load' });
     await page.waitForFunction(() => document.body.dataset.ready === 'true', { timeout: 5000 });
     await page.waitForTimeout(400);
+    // A logo that barely contrasts with the card (a black PNG on a black plate) is
+    // recoloured to the card's text colour, so the brand never vanishes.
+    const tint = await page.evaluate(() => {
+      const lum = hex => { const n = parseInt(hex.replace('#', '').slice(0, 6), 16);
+        const c = [n >> 16 & 255, n >> 8 & 255, n & 255].map(v => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; });
+        return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
+      const ratio = (a, b) => (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+      const css = getComputedStyle(document.documentElement);
+      const bg = lum(css.getPropertyValue('--bg').trim()), fg = lum(css.getPropertyValue('--fg').trim());
+      const img = document.querySelector('.wordmark img');
+      if (!img) return null;
+      const cv = document.createElement('canvas'); cv.width = 200; cv.height = Math.max(1, Math.round(200 * img.naturalHeight / img.naturalWidth));
+      const cx = cv.getContext('2d'); cx.drawImage(img, 0, 0, cv.width, cv.height);
+      const d = cx.getImageData(0, 0, cv.width, cv.height).data; let sum = 0, n = 0;
+      for (let i = 0; i < d.length; i += 4) if (d[i + 3] > 128) {
+        const c = [d[i], d[i + 1], d[i + 2]].map(v => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; });
+        sum += 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; n++; }
+      if (!n) return null;
+      const r = ratio(sum / n, bg);
+      if (r >= 3) return `logo contrast ${r.toFixed(1)}:1, kept`;
+      img.style.filter = fg > 0.5 ? 'brightness(0) invert(1)' : 'brightness(0)';
+      return `logo contrast ${r.toFixed(1)}:1 on this card, recoloured to the text colour`;
+    });
+    if (tint) console.log(tint);
     await page.screenshot({ path: outPng });
     await browser.close();
     execSync(
