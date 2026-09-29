@@ -146,8 +146,26 @@ def main():
     img = img if img.is_absolute() else (chp.parent / img)
     if not img.exists():
         raise SystemExit("character image not found: %s" % img)
-    if not (ch.get("identity") or "").strip():
+    ident = (ch.get("identity") or "").strip()
+    if not ident:
         raise SystemExit("character.json needs `identity`: the person, in the words that made the image")
+    # Non-empty is not enough. The realism prompt needs age, ethnicity and sex stated
+    # explicitly or the model drifts to an ambiguous composite face, which is what a reviewer
+    # sees as "obviously AI". An unfilled placeholder and a vague "a creator" both pass a
+    # not-empty test, so check for the things that mean nobody was asked.
+    low = ident.lower()
+    if "..." in ident or low.startswith("<") or "ask the user" in low or "user chose" in low:
+        raise SystemExit(
+            "character.json `identity` is still the placeholder (%r). Ask the user for age, "
+            "gender and look, then write their answer here. There is no default person."
+            % ident[:60])
+    if not re.search(r"\b(\d{2}s?|teen|twenties|thirties|forties|fifties|sixties|year[- ]old)\b", low):
+        raise SystemExit(
+            "character.json `identity` states no AGE (%r). Ask the user, or generate the still "
+            "with make_character.py, which requires it." % ident[:60])
+    if not re.search(r"\b(man|woman|male|female|non[- ]binary|guy|girl|boy|lady)\b", low):
+        raise SystemExit(
+            "character.json `identity` states no GENDER (%r). Ask the user." % ident[:60])
     if not (ch.get("delivery") or "").strip():
         print("[plan] note: character.json has no `delivery`; using a neutral conversational read. "
               "Set it from the tone the user chose.", file=sys.stderr)

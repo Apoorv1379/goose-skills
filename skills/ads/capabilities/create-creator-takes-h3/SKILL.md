@@ -46,6 +46,17 @@ python align_beats.py --beats cutlist.json --words work/creator.words.json \
 making any still, and build `identity` from their answer. There is no default person: never
 copy a look from an example, a reference build or a demo reel.
 
+This is now enforced, not advisory. `plan_takes.py` rejects an `identity` that is still a
+placeholder, or that states no age, or that states no gender. It was advisory once and the
+docstring carried "a man in his late 20s ..." as an example: that got copied verbatim, the
+old non-empty check passed it, and every build produced the same unrequested man. An
+unspecified person is exactly the ambiguous composite face the realism formula warns about,
+and it is what a reviewer sees as "obviously AI".
+
+`delivery` now defaults to **calm and conversational**. The default used to be energetic,
+which this file already warned "can give a constant grin and busy hands that read as AI", so
+avoiding a known failure depended on remembering to opt out. Pass `delivery` to override.
+
 `identity` and `environment` go into every take **word for word**. Write them once from the
 approved still, then never retype them: a person described two ways drifts between takes.
 
