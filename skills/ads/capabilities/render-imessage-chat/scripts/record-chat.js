@@ -65,6 +65,8 @@ const TIMING = {
   min_type: 0.50,     // clamp composer typing duration
   max_type: 2.00,
   scroll_ms: 300,     // smooth auto-scroll duration after each beat
+  tapback_gap: 0.70,  // dwell after a tapback reaction lands
+  link_zoom: 1.10,    // gentle push-in on a rich link while it dwells (1 = off)
 };
 
 function isEmojiOnly(text) {
@@ -126,7 +128,16 @@ function buildTimeline(thread, T) {
     } else if (m.type === 'attachment') {
       TL.push({ t: +t.toFixed(2), kind: 'pop', id: m.id, sfx: isSelf(m.from) ? 'send' : 'receive' });
       scrollAfter(t);
+      if (T.link_zoom > 1 && T.attach_dwell >= 2.4) {
+        TL.push({ t: +(t + 0.55).toFixed(2), kind: 'zoom-in', id: m.id, scale: T.link_zoom, dur: 700 });
+        TL.push({ t: +(t + T.attach_dwell - 0.55).toFixed(2), kind: 'zoom-out', dur: 450 });
+      }
       t += T.attach_dwell;
+    } else if (m.type === 'tapback') {
+      // A reaction lands on an earlier bubble (iOS "tapback"); soft receive sound if it's theirs.
+      TL.push({ t: +t.toFixed(2), kind: 'tapback', target: m.target, emoji: m.emoji, self: isSelf(m.from),
+                ...(isSelf(m.from) ? {} : { sfx: 'receive', soft: true }) });
+      t += T.tapback_gap;
     }
   }
   const total = +(t + T.tail_hold).toFixed(2);
@@ -177,7 +188,7 @@ function injectedStyle({ zoom, logicalH, theme, bgCss }) {
     body.framed .conv-header .center .avatar { width: 42px; height: 42px; font-size: 17px; }
     body.framed .conv-header .center .name-pill { font-size: 13px; }
     body.framed .conversation { flex: 1; overflow: hidden;
-      justify-content: flex-end; padding: 6px 14px 10px; }
+      justify-content: flex-start; /* iOS: a short thread sits under the header; auto-scroll follows once it fills */ padding: 6px 14px 10px; }
 
     /* ---- URL-preview rich-link card (the iMsg #1 fix) ---- */
     body.framed .row.attachment { gap: 0; }
@@ -202,6 +213,14 @@ function injectedStyle({ zoom, logicalH, theme, bgCss }) {
       font-size: 22px; font-weight: 300; color: ${chevron}; line-height: 1;
     }
     img.ae { width: 1.2em; height: 1.2em; vertical-align: -0.22em; display: inline-block; }
+    .tapback { position: absolute; top: -16px; width: 30px; height: 30px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; font-size: 15px; z-index: 3;
+      border: 2px solid ${dark ? '#000' : '#fff'}; animation: bubble-grow 220ms cubic-bezier(0.2,0.8,0.2,1) both; }
+    .tapback.on-sent { left: -14px; }
+    .tapback.on-received { right: -14px; }
+    .tapback.theirs { background: ${dark ? '#3a3a3c' : '#e9e9eb'}; }
+    .tapback.mine { background: #0a84ff; }
+    .tapback img.ae { width: 17px; height: 17px; vertical-align: 0; }
   </style>`;
 }
 
@@ -263,6 +282,32 @@ function makeDriverScript(timeline, emojiMap = {}) {
       if (!typRow || !textRow) return;
       typRow.style.display = 'none';
       popBubble(textRow);
+    }
+
+    function addTapback(ev) {
+      const row = findRow(ev.target);
+      const b = row && (row.classList.contains('bubble') ? row : row.querySelector('.bubble, .attachment-card'));
+      if (!b) return;
+      const onSent = row.classList.contains('sent');
+      const tb = document.createElement('div');
+      tb.className = 'tapback ' + (ev.self ? 'mine' : 'theirs') + (onSent ? ' on-sent' : ' on-received');
+      tb.appendChild(emojiNode(ev.emoji));
+      b.style.position = 'relative';
+      row.style.marginTop = '14px';
+      b.appendChild(tb);
+    }
+
+    function zoomTo(id, scale, durMs) {
+      const frame = document.querySelector('.iphone-frame') || document.body;
+      frame.style.transition = 'transform ' + durMs + 'ms cubic-bezier(0.4, 0, 0.2, 1)';
+      if (id) {
+        const el = findRow(id);
+        const fr = frame.getBoundingClientRect(), r = el.getBoundingClientRect();
+        const ox = ((r.left + r.width / 2) - fr.left) / fr.width * 100;
+        const oy = ((r.top + r.height / 2) - fr.top) / fr.height * 100;
+        frame.style.transformOrigin = ox + '% ' + oy + '%';
+      }
+      frame.style.transform = 'scale(' + scale + ')';
     }
 
     function smoothScroll(durMs) {
@@ -329,6 +374,9 @@ function makeDriverScript(timeline, emojiMap = {}) {
           case 'composer':       typeComposer(ev.text, ev.dur); break;
           case 'composer-clear': clearComposer(); break;
           case 'scroll':         smoothScroll(ev.dur); break;
+          case 'tapback':        addTapback(ev); break;
+          case 'zoom-in':        zoomTo(ev.id, ev.scale, ev.dur); break;
+          case 'zoom-out':       zoomTo(null, 1, ev.dur); break;
           case 'noop':           break;
         }
       }
@@ -430,6 +478,31 @@ async function main() {
     }
     // Real iMessage marks every sent message Delivered; the driver shows only the newest.
     if (selfIds.has(m.from) && (m.type === 'text' || m.type === 'attachment') && m.delivered !== false) m.delivered = true;
+  }
+  // Grammar and punctuation: iPhones auto-capitalise and add apostrophes, so correct text is
+  // also the realistic text. Fails the render with the exact message and fix.
+  const SLANG = { u: 'you', ur: 'your', im: "I'm", dont: "don't", cant: "can't", wont: "won't",
+    thats: "that's", whats: "what's", isnt: "isn't", doesnt: "doesn't", didnt: "didn't", ive: "I've",
+    youre: "you're", theyre: "they're", tmrw: 'tomorrow', rn: 'right now', ok: 'okay' };
+  const ENDS = /([.!?…]|\p{Extended_Pictographic}\uFE0F?|\))$/u;
+  const ids2 = new Set((thread.messages || []).map(m => m.id));
+  let prevContinues = false;
+  for (const m of thread.messages || []) {
+    const afterSplit = prevContinues; if (m.type === 'text') prevContinues = !!m.continues;
+    if (m.type === 'tapback' && !ids2.has(m.target)) problems.push(`${m.id}: tapback target ${m.target} not found`);
+    if (m.type !== 'text' || !m.text || isEmojiOnly(m.text) || m.allow_casual) continue;
+    const txt = m.text.trim();
+    const first = txt.replace(/^[^\p{L}\p{N}]+/u, '');
+    if (!afterSplit && first && /^\p{Ll}/u.test(first) && !/^(iPhone|iMessage|iOS|eBay|iPad)\b/.test(first))
+      problems.push(`${m.id}: starts lowercase ("${txt}")`);
+    // `continues: true` = the first half of a sentence sent as two bubbles (real texting).
+    if (!m.continues && !ENDS.test(txt)) problems.push(`${m.id}: no end punctuation ("${txt}")`);
+    for (const w of txt.toLowerCase().match(/[a-z']+/g) || [])
+      if (SLANG[w.replace(/'/g, '')] && !w.includes("'") && w !== 'ok') problems.push(`${m.id}: "${w}" -> "${SLANG[w]}"`);
+    if (/\bi\b/.test(txt)) problems.push(`${m.id}: lowercase "i"`);
+    if (/\s[,.!?]/.test(txt) || /,(?=\S)/.test(txt)) problems.push(`${m.id}: spacing around punctuation ("${txt}")`);
+    // Smart Punctuation is on by default on iOS: straight quotes render curly.
+    m.text = txt.replace(/(\w)'(\w)/g, '$1\u2019$2').replace(/'/g, '\u2019');
   }
   const nMsgs = (thread.messages || []).filter(m => m.type === 'text' || m.type === 'attachment').length;
   if (problems.length) { console.error('THREAD REJECTED: ' + problems.join(' | ')); process.exit(2); }

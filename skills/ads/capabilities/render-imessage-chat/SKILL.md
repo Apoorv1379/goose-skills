@@ -76,6 +76,26 @@ be run one by one (same flags as before).
   recoloured to `fg`; `url_text` under the CTA; `footnote` for legal lines (the FDA
   disclaimer every supplement benefit claim needs), kept inside the 4:5 safe zone.
 
+**Grammar and punctuation are enforced** (iPhones auto-capitalise and add apostrophes, so
+correct text is also the realistic text): every message starts with a capital, ends with
+`. ! ? …` or an emoji, has no texting shorthand (u, ur, im, dont, tmrw, rn...), no lowercase
+"i", and clean spacing around punctuation. A sentence sent as two bubbles marks the first
+half `"continues": true` (it may skip end punctuation; the second half may start lowercase).
+Straight apostrophes render curly, as iOS Smart Punctuation does.
+
+**Texture without typos:** `{ "type": "tapback", "from": "<id>", "target": "<message id>",
+"emoji": "😂" }` lands an iOS reaction on an earlier bubble; split sentences as above.
+**Link zoom:** the phone pushes in (`timing.link_zoom`, default 1.10) on a rich link while it
+dwells and eases out before the next message. Short threads sit under the header and
+auto-scroll once the screen fills, as in Messages.
+
+**Editorial end card** (`end_card.layout: "editorial"`): the brand's own type system instead
+of the badge template. `fonts.{headline,body,mono} = { family, weight, style, google }`
+(`google` = a Google Fonts family spec, the free stand-in when the brand's font is
+licensed), `headline: [line, line]` (second line in `accent`), `headline_case`, `points`
++ `points_case` + `points_sep`, optional `cta_text`, `url_text`, `footnote`. The render fails
+if any requested font does not load.
+
 Put `{ "type": "timestamp", "bold": "iMessage", "light": "Today 7:12 AM" }` first in the
 thread; real conversations open with it and the clock is read from it.
 
@@ -121,3 +141,6 @@ thread; real conversations open with it and the clock is read from it.
    by design; compare the text's Range box with the bubble box instead.
 5. **Chromium on Windows/Linux draws Segoe/Noto emoji** and the render reads fake instantly.
 6. **BSD `mktemp -t name`** (no XXXXXX) fails on GNU/Git Bash; use a template.
+7. **Short threads were bottom-aligned** with an empty screen above; Messages top-aligns them.
+8. **The generic badge end card looked the same for every brand.** Use the editorial layout
+   with the brand's fonts (or named free stand-ins).

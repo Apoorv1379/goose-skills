@@ -101,6 +101,24 @@ function main() {
       ).join('') + `</div>`
     : '';
 
+  // ── editorial layout: the brand's own type system instead of the generic badge card ──
+  // fonts: { headline|body|mono: { family, weight, style, google } } where `google` is the
+  // Google Fonts family spec used as a free stand-in when the brand's font is licensed.
+  const F = ec.fonts || {};
+  const face = (k, fb) => F[k] ? `font-family:'${F[k].family}',${fb};font-weight:${F[k].weight || 400};font-style:${F[k].style || 'normal'};` : `font-family:${fb};`;
+  const gf = Object.values(F).filter(f => f.google).map(f => 'family=' + f.google).join('&');
+  const fontLink = gf ? `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?${gf}&display=block">` : '';
+  let editorial = '';
+  if (ec.layout === 'editorial') {
+    const hl = (ec.headline || []).map((line, i) =>
+      `<div class="hl" style="${face('headline', 'Georgia,serif')}color:${i && ec.accent ? ec.accent : 'var(--fg)'};text-transform:${ec.headline_case || 'none'}">${esc(line)}</div>`).join('');
+    const pts = (ec.points || []).length
+      ? `<div class="pts" style="${face('mono', 'monospace')}text-transform:${ec.points_case || 'none'}">${ec.points.map(x => `<span class="pt">${esc(x)}</span>`).join(`<span class="sep">${esc(ec.points_sep || ' / ')}</span>`)}</div>` : '';
+    const cta = ec.cta_text ? `<div class="cta-pill" style="${face('body', "'Helvetica Neue',Arial,sans-serif")}">${esc(ec.cta_text)}</div>` : '';
+    const url = ec.url_text ? `<div class="url" style="${face('mono', 'monospace')}">${esc(ec.url_text)}</div>` : '';
+    editorial = `<div class="wordmark">${wordmark}</div><div class="hls">${hl}</div>${pts}${cta}${url}`;
+  }
+
   const html = tpl
     .replace('{{BG}}', ec.bg || '#ffffff')
     .replace('{{FG}}', ec.fg || '#111111')
@@ -115,6 +133,11 @@ function main() {
     .replace('{{URL}}', ec.url_text ? `<div class="url">${esc(ec.url_text)}</div>` : '')
     // Legal line (e.g. the FDA disclaimer every supplement benefit claim needs). Sits
     // above y=1635 so it stays inside the 4:5 safe zone.
+    .replace('{{FONTLINK}}', fontLink)
+    .replace('{{BODY}}', editorial)
+    .replace('{{LAYOUT}}', ec.layout === 'editorial' ? 'editorial' : 'badges')
+    .replace('{{BADGES_START}}', ec.layout === 'editorial' ? '<template>' : '')
+    .replace('{{BADGES_END}}', ec.layout === 'editorial' ? '</template>' : '')
     .replace('{{FOOTNOTE}}', ec.footnote ? `<div class="footnote">${esc(ec.footnote)}</div>` : '');
 
   const outDir = path.resolve(args.outDir);
@@ -130,6 +153,12 @@ function main() {
     const ctx = await browser.newContext({ viewport: { width: 1080, height: 1920 }, deviceScaleFactor: 1 });
     const page = await ctx.newPage();
     await page.goto('file://' + htmlPath, { waitUntil: 'load' });
+    // Every requested font must actually load; a silent fallback to Times is a broken card.
+    const missing = await page.evaluate(async fams => {
+      await document.fonts.ready;
+      return fams.filter(f => !document.fonts.check(`${f.style || 'normal'} ${f.weight || 400} 40px '${f.family}'`));
+    }, Object.values(F));
+    if (missing.length) { console.error('END CARD FONT NOT LOADED: ' + missing.map(f => f.family).join(', ')); process.exit(5); }
     await page.waitForFunction(() => document.body.dataset.ready === 'true', { timeout: 5000 });
     await page.waitForTimeout(400);
     // A logo that barely contrasts with the card (a black PNG on a black plate) is
