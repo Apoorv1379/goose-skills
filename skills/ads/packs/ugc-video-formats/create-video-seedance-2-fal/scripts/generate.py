@@ -89,7 +89,9 @@ def main() -> int:
           f"{len(args.image_urls)} ref{'s' if len(args.image_urls) > 1 else ''})...", flush=True)
 
     try:
-        result = _fal_run(MODEL, payload, timeout_s=900)
+        # Default poll timeout for video (1800s). A timeout raises FalPollTimeout with the
+        # request_id — resume it (media-proxy resume.py), never resubmit (GOOSE-3729).
+        result = _fal_run(MODEL, payload)
     except RuntimeError as e:
         msg = str(e).lower()
         if "content_policy_violation" in msg or "partner_validation" in msg:

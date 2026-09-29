@@ -165,7 +165,18 @@ def mean_volume_db(audio: str) -> float:
 
 
 def _gw_creds():
-    """(api_base, cal_token, agent_id) from the CLI credentials, or None."""
+    """(api_base, token, agent_id) or None. Cloud sandbox: the per-session
+    GW_MEDIA_PROXY_TOKEN (already binds the billing agent → agent_id None) +
+    GW_API_BASE (or derived from GW_FAL_PROXY_URL). Else the CLI credentials."""
+    env_tok = os.environ.get("GW_MEDIA_PROXY_TOKEN")
+    if env_tok:
+        base = os.environ.get("GW_API_BASE")
+        if not base:
+            fal = (os.environ.get("GW_FAL_PROXY_URL") or "").rstrip("/")
+            i = fal.find("/api/internal/")
+            base = fal[:i] if i > 0 else None
+        if base:
+            return base.rstrip("/"), env_tok, None
     p = os.path.expanduser("~/.gooseworks/credentials.json")
     if not os.path.exists(p):
         return None

@@ -1,6 +1,6 @@
 ---
 name: media-proxy
-description: Shared helper that routes ALL paid media generation (FAL image/video, ElevenLabs music) through the GooseWorks proxies so every call bills the Ads agent — never a provider SDK's default host. Host-swaps the FAL queue URLs, loads the agent token from ~/.gooseworks/credentials.json, and returns the result CDN URL. Every video-ad media capability imports this; templates never call a provider directly.
+description: Shared helper that routes ALL paid media generation (FAL image/video, ElevenLabs music) through the GooseWorks proxies so every call bills the Ads agent — never a provider SDK's default host. Host-swaps the FAL queue URLs, loads the agent token from the sandbox env (GW_MEDIA_PROXY_TOKEN) or ~/.gooseworks/credentials.json, and returns the result CDN URL. Every video-ad media capability imports this; templates never call a provider directly.
 status: active
 ---
 
@@ -27,6 +27,27 @@ render. Two built-in protections (automatic for every capability that imports th
   resume.py --request-id <id> --out final.mp4   # poll to completion + download
   ```
   `resume_fal` NEVER re-submits, so it can't double-charge.
+- **Poll timeout never resubmits (GOOSE-3729)** — polling gives up after
+  `default_poll_timeout(model)`: **1800s for video / lipsync / audio-driven models**,
+  600s for images (`GW_FAL_POLL_TIMEOUT_S` overrides; `timeout_s=` per call). A timeout
+  raises `FalPollTimeout` carrying `.request_id` + `.model_path` — the job is still
+  running and already paid for. **Re-attach with `resume_fal(e.request_id)`; never call
+  `fal_generate*` again for it** (a veed/fabric lipsync once finished 26s after a 600s
+  poller quit, and the retry paid for a second identical job).
+- **Proxy dedupe back-stop** — the fal proxy returns the already-running job for an
+  identical submit (same agent + model + body) within 30 min, so an accidental
+  resubmit re-attaches instead of paying twice (response header `x-gw-deduped: 1`).
+  For a **deliberate re-roll** of the same input (want a new take), pass
+  `new_take=True` (`fal_generate(..., new_take=True)` / `fal_generate_video(...)`),
+  which sends `x-gw-no-dedupe: 1` (raw HTTP callers: that header or `?dedupe=0`).
+- **Pass `input_digest=` for any piece you save as an ingredient, so a resumed run
+  never pays twice.** The body-match dedupe above breaks after a sandbox restart: the
+  resumed run re-uploads its inputs (voiceover, stills) and gets NEW urls, so the body
+  differs. `fal_generate*(..., input_digest=d)` sends `x-gw-input-digest: d`; the proxy
+  then dedupes on (agent + model + digest) for **24 h** and returns the job you already
+  paid for. Use the same stable digest you save with `media_upload` (see below). If
+  that job's result has since expired at fal, the poll fails: retry once with
+  `new_take=True`.
 
 ## Use it
 
@@ -43,10 +64,36 @@ vid = fal_generate_video("fal-ai/kling-video/v2.1/standard/image-to-video",
 eleven_music(prompt, 10500, "music.mp3", force_instrumental=True)
 ```
 
+## Save-as-you-go digest (GOOSE-3731)
+
+`input_digest(model, args)` = sha256 of the canonical JSON `{"model", "args"}` (sorted
+keys, no whitespace), first 32 hex chars. Pass it with the MCP `media_upload` of the
+result (plus an `ingredient_key` such as `vo/scene-03`); on a resume, `media_list
+{ ingredient_key }` returns the saved file and its digest, and the file is reused only
+when the digest of the args you would send now is the same.
+
+```python
+from media_proxy import input_digest, eleven_tts, fal_generate_video
+args = {"text": line, "voice_id": vid, "model_id": "eleven_v3"}
+digest = input_digest("elevenlabs/tts", args)
+
+# FAL job: hash the STABLE identities of its inputs, not their urls, and send the
+# same digest with the submit so a resumed run re-attaches instead of re-paying.
+lip_digest = input_digest("veed/fabric-1.0", {"image": "still/scene-03:" + still_digest,
+                                              "audio": "vo/scene-03:" + digest})
+clip = fal_generate_video("veed/fabric-1.0", {"image_url": still_url, "audio_url": vo_url},
+                          input_digest=lip_digest)
+```
+
+Hash only what determines the output. Swap any expiring input URL (presigned / proxy)
+for that input's own ingredient_key + digest first, or the digest never matches.
+
 ## Contracts (load-bearing)
 
 - **Bills the Ads agent** — `?token=&agent_id=` from `~/.gooseworks/credentials.json`
-  (the CLI writes it; run `gooseworks login` if missing).
+  (the CLI writes it; run `gooseworks login` if missing). In a GooseWorks cloud sandbox
+  (coworker chat) the env wins instead: `GW_MEDIA_PROXY_TOKEN` (a per-session token that
+  already binds agent/org/user) + `GW_API_BASE`; `GW_PROJECT_ID` attributes spend.
 - **Host-swap the FAL queue URLs** — submit returns `status_url`/`response_url` on
   `queue.fal.run`; the helper rewrites them to the proxy base (keeps the path). Never
   poll `queue.fal.run` directly (401 + burns credits).
