@@ -156,7 +156,9 @@ def main():
     ap.add_argument("--expression", default="mid-sentence, mouth slightly open on a word, eyes "
                                             "steady on the lens, no held smile")
     ap.add_argument("--face-fill", default="45 to 55 percent")
-    ap.add_argument("--model", default="fal-ai/nano-banana-2")
+    # fal-ai/nano-banana is the fal SLUG. nano-banana-2 is an internal engine label and fal
+    # rejects it outright, which cost a run before anything generated.
+    ap.add_argument("--model", default="fal-ai/nano-banana")
     ap.add_argument("--aspect", default="9:16")
     ap.add_argument("--seed", type=int, default=None)
     ap.add_argument("--out", required=True, type=pathlib.Path)
