@@ -84,9 +84,8 @@ half `"continues": true` (it may skip end punctuation; the second half may start
 Straight apostrophes render curly, as iOS Smart Punctuation does.
 
 **Texture without typos:** `{ "type": "tapback", "from": "<id>", "target": "<message id>",
-"emoji": "😂" }` lands an iOS reaction on an earlier bubble; split sentences as above.
-**Link zoom:** the phone pushes in (`timing.link_zoom`, default 1.10) on a rich link while it
-dwells and eases out before the next message. Short threads sit under the header and
+"emoji": "😂" }` lands an iOS reaction on an earlier bubble: a round badge mostly above the message on its outer top corner (left on your blue bubbles, right on theirs), grey for theirs and blue for yours, with a two-dot tail touching the corner; the message steps down to make room; split sentences as above.
+Short threads sit under the header and
 auto-scroll once the screen fills, as in Messages.
 
 **Editorial end card** (`end_card.layout: "editorial"`): the brand's own type system instead
@@ -142,5 +141,9 @@ thread; real conversations open with it and the clock is read from it.
 5. **Chromium on Windows/Linux draws Segoe/Noto emoji** and the render reads fake instantly.
 6. **BSD `mktemp -t name`** (no XXXXXX) fails on GNU/Git Bash; use a template.
 7. **Short threads were bottom-aligned** with an empty screen above; Messages top-aligns them.
-8. **The generic badge end card looked the same for every brand.** Use the editorial layout
+8. **Sounds snap to the picture, not the plan.** The page fires on time, but the screencast
+   delivered a tapback ~0.6 s late in one capture. `record-chat.js` now finds the frame where
+   each bubble/reaction appears (changed-pixel count in the chat area) and moves its sound there.
+9. **No push-in on the link.** It read as a camera move a phone recording can't make; removed.
+10. **The generic badge end card looked the same for every brand.** Use the editorial layout
    with the brand's fonts (or named free stand-ins).

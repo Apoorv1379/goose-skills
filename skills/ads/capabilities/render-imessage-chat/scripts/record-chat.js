@@ -66,7 +66,6 @@ const TIMING = {
   max_type: 2.00,
   scroll_ms: 300,     // smooth auto-scroll duration after each beat
   tapback_gap: 0.70,  // dwell after a tapback reaction lands
-  link_zoom: 1.10,    // gentle push-in on a rich link while it dwells (1 = off)
 };
 
 function isEmojiOnly(text) {
@@ -128,10 +127,6 @@ function buildTimeline(thread, T) {
     } else if (m.type === 'attachment') {
       TL.push({ t: +t.toFixed(2), kind: 'pop', id: m.id, sfx: isSelf(m.from) ? 'send' : 'receive' });
       scrollAfter(t);
-      if (T.link_zoom > 1 && T.attach_dwell >= 2.4) {
-        TL.push({ t: +(t + 0.55).toFixed(2), kind: 'zoom-in', id: m.id, scale: T.link_zoom, dur: 700 });
-        TL.push({ t: +(t + T.attach_dwell - 0.55).toFixed(2), kind: 'zoom-out', dur: 450 });
-      }
       t += T.attach_dwell;
     } else if (m.type === 'tapback') {
       // A reaction lands on an earlier bubble (iOS "tapback"); soft receive sound if it's theirs.
@@ -213,14 +208,24 @@ function injectedStyle({ zoom, logicalH, theme, bgCss }) {
       font-size: 22px; font-weight: 300; color: ${chevron}; line-height: 1;
     }
     img.ae { width: 1.2em; height: 1.2em; vertical-align: -0.22em; display: inline-block; }
-    .tapback { position: absolute; top: -16px; width: 30px; height: 30px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center; font-size: 15px; z-index: 3;
-      border: 2px solid ${dark ? '#000' : '#fff'}; animation: bubble-grow 220ms cubic-bezier(0.2,0.8,0.2,1) both; }
-    .tapback.on-sent { left: -14px; }
-    .tapback.on-received { right: -14px; }
+    /* iOS tapback: a round reaction bubble sitting mostly ABOVE the reacted message, on its
+       outer top corner (left on your blue bubbles, right on theirs), with a two-dot tail
+       pointing down at the message. Theirs is grey, yours is blue. */
+    .tapback { position: absolute; top: -34px; width: 38px; height: 38px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; z-index: 3;
+      box-shadow: 0 0 0 2.5px ${dark ? '#000' : '#fff'};
+      animation: bubble-grow 240ms cubic-bezier(0.2,0.8,0.2,1.15) both; }
+    .tapback.on-sent { left: -24px; transform-origin: 70% 90%; }
+    .tapback.on-received { right: -24px; transform-origin: 30% 90%; }
+    .tapback::before, .tapback::after { content: ''; position: absolute; border-radius: 50%;
+      background: inherit; box-shadow: 0 0 0 2px ${dark ? '#000' : '#fff'}; }
+    .tapback.on-sent::before { width: 9px; height: 9px; right: -1px; bottom: -2px; }
+    .tapback.on-sent::after  { width: 4.5px; height: 4.5px; right: -6px; bottom: -7px; }
+    .tapback.on-received::before { width: 9px; height: 9px; left: -1px; bottom: -2px; }
+    .tapback.on-received::after  { width: 4.5px; height: 4.5px; left: -6px; bottom: -7px; }
     .tapback.theirs { background: ${dark ? '#3a3a3c' : '#e9e9eb'}; }
     .tapback.mine { background: #0a84ff; }
-    .tapback img.ae { width: 17px; height: 17px; vertical-align: 0; }
+    .tapback img.ae { width: 21px; height: 21px; vertical-align: 0; position: relative; z-index: 1; }
   </style>`;
 }
 
@@ -293,21 +298,8 @@ function makeDriverScript(timeline, emojiMap = {}) {
       tb.className = 'tapback ' + (ev.self ? 'mine' : 'theirs') + (onSent ? ' on-sent' : ' on-received');
       tb.appendChild(emojiNode(ev.emoji));
       b.style.position = 'relative';
-      row.style.marginTop = '14px';
+      row.style.marginTop = '36px';  // the message steps down to make room, as in Messages
       b.appendChild(tb);
-    }
-
-    function zoomTo(id, scale, durMs) {
-      const frame = document.querySelector('.iphone-frame') || document.body;
-      frame.style.transition = 'transform ' + durMs + 'ms cubic-bezier(0.4, 0, 0.2, 1)';
-      if (id) {
-        const el = findRow(id);
-        const fr = frame.getBoundingClientRect(), r = el.getBoundingClientRect();
-        const ox = ((r.left + r.width / 2) - fr.left) / fr.width * 100;
-        const oy = ((r.top + r.height / 2) - fr.top) / fr.height * 100;
-        frame.style.transformOrigin = ox + '% ' + oy + '%';
-      }
-      frame.style.transform = 'scale(' + scale + ')';
     }
 
     function smoothScroll(durMs) {
@@ -375,8 +367,6 @@ function makeDriverScript(timeline, emojiMap = {}) {
           case 'composer-clear': clearComposer(); break;
           case 'scroll':         smoothScroll(ev.dur); break;
           case 'tapback':        addTapback(ev); break;
-          case 'zoom-in':        zoomTo(ev.id, ev.scale, ev.dur); break;
-          case 'zoom-out':       zoomTo(null, 1, ev.dur); break;
           case 'noop':           break;
         }
       }
@@ -436,6 +426,36 @@ async function appleEmojiMap(texts) {
     if (!map[g]) console.warn(`emoji  ${g} (${full}): no Apple glyph found, system font used`);
   }
   return map;
+}
+
+function snapCuesToPicture(cues, mp4) {
+  const W = 135, H = 240, FPS = 30;
+  const top = Math.round(H * 0.10), bot = Math.round(H * 0.86);   // chat area, not the composer
+  const buf = execSync(`ffmpeg -v error -i "${mp4}" -vf "scale=${W}:${H},format=gray" -f rawvideo -`, { maxBuffer: 1 << 30 });
+  const n = Math.floor(buf.length / (W * H));
+  const diff = new Float64Array(n);
+  for (let f = 1; f < n; f++) {
+    // Count pixels that changed visibly: a small grey bubble on white moves few levels on
+    // average but flips a clear block of pixels.
+    let cnt = 0;
+    for (let y = top; y < bot; y++) { const o = y * W, a = f * W * H + o, b = (f - 1) * W * H + o;
+      for (let x = 0; x < W; x++) if (Math.abs(buf[a + x] - buf[b + x]) > 12) cnt++; }
+    diff[f] = cnt;
+  }
+  const lags = [];
+  const out = cues.map(c => {
+    const f0 = Math.max(1, Math.round((c.t - 0.05) * FPS)), f1 = Math.min(n - 1, Math.round((c.t + 0.9) * FPS));
+    for (let f = f0; f <= f1; f++) if (diff[f] >= 25) {
+      const seen = f / FPS - 1 / FPS / 2;          // change first visible between frames f-1 and f
+      lags.push(Math.round((seen - c.t) * 1000));
+      return { ...c, t: +Math.max(c.t - 0.05, seen).toFixed(3), planned: c.t };
+    }
+    lags.push(null);
+    return c;                                      // nothing detected: keep the planned time
+  });
+  const found = lags.filter(x => x != null);
+  console.log(`sfx  → snapped ${found.length}/${cues.length} cues to the picture; capture lag ${Math.min(...found)}..${Math.max(...found)} ms`);
+  return out;
 }
 
 function buildCueList(timeline) {
@@ -535,7 +555,7 @@ async function main() {
   const logicalH = Math.round(OUT_H / ZOOM);
   let html = renderHTML(thread, { mode: 'with-iphone-frame' });
   html = html.replace('</head>', injectedStyle({ zoom: ZOOM, logicalH, theme, bgCss }) + '\n</head>');
-  html = html.replace('</body>', makeDriverScript(timeline, await appleEmojiMap((thread.messages || []).map(m => m.text || ''))) + '\n</body>');
+  html = html.replace('</body>', makeDriverScript(timeline, await appleEmojiMap((thread.messages || []).map(m => m.text || m.emoji || ''))) + '\n</body>');
 
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'imessage-chat-'));
   const browser = await chromium.launch();
@@ -592,7 +612,11 @@ async function main() {
     `-vf "scale=${OUT_W}:${OUT_H}" -c:v libx264 -pix_fmt yuv420p -movflags +faststart "${outMp4}"`,
     { stdio: 'pipe' }
   );
-  const cues = buildCueList(timeline);
+  // Snap every sound to the frame where its bubble/reaction ACTUALLY appears in the recording.
+  // The page fires on time, but the screencast can deliver a small change (a tapback) late,
+  // so the timeline alone is not what the viewer sees.
+  const cues = snapCuesToPicture(buildCueList(timeline), outMp4);
+  fs.writeFileSync(outMp4.replace(/\.mp4$/, '.timeline.json'), JSON.stringify(timeline, null, 1));
   fs.writeFileSync(outMp4.replace(/\.mp4$/, '.sfx.json'), JSON.stringify(cues, null, 2));
   if (process.env.IMSG_KEEP_RAW) console.log(`raw  → ${videoPath}`); else fs.rmSync(tmpDir, { recursive: true, force: true });
 
