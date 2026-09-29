@@ -31,11 +31,21 @@ FAL inputs that are local files (a product image, an audio track) must be a PUBL
 URL — `fal_upload(path)` puts a local file on the fal CDN through the fal-storage-proxy
 (free) and returns that URL; the MCP `get_upload_url` → `get_download_url` presigned URL
 also works.
+
+MCP RELAY (no credentials at all). A session that only has the GooseWorks MCP connector
+(no GW_MEDIA_PROXY_TOKEN and no ~/.gooseworks/credentials.json) cannot call the proxies
+over HTTP. Then (or when GW_MEDIA_VIA=mcp) every paid call is RELAYED through the agent:
+the script writes the exact MCP tool call to working/mcp-requests/<kind>-<hash>.json and
+exits with code 3; the agent makes it (data_post_provider [+ job_get] for fal/ElevenLabs,
+media_upload for a local file), saves the result JSON where the request says, and
+re-runs the same command. Same server proxy, same price, billed to GW_PROJECT_ID.
+GW_MEDIA_VIA=proxy forces the HTTP path.
 """
 import hashlib
 import json
 import os
 import pathlib
+import sys
 import time
 import urllib.request
 import uuid
@@ -77,6 +87,44 @@ def _cfg():
             f"sandbox) or log in with the GooseWorks CLI (writes {_CREDS_PATH}).")
     c = json.loads(p.read_text())
     return c["api_base"].rstrip("/"), c["api_key"], c.get("agent_id")
+
+
+RELAY_EXIT = 3
+
+
+def relay_mode():
+    """True when paid calls must go through the agent's MCP tools instead of HTTP: no
+    sandbox proxy token and no CLI credentials (or GW_MEDIA_VIA=mcp)."""
+    v = os.environ.get("GW_MEDIA_VIA", "").strip().lower()
+    if v == "mcp":
+        return True
+    if v in ("proxy", "http", "cli"):
+        return False
+    if os.environ.get("GW_MEDIA_PROXY_TOKEN"):
+        return False
+    return not pathlib.Path(os.path.expanduser(_CREDS_PATH)).exists()
+
+
+def _relay(kind, tool, args, then, extra=None):
+    """Return the saved result of this exact MCP call, or write the call and exit(3)."""
+    pid = os.environ.get("GW_PROJECT_ID")
+    if tool.startswith("data_"):
+        if not pid:
+            raise SystemExit("GW_PROJECT_ID is not set. Every paid call names the video project so its "
+                             "cost is recorded on it: export GW_PROJECT_ID=<project_id> and re-run.")
+        args = dict(args, project_id=pid)
+    key = hashlib.sha256(json.dumps({"tool": tool, "args": args}, sort_keys=True).encode()).hexdigest()[:16]
+    d = pathlib.Path(os.environ.get("GW_RELAY_DIR", "working/mcp-requests"))
+    d.mkdir(parents=True, exist_ok=True)
+    req, res = d / f"{kind}-{key}.json", d / f"{kind}-{key}.result.json"
+    if res.exists():
+        return json.loads(res.read_text())
+    req.write_text(json.dumps({"tool": tool, "args": args, **(extra or {}), "then": then,
+                               "save_result_to": str(res)}, indent=1, ensure_ascii=False))
+    print("\n[mcp-relay] %s needs an MCP tool call (no GooseWorks credentials on this machine):\n"
+          "  1. call %s with the args in %s\n  2. %s\n  3. save that JSON to %s\n"
+          "  4. re-run this same command\n" % (kind, tool, req, then, res), file=sys.stderr)
+    sys.exit(RELAY_EXIT)
 
 
 def _params(tok, agent, project_id=None):
@@ -324,6 +372,13 @@ def _fal_run(model_path, payload, timeout_s=None, poll_s=3, new_take=False,
     body, so a resumed run with re-uploaded inputs re-attaches to the job it already
     paid for. If that job's result has expired upstream the poll fails: retry with
     new_take=True."""
+    if relay_mode():
+        args = {"provider": "fal", "path": model_path, "body": payload}
+        if input_digest:
+            args["idempotency_key"] = input_digest
+        return _relay("fal", "data_post_provider", args,
+                      "poll job_get { job_id } from the reply until status is complete; the result is "
+                      "job_get's result.output (fal's JSON with the media URLs)")
     if timeout_s is None:
         timeout_s = default_poll_timeout(model_path)
     api_base, tok, agent = _cfg()
@@ -447,6 +502,11 @@ def fal_whisper(audio_url, language="en", **kw):
 
 def eleven_music(prompt, music_length_ms, out_path, force_instrumental=True, timeout_s=180):
     """ElevenLabs Music through the proxy → writes the mp3 to out_path, returns it."""
+    if relay_mode():
+        r = _relay("elevenlabs", "data_post_provider",
+                   {"provider": "elevenlabs", "path": "/v1/music", "body": {"prompt": prompt, "music_length_ms": int(music_length_ms), "force_instrumental": force_instrumental}},
+                   "the result is the tool's JSON reply (it carries download_url)")
+        return download(r["download_url"], out_path)
     api_base, tok, agent = _cfg()
     url = api_base + "/api/internal/elevenlabs-proxy/v1/music"
     t0 = time.time()
@@ -472,6 +532,19 @@ def fal_upload(path, content_type=None):
     Use it for any fal input that is a local file (a character still, a take's audio used
     as a voice reference, a reel's audio for Whisper). The proxy swaps in the managed key
     for the short-lived storage token; the upload itself goes straight to the CDN host."""
+    if relay_mode():
+        import mimetypes
+        p = pathlib.Path(path).resolve()
+        mime = content_type or mimetypes.guess_type(p.name)[0] or "application/octet-stream"
+        kind = mime.split("/")[0] if mime.split("/")[0] in ("image", "audio", "video") else "document"
+        r = _relay("upload", "media_upload",
+                   {"brand_id": os.environ.get("GW_BRAND_ID", "<brand_id>"), "scope": "video_project",
+                    "scope_id": os.environ.get("GW_PROJECT_ID", "<project_id>"), "kind": kind,
+                    "source": {"type": "bytes", "filename": p.name, "content_base64": "<base64 of local_file>"}},
+                   "the result is {\"url\": <the uploaded media's url>} (an https url fal can fetch). Over ~8 MB, "
+                   "use source {type: file, filename} + PUT the bytes + media_confirm instead",
+                   extra={"local_file": str(p), "bytes": p.stat().st_size, "mime": mime})
+        return r["url"]
     import mimetypes
     api_base, tok, agent = _cfg()
     p = pathlib.Path(path)
@@ -500,6 +573,11 @@ def download(url, out_path):
 
 def eleven_tts(text, voice_id, out_path, model_id="eleven_v3", timeout_s=180):
     """ElevenLabs text-to-speech (VO) through the proxy → writes mp3 to out_path."""
+    if relay_mode():
+        r = _relay("elevenlabs", "data_post_provider",
+                   {"provider": "elevenlabs", "path": "/v1/text-to-speech/%s" % voice_id, "body": {"text": text, "model_id": model_id}},
+                   "the result is the tool's JSON reply (it carries download_url)")
+        return download(r["download_url"], out_path)
     api_base, tok, agent = _cfg()
     url = api_base + f"/api/internal/elevenlabs-proxy/v1/text-to-speech/{voice_id}"
     t0 = time.time()
