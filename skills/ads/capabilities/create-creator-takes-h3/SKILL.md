@@ -11,18 +11,22 @@ across several takes.
 
 | Script | What | Cost |
 |---|---|---|
+| `make_character.py` | build the creator still from the user's choices, one shot | **paid** (one still, cents) |
 | `plan_takes.py` | split lines into takes (under 15s each) and write the prompts | free |
 | `run_takes.py` | generate the takes, dry run unless `--go` | **paid** (H3 Max, ~$0.16/s at 1080P) |
 | `join_takes.py` | join into one creator track | free |
 | `align_beats.py` | move line timings onto the spoken words | free |
 
-`character-prompt.json` is a realism prompt for making the character still (use it with
-`create-image-fal`, e.g. `fal-ai/nano-banana-2`): fill its slots, generate 2–4 options, let the
-user pick one.
+`character-prompt.json` is the realism prompt for the character still. **Do not fill it by
+hand.** `make_character.py` fills every slot and calls `create-image-fal`, because a
+hand-filled prompt left slots blank and produced the composite face the formula warns about,
+and different runs filled it differently.
 
 ## Run
 
 ```bash
+# the user's person, one command, one still. --dry-run prints the prompt and spends nothing.
+python make_character.py --age 34 --gender woman --ethnicity "South Asian"     --hair "shoulder-length black hair, slightly frizzy at the crown, one side tucked back"     --wardrobe "plain charcoal crew-neck t-shirt, slightly creased"     --scene "a lived-in home office, a bookshelf softly out of focus behind her"     --out work/character        # writes character.png AND character.json
 python plan_takes.py --beats cutlist.json --character character.json --out work/takes
 python run_takes.py --spec work/takes/takes.json                  # dry run: plan + estimate
 python run_takes.py --spec work/takes/takes.json --only t1 --go   # after the user approves
@@ -33,7 +37,7 @@ python align_beats.py --beats cutlist.json --words work/creator.words.json \
     --out cutlist.aligned.json --max-end <creator.mp4 length>
 ```
 
-`character.json`:
+`character.json`, which `make_character.py` writes for you:
 
 ```json
 {"image": "character.png",
@@ -42,8 +46,9 @@ python align_beats.py --beats cutlist.json --words work/creator.words.json \
  "delivery": "<the tone the user chose>. Whatever the tone, keep the face relaxed: an over-energetic read can give a constant grin and busy hands that read as AI."}
 ```
 
-**The user chooses who the creator is.** Ask for gender, age and look (or ethnicity) before
-making any still, and build `identity` from their answer. There is no default person: never
+**The user chooses who the creator is.** Ask for age, gender and ethnicity, plus hair,
+wardrobe and room, then pass them to `make_character.py`. Those six are required arguments, so
+there is nothing to forget and nothing to invent. There is no default person: never
 copy a look from an example, a reference build or a demo reel.
 
 This is now enforced, not advisory. `plan_takes.py` rejects an `identity` that is still a
@@ -98,3 +103,18 @@ These are the user's calls (the recipe's `choices`), never defaults of this atom
     use another brand's creator footage.
 11. **Seeds are pinned.** Re-running an unchanged take repays for the same clip. Existing
     take files are skipped.
+
+## Failure modes
+
+1. **A hand-filled realism prompt.** `character-prompt.json` sat in this directory read by no
+   script, with the instruction "fill its slots, generate 2-4 options, let the user pick one".
+   Slots got left blank, every run filled them differently, and the documented workflow was
+   iterative by design. Use `make_character.py`; it refuses a blank slot and an out-of-range age.
+2. **A guard that rejects everything.** The age and gender guards in `plan_takes.py` shipped
+   with a literal backspace byte where `\b` was meant, so every identity failed and the skill
+   could not run at all. A guard is not tested by reading it: run it against one input it must
+   ACCEPT and one it must REJECT. `grep -c $'\x08' <file>` catches this class.
+3. **Iterating the avatar.** This is a template a customer runs, so the still has to land on the
+   first generation. When it does not, fix the inputs (`--hair`, `--wardrobe`, `--scene`, or a
+   different `--seed`, which reshuffles which three skin imperfections are asked for) rather than re-rolling the same brief; an unchanged payload
+   with a pinned seed reproduces the same image and wastes the spend.
