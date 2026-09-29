@@ -156,9 +156,14 @@ def main():
     ap.add_argument("--expression", default="mid-sentence, mouth slightly open on a word, eyes "
                                             "steady on the lens, no held smile")
     ap.add_argument("--face-fill", default="45 to 55 percent")
-    # fal-ai/nano-banana is the fal SLUG. nano-banana-2 is an internal engine label and fal
-    # rejects it outright, which cost a run before anything generated.
-    ap.add_argument("--model", default="fal-ai/nano-banana")
+    # fal-ai/nano-banana-pro is NB2 Pro, the model this realism formula was written for.
+    # Two wrong turns cost a generation each: "nano-banana-2" is an internal engine label fal
+    # rejects outright, and plain "fal-ai/nano-banana" is the OLDER model, which produced a
+    # face the reviewer called AI-generated on sight.
+    ap.add_argument("--model", default="fal-ai/nano-banana-pro")
+    # 4K, not the 1K default. The formula demands pores "legible, not implied"; at 1K the face
+    # is ~700px wide and a pore is sub-pixel, so the whole skin system renders as smooth skin.
+    ap.add_argument("--resolution", default="4K", choices=["1K", "2K", "4K"])
     ap.add_argument("--aspect", default="9:16")
     ap.add_argument("--seed", type=int, default=None)
     ap.add_argument("--out", required=True, type=pathlib.Path)
@@ -179,7 +184,8 @@ def main():
         return
 
     png = out / "character.png"
-    payload = {"prompt": prompt, "negative_prompt": negative, "aspect_ratio": a.aspect}
+    payload = {"prompt": prompt, "negative_prompt": negative, "aspect_ratio": a.aspect,
+               "resolution": a.resolution}
     if a.seed is not None:
         payload["seed"] = a.seed
     r = subprocess.run([sys.executable, str(HERE.parent.parent / "create-image-fal" / "scripts"
