@@ -28,8 +28,9 @@ re-submits the job (inputs re-uploaded -> new URLs) re-attaches to it instead of
 paying twice (GOOSE-3729).
 
 FAL inputs that are local files (a product image, an audio track) must be a PUBLIC
-URL — the orchestrator hosts them via the MCP `get_upload_url` → `get_download_url`
-presigned URL and passes that URL in; this module does NOT do MCP uploads.
+URL — `fal_upload(path)` puts a local file on the fal CDN through the fal-storage-proxy
+(free) and returns that URL; the MCP `get_upload_url` → `get_download_url` presigned URL
+also works.
 """
 import hashlib
 import json
@@ -462,6 +463,33 @@ def eleven_music(prompt, music_length_ms, out_path, force_instrumental=True, tim
         raise
     pathlib.Path(out_path).write_bytes(r.content)
     return out_path
+
+
+def fal_upload(path, content_type=None):
+    """Upload a LOCAL file to the fal CDN through the GooseWorks fal-storage-proxy and
+    return its public https url (v3b.fal.media/...). Free: storage calls are not billed.
+
+    Use it for any fal input that is a local file (a character still, a take's audio used
+    as a voice reference, a reel's audio for Whisper). The proxy swaps in the managed key
+    for the short-lived storage token; the upload itself goes straight to the CDN host."""
+    import mimetypes
+    api_base, tok, agent = _cfg()
+    p = pathlib.Path(path)
+    ctype = content_type or mimetypes.guess_type(p.name)[0] or "application/octet-stream"
+    r = requests.post(api_base + "/api/internal/fal-storage-proxy/storage/auth/token",
+                      params={**_params(tok, agent), "storage_type": "fal-cdn-v3"},
+                      json={}, timeout=60)
+    r.raise_for_status()
+    t = r.json()
+    with open(p, "rb") as f:
+        up = requests.post(t["base_url"].rstrip("/") + "/files/upload", data=f, timeout=600,
+                           headers={"Authorization": f"{t['token_type']} {t['token']}",
+                                    "Content-Type": ctype, "X-Fal-File-Name": p.name})
+    up.raise_for_status()
+    url = up.json().get("access_url")
+    if not url:
+        raise RuntimeError(f"fal upload returned no url for {p.name}: {up.text[:300]}")
+    return url
 
 
 def download(url, out_path):
