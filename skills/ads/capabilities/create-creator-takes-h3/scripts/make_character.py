@@ -76,6 +76,31 @@ IMPERFECTIONS = [
     "flaking dry skin at the outer edge of one nostril",
 ]
 
+# The formula's own capture grammar is a STUDIO PORTRAIT: medium format film, a raking
+# side-top key at 45 degrees, shallow depth of field, film grain. Its SKIN engine is right and
+# measures in range (detail 6.9-11.2 against 6.2-10.6 for real reference footage), but the
+# capture grammar is what makes a correct-skinned face still read as generated: real creator
+# footage is a phone, and it is flatter, deeper-focused and much less saturated.
+#
+# Measured 2026-09-30, real references vs our renders (mean per-pixel saturation):
+#     Salary Transparent 0.262 · Chris Klemens 0.182 · Arcads real actor 0.135
+#     ours: man46 0.364 · man31 0.217 · woman27 0.507
+# The woman-27 render, the one rejected first by eye, is ~3x the Arcads reference. So
+# "phone" replaces the capture sentences only, and never touches the skin block.
+CAPTURE = {
+    "studio": "",   # the formula as written; keep for stills that really are portraits
+    "phone": (
+        "Shot on a recent phone's front camera, handheld feel but held still, at the subject's "
+        "own eye level. Ordinary room light doing all the work, coming mostly from one window "
+        "or one ceiling fitting that is visible or clearly motivated in frame - no studio key, "
+        "no softbox, no rim light, no ring light. DEEP focus: the room behind the subject is "
+        "readable, not melted into bokeh. Muted, slightly desaturated colour, the way an "
+        "unedited phone clip looks before any grade - no teal-and-orange, no lifted vibrance, "
+        "no colour pop. Slightly uneven white balance. Faint sensor noise in the shadows rather "
+        "than film grain. Mild wide-lens distortion near the frame edge. Nothing in the image "
+        "looks lit or art-directed; it looks recorded."),
+}
+
 AGE_NOTES = [
     (0, 25, "smooth forehead with expression lines only when the brow moves, full lip volume"),
     (25, 35, "the first fixed line between the brows, faint crow's feet at rest"),
@@ -140,7 +165,26 @@ def build(a):
     if blank:
         sys.exit("these slots are empty: %s. A blank slot is how the composite face gets in."
                  % ", ".join(blank))
-    return spec["prompt"].format(**slots), spec["negative_prompt"], ident, slots
+    prompt = spec["prompt"].format(**slots)
+    if a.capture == "phone":
+        # Replace the three studio-capture sentences; the skin block after them is untouched.
+        prompt = prompt.replace(
+            "Photorealistic, shot on medium format film. Raking side-top light at 45 degrees "
+            "reveals every pore as a 3D crater with its own micro-shadow. Shallow depth of "
+            "field - critical sharpness on the eyes and the skin of the face, gentle optical "
+            "falloff beginning behind the head.",
+            "Photorealistic. " + CAPTURE["phone"] + " The light still rakes across the skin "
+            "enough to give every pore its own micro-shadow, and the eyes and facial skin are "
+            "the sharpest thing in frame.")
+        prompt = prompt.replace(
+            "Fine organic film grain throughout. Zero digital sharpening - all sharpness is "
+            "optical.",
+            "Faint sensor noise throughout, heavier in the shadows. Zero digital sharpening.")
+        neg = spec["negative_prompt"] + (", saturated colour, vibrant, colour graded, teal and "
+              "orange, HDR, studio lighting, softbox, rim light, bokeh background, shallow "
+              "depth of field, cinematic grade, glamour lighting, film grain overlay")
+        return prompt, neg, ident, slots
+    return prompt, spec["negative_prompt"], ident, slots
 
 
 def main():
@@ -167,6 +211,8 @@ def main():
     # Two wrong turns cost a generation each: "nano-banana-2" is an internal engine label fal
     # rejects outright, and plain "fal-ai/nano-banana" is the OLDER model, which produced a
     # face the reviewer called AI-generated on sight.
+    ap.add_argument("--capture", default="phone", choices=["phone", "studio"],
+                    help="phone (default) reads as recorded; studio is the formula as written")
     ap.add_argument("--model", default="fal-ai/nano-banana-pro")
     # 4K, not the 1K default. The formula demands pores "legible, not implied"; at 1K the face
     # is ~700px wide and a pore is sub-pixel, so the whole skin system renders as smooth skin.
