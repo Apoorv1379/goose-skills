@@ -18,6 +18,24 @@ punchline is a peer's reaction in a DM. The template recipe (DB) supplies the
 per-brand `thread` + `timeline` + `end_card` config and gates the paid music call
 (music bed → `create-music-elevenlabs`) to its own capability.
 
+## Choices
+
+The recipe asks these before any paid step; this renderer only draws what the config says. The
+demo's value is an example, never a default:
+
+- **`question_angle`** — the kind of question (symptom "why is this happening", how-to,
+  recommendation, comparison). Sets the `user-text` message, the matching `composer-type` text
+  in the timeline, and the `assistant` answer. Demo: a "why is my stomach so bloated at 47?"
+  symptom question.
+- **`asker`** — whose voice the question is in (the core customer, a busy parent, a
+  first-timer, a skeptic). Sets the `user-text` wording + `keyboard.suggestions`. Demo: a woman
+  in perimenopause.
+- **`product_in_thread`** — whether a real product photo appears in the chat after the answer.
+  Demo: no (text only; the product lands on the end card). The mockup has a `user-image`
+  message type but no assistant-side image yet — a product image after the answer is a gap.
+- **`music`** — the bed passed to `stitch.sh --music` (or none → SFX only). Demo: an
+  instrumental bed.
+
 ## What it renders
 
 One continuous take — never scene-by-scene (every reload flickers):

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """compose.py — the deterministic FREE assembler for the absurdist-explainer ad.
 
-Ports the validated compose recipe from the two reference runs (HUM "Big Chill" and
-Soteri "Eczema, the pH villain"). Given the per-scene i2v clips + the per-scene VO
+Ports the validated compose recipe from the format's two reference runs. Style-agnostic:
+the art style, narrator and music style are the recipe's choices and arrive here only as
+files. Given the per-scene i2v clips + the per-scene VO
 windows + the VO track + the music bed + a built end-card PNG + a caption .ass file,
 it renders the master mp4:
 
@@ -39,7 +40,7 @@ PRESET = "medium"
 # ---- audio mix constants (validated) ----
 VO_LOUDNORM = "loudnorm=I=-14:TP=-1.5:LRA=11"
 MUSIC_LOUDNORM = "loudnorm=I=-26:TP=-3:LRA=11"
-MUSIC_VOLUME_DEFAULT = 0.62   # Soteri 0.62 / Big Chill 0.70
+MUSIC_VOLUME_DEFAULT = 0.62   # validated range 0.62-0.70 across the reference runs
 FADE_OUT_TAIL = 1.4           # music out-fade length
 FADE_IN = 0.6                 # music in-fade length
 

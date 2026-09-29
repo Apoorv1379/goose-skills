@@ -14,7 +14,7 @@ high-production sizzle, not UGC.
 The reusable IP is **one-call-many-cuts + intercut**: dice ONE 12–15s Seedance 2.0
 hypermotion i2v into 5–6 segments (never a paid call per segment) and interleave PIL
 kinetic-typography spec cards between the cuts, capped by a real-logo end card, over a
-124 BPM bass bed.
+beat-driven music bed.
 
 This capability ships the FREE, deterministic assembly — everything between the two paid
 model calls. It is **documentation-grade + config**: the format has no runnable driver.
@@ -24,12 +24,27 @@ copied + adapted per run, not vendored.
 
 - **config.example.json** — the Soundboks worked example: hero product, 5 spec callouts,
   the 5-block Seedance prompt, per-card treatments, beat structure, end-card spec, music
-  brief, dims. Copy to `config.json` and edit.
+  brief, dims. Copy its structure to `config.json`; never its creative values. Card
+  `label`s equal their `text_cards` keys (`intro`, `spec_1`..`spec_N`, `cta`) so
+  `beat_structure.concat_order` resolves to `kinetic-movs/<key>.mp4`.
 - **PIPELINE.md** — the full config-field → step map: Phase 0 assets → Phase 1 PAID
   Seedance + music (parallel, gated) → Phase 2 FREE PIL cards → Phase 3 FREE
   dice/intercut/concat/mux → Phase 4 watch/QC. Names the atom/tool each step uses, plus
   20s/25s/30s beat-structure variants.
 - **README.md** — documents the FREE assembly (below).
+
+## Choices
+
+The calling recipe asks the user these before any paid step; this capability only assembles
+what they produced. The Soundboks values are a worked example, never defaults.
+
+- **energy** → `config.brand_voice`, Seedance block 1, `music.bpm` (demo: party, 124 BPM).
+- **environment** → Seedance blocks 3–4 (demo: beach festival deck).
+- **lighting** → Seedance blocks 2–3 (demo: dusk, magenta/blue rim).
+- **music** → `config.music.prompt` (demo: bass-driven party banger).
+
+The assembly itself is choice-agnostic: segment cut points, card order and the end card
+read only from config.
 
 ## The FREE assembly
 
@@ -72,6 +87,6 @@ FREE, $0.
 - Spec cards carry every fact (no VO); outline echoes stay ≤1.08× so nothing bleeds off
   frame; use the static Space Grotesk Bold TTF (variable renders as Regular in PIL).
 - The paid steps — the ONE Seedance 2.0 hypermotion i2v (5-block prompt with the mandatory
-  ABSOLUTE CONSTRAINTS block, or the geometry drifts) + the ElevenLabs 124 BPM bass bed —
+  ABSOLUTE CONSTRAINTS block, or the geometry drifts) + the ElevenLabs music bed —
   are separate capabilities (create-video-fal, create-music-elevenlabs); the recipe
   orchestrates them and gates the spend.

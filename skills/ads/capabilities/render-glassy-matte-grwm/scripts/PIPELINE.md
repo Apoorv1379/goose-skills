@@ -30,9 +30,10 @@ product-name beats, and the mix + captions + end card finish the master.
 
 ## 1. Lock the assets + VO  (config: `assets`, `vo`)  [PAID-or-supplied VO]
 
-Lock the creator anchor (identity + wardrobe + setting), the vanity world plate, and the hook
-keyframe (creator holding the ~5 products fanned; doubles as the payoff). Render the VO on
-ElevenLabs `eleven_v3` (`stability 0.40`, `style 0.25`), then `ffmpeg atempo=1.15` to hit a
+Lock the creator anchor (identity + wardrobe from `choices.creator`), the world plate (the
+`choices.setting` location), and the hook keyframe (creator holding the ~5 products fanned; doubles
+as the payoff). Render the VO on ElevenLabs `eleven_v3` (voice from `choices.voice`, delivery from
+`choices.tone`; `stability 0.40`, `style 0.25`), then `ffmpeg atempo=1.15` to hit a
 ~27.5s pace, or ingest a supplied mp3. **The VO is a SEPARATE track — not a native take.** Write
 the script clean (no audio tags).
 
@@ -65,8 +66,8 @@ duration when zoompan/PNG clips are in the chain.
 on-body, NOT an AI flat-lay). **PDP-verify every tagline** — the gpt-image-2 flat-lay renders
 hallucinated sublines ("SCULPT + GLOW"), which are WRONG. The cutout must match the REAL product,
 not the Seedance scene's hallucinated barrel. Playwright renders `product-card.html.tmpl` at **2×
-scale** → one card PNG per product (warm cream card, pink accent bar, cutout thumb, name, PDP
-tagline).
+scale** → one card PNG per product (a `palette.card_bg` card with a `palette.accent` bar from the
+brand kit — the demo used warm cream + pink — cutout thumb, name, PDP tagline).
 
 ## 6. Composite + mix + captions + end card → `composite_cards.py` + `build_master.py`  (config: `cards.timing`, `music`, `audio_mix`, `captions`, `end_card`)  [free assembly]
 

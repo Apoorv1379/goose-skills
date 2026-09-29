@@ -3,12 +3,13 @@
 `render-podcast-skit` is the **deterministic, $0 assembly stage** of the fake-podcast skit
 format. The paid stages — the per-line ElevenLabs with-timestamps VOs, the two base stills, the
 ~10 expression variants, and the per-line lipsync clips — are separate capabilities
-(`create-vo-elevenlabs`, `create-image-fal`, `create-video-fal`). This capability spends nothing:
+(`create-vo-elevenlabs`, `create-image-gpt-image-fal`, `create-video-fal`). This capability spends nothing:
 it takes the per-line clips + their VO timestamps + the brand wordmark and stitches the finished
 master. Re-cuts (new caption chunking, a re-timed slice, a swapped end card) reuse the existing
 clips and cost **$0**.
 
-`config.example.json` is the worked example (Ladder run-02 "Laundromat 2am", ~49s 1080×1920).
+`config.example.json` is the worked example (Ladder run-02 "Laundromat 2am", ~49s 1080×1920) —
+its tone, set and cast are that demo's choices, not defaults.
 `PIPELINE.md` maps every config block to its source step. This README documents the FREE
 assembly pieces that `render-podcast-skit` owns.
 
@@ -28,14 +29,14 @@ durations). It groups words into **≤5-word cues broken on sentence-final punct
 ## 2. Per-line clip assembly, hard-concat in script order
 
 One line = one scene = one clip. The clips are hard-concatenated in script order (scale/pad to
-1080×1920, re-encode `libx264 -preset veryfast -crf 20`), so the edit cuts on the dialogue beat.
+1080×1920, final-encode `libx264 -preset slow -crf 28`, see §4), so the edit cuts on the dialogue beat.
 No dissolves. Anchoring every still on one base upstream keeps the set pixel-identical across all
 ~22 cuts, so the many cuts read as one continuous podcast.
 
 ## 3. End card — Playwright/PIL from the real wordmark, no AI text
 
-The brand lockup is composited via **Playwright** from the brand's REAL wordmark SVG: black
-background + the brand wordmark + a CTA pill + the URL → an HTML file → a screenshot to a
+The brand lockup is composited via **Playwright** from the brand's REAL wordmark SVG: a
+background + the brand wordmark + a CTA pill (colours from the brand kit) + the URL → an HTML file → a screenshot to a
 1080×1920 PNG → a **2.5s** silent mp4. The brand text is **never** AI-rendered — a diffusion
 model garbles a wordmark.
 

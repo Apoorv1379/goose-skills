@@ -14,7 +14,20 @@ Render a designed 'value prop' video from a config: a hook sticker, then one bea
 pacing, hook, logo and end card all come from `config.json` (schema = `ad_sample.recipe.config`;
 see `config.example.json`). Nothing is hardcoded to one brand. `build_storyboard_preview.py` is an
 optional free preview gallery for the gate; `build_text_overlays.py` is optional (transparent
-text-zone PNGs for compositing claims over a motion clip).
+text-zone PNGs for compositing claims over a motion clip). Both preview scripts take their ink,
+background, brand name and logo from `shot-list.yml` `project:` or the project's `config.json`
+(neutral fallbacks otherwise). `shared/beat-templates/` are reference layouts with placeholder copy;
+the renderer does not read them.
+
+## Choices
+
+The value-prop recipe asks these of the user; this capability renders whatever the config says.
+
+- `music` — the bed under the claims, or silent (sets `music_brief`, consumed by
+  create-music-elevenlabs, not this renderer). Asked of the user; the demo used calm ambient
+  sleep music.
+- `background` — what the claims sit on (sets `palette.bg`). Asked of the user; the demo used
+  white with a navy headline. `palette.ink` comes from the brand kit.
 
 Environment: run with a **Python that has Playwright** (override the frame-render interpreter with
 `RENDER_PYTHON`); `ffmpeg` is auto-discovered (`FFMPEG` env > PATH > common prefixes). The frame

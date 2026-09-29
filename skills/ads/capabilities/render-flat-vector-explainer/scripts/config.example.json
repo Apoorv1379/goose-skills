@@ -1,5 +1,5 @@
 {
-  "_comment": "Spoiled Child 'The Perfect Morning Routine = 4 Products' \u2014 the worked example (v3 shipped recipe). Copy to config.json and edit. A flat-vector creator-character walks a countable 4-step routine, one step per beat: large corner numeral + labelled chip + tagline + the step's REAL product photo. Character scenes are Kling i2v off text-stripped clean plates (subtle motion, style-preserving negative); ALL text is an animated Remotion DOM overlay (NEVER baked); slate/grid/CTA scenes get no i2v; the closing grid is a PIL composite of real product webps. eleven_v3 full-sentence VO drives word-by-word burned captions over a VO-forward music bed. Built as a ~50s animated master, then re-cut to 30s FROM the animated master. Values lifted from the source design-brief scene table + meta.json. The runnable scripts live in the source project's working/ (see PIPELINE.md).",
+  "_comment": "Worked example (the Spoiled Child 'Perfect Morning Routine = 4 Products' build). Creative fields \u2014 character.anchor_prompt (host look), character.keyframe_variants + scenes[].keyframe_prompt + scenes[].motion (setting, poses), scenes[].vo + concept.hook_line (tone), voice.{voice_id,voice_chosen,casting_ab}, music.prompt \u2014 come from the recipe's choices (host, setting, tone, narrator_voice, music); never copy them as defaults. Brand fields (concept, brand_palette, scene grounds/accents, product_grid, overlay text, wordmark/url) are Spoiled Child's: take them from the new brand's kit and real products. Copy the STRUCTURE to config.json. A flat-vector creator-character walks a countable 4-step routine, one step per beat: large corner numeral + labelled chip + tagline + the step's REAL product photo. Character scenes are Kling i2v off text-stripped clean plates (subtle motion, style-preserving negative); ALL text is an animated Remotion DOM overlay (NEVER baked); slate/grid/CTA scenes get no i2v; the closing grid is a PIL composite of real product webps. eleven_v3 full-sentence VO drives word-by-word burned captions over a VO-forward music bed. Built as a ~50s animated master, then re-cut to 30s FROM the animated master. Values lifted from the source design-brief scene table + meta.json. The runnable scripts live in the source project's working/ (see PIPELINE.md).",
   "brand_name": "Spoiled Child",
   "concept": {
     "single_point": "The perfect morning routine is just 4 products (collagen drink, face serum, eye cream, hair treatment) \u2014 not twenty.",
@@ -21,6 +21,7 @@
     "#88B6A4",
     "#B3A7C4"
   ],
+  "_palette_comment": "brand_palette, every scenes[].overlay.ground/accent and product_grid.ground are the demo brand's hexes (Spoiled Child) \u2014 brand facts, replace with the new brand's colours; never reuse them.",
   "display_font": "Inter",
   "character": {
     "mode": "anchor-ref (fresh flat-vector \u2014 NOT a chained photoreal ref)",
@@ -231,7 +232,7 @@
   "post_production": {
     "music": {
       "default": "on",
-      "note": "lo-fi pop bed under the VO, default on"
+      "note": "music bed under the VO in the style from choices.music (demo: lo-fi pop); off if the user chose no music"
     },
     "captions": {
       "default": "on",

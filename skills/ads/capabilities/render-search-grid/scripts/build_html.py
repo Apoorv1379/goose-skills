@@ -8,18 +8,49 @@ images are base64-embedded so load is synchronous.
 Four beats (mirrors the Pinterest search-moodboard reference):
   1. SEARCH  — masonry grid (side columns drift down / middle up) behind a Pinterest
                search bar; the hook types in letter-by-letter.
-  2. CARDS   — 3 room cards slide in from the right and stack over a warm blurred backdrop.
+  2. CARDS   — 3 room cards slide in from the right and stack over a blurred backdrop
+               (stack_bg photo + optional stack_tint).
   3. FEATURES— the TOP card physically expands (box-grows) to fill the screen, then
                swipe-left -> swipe-left through the same 3 rooms, each captioned.
-  4. END     — hero card + wordmark + tagline + CTA on a warm background.
+  4. END     — hero card + wordmark + tagline + CTA on endcard.bg.
+
+Creative values (hook, rooms/captions, caret_color, endcard.bg, stack_tint) come from the
+config, which the recipe fills from the brand kit + recipe.choices (backdrop_mood). The
+Ruggable demo's red caret + warm beige gradient are ONE worked example, not defaults: when a
+CSS value is missing or still an unfilled `<input:…>` / `<brand:…>` / `{…}` placeholder, a
+NEUTRAL value is used and a WARNING is printed. Unfilled TEXT/PATH placeholders fail loudly.
 
 NOTE (free/deterministic renderer — no paid calls). The music bed (optional) is a
 separate paid step (create-music-elevenlabs); render.py muxes it on.
 
 Usage: python3 build_html.py --config config.json --out index.html
 """
-import argparse, base64, json, mimetypes
+import argparse, base64, json, mimetypes, re, sys
 from pathlib import Path
+
+# Neutral fallbacks (no demo look). Used only when the config value is missing or unfilled.
+NEUTRAL_CARET = "#2b2622"
+NEUTRAL_END_BG = "radial-gradient(120% 82% at 50% 42%, #e6e4e1 0%, #c9c6c2 100%)"
+NEUTRAL_STACK_TINT = "radial-gradient(122% 82% at 50% 45%, rgba(0,0,0,.18) 0%, rgba(0,0,0,.62) 100%)"
+
+
+def is_unfilled(v):
+    """True for None/empty or a recipe placeholder left in place (`<input:…>`, `<brand:…>`, `{…}`)."""
+    if v is None:
+        return True
+    if not isinstance(v, str):
+        return False
+    t = v.strip()
+    return (not t) or t.startswith("<") or "<input:" in t or "<brand:" in t or bool(re.match(r"^\{[^}]*\}", t))
+
+
+def css_value(v, fallback, name):
+    if is_unfilled(v) or any(c in v for c in ";{}<>"):
+        shown = "missing" if v in (None, "") else f"unfilled/invalid ({v!r})"
+        print(f"WARNING: {name} is {shown} — using neutral {fallback!r}. "
+              f"Set it from the brand kit / recipe choices.", file=sys.stderr)
+        return fallback
+    return v
 
 
 def datauri(path, base):
@@ -41,9 +72,23 @@ def main():
     C = cfg.get("canvas", {})
     W, H = C.get("width", 1080), C.get("height", 1920)
     DUR = C.get("duration_ms", 18000)
+    # Unfilled text/path placeholders are a binding bug, not a style choice — stop loudly.
+    ec0 = cfg.get("endcard", {}) or {}
+    unfilled = [k for k, v in (("hook", cfg.get("hook")), ("stack_bg", cfg.get("stack_bg")),
+                               ("endcard.hero", ec0.get("hero")), ("endcard.wordmark", ec0.get("wordmark")),
+                               ("endcard.tagline", ec0.get("tagline")), ("endcard.cta", ec0.get("cta")))
+                if is_unfilled(v)]
+    for k in ("grid_cols", "rooms"):
+        if not isinstance(cfg.get(k), list):
+            unfilled.append(k)
+    if unfilled:
+        sys.exit("ERROR: config has unfilled values: " + ", ".join(unfilled) +
+                 " — bind them from the brand's real assets/copy (see config.example.json for the shape).")
+
     hook = cfg["hook"]
-    placeholder = cfg.get("placeholder", "Search for anything")
-    caret_color = cfg.get("caret_color", "#c8102e")
+    placeholder = cfg.get("placeholder") or "Search for anything"
+    caret_color = css_value(cfg.get("caret_color"), NEUTRAL_CARET, "caret_color")
+    stack_tint = css_value(cfg.get("stack_tint"), NEUTRAL_STACK_TINT, "stack_tint") if "stack_tint" in cfg else NEUTRAL_STACK_TINT
 
     # 3 columns of masonry tiles (side cols drift down, middle up)
     cols = cfg["grid_cols"]
@@ -73,7 +118,7 @@ def main():
         f'<div class="feat-scrim"></div><div class="feat-cap" id="cap{i}">{r["caption"]}</div></div>'
         for i, r in enumerate(rooms))
 
-    ec_bg = ec.get("bg", "radial-gradient(120% 82% at 50% 42%, #ecdfce 0%, #d9c6ac 100%)")
+    ec_bg = css_value(ec.get("bg"), NEUTRAL_END_BG, "endcard.bg")
 
     html = f"""<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
 <style>
@@ -101,10 +146,10 @@ def main():
   #mag svg {{ width:52px; height:52px; }}
 
   /* beat 2: card stack */
-  #beat-stack {{ opacity:0; overflow:hidden; background:#6f432b; }}
+  #beat-stack {{ opacity:0; overflow:hidden; background:#2a2826; }}
   #stack-bg {{ position:absolute; inset:-80px; background-image:url('{uri(stack_bg)}'); background-size:cover; background-position:center;
     filter:blur(42px) brightness(.72) saturate(1.25); transform:scale(1.25); }}
-  #stack-tint {{ position:absolute; inset:0; background:radial-gradient(122% 82% at 50% 45%, rgba(96,58,36,.20) 0%, rgba(48,26,15,.66) 100%); }}
+  #stack-tint {{ position:absolute; inset:0; background:{stack_tint}; }}
   #stack-cards {{ position:absolute; inset:0; }}
   .stackcard {{ position:absolute; left:90px; width:900px; height:392px; border-radius:26px; overflow:hidden;
     box-shadow:0 26px 60px rgba(30,18,10,.34); will-change:transform,opacity,width,height; }}

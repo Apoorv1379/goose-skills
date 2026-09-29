@@ -1,5 +1,5 @@
 {
-  "_comment": "Hype and Vice 'Game Day Girls' cinematic music-video — the worked example. Copy to config.json and edit. A ~28s 35mm-film-look (FILM_TAILGATE_35MM) 9:16 LIVE-ACTION-STYLE short film cut to an original anthem (NO separate VO). Pipeline: (1) ElevenLabs music_v1 anthem from song.structure -> mp3 + music_metadata.json (words_timestamps) -> build_word_timestamps.py -> words.json; (2) one Higgsfield gpt_image_2 keyframe per tableau (2k, 2:3~=9:16, one look_pack); (3) one Higgsfield kling3_0 i2v clip per tableau; (4) beat-locked hard-cut assembly + anthem mux (-14 LUFS) + cinematic lower-third serif captions via sync-captions-to-music (music-video preset, --placement low). Master 1080x1920. See scripts/PIPELINE.md for the source scripts (clients/hype-and-vice/ad-runs/run-01-game-day-girls/working/).",
+  "_comment": "Worked example (the Hype and Vice 'Game Day Girls' build: four young college women, an American college town on game day in autumn golden hour, a triumphant indie-pop anthem with a confident female lead, one game day morning -> peak -> twilight). Creative fields — brand_name, campaign, title, song.prompt, song.bpm, song.global_styles, song.structure[].lines, song.hook_line, song.hook_word, look_pack.name, look_pack.style_opener (place + light clause), look_pack.palette_anchors, look_pack.continuity_anchor, tableaux[] (role, lyric_anchor, keyframe_prompt, motion_hint, caption), captions.accent_words, end_card.wordmark_text/wordmark_font/tagline_text/tagline_font/background/brand_asset — come from the recipe's choices (song_style, vocalist, cast, setting, story_arc) and the brand kit; never copy them as defaults. Copy the structure and field names only. Provider note: the demo ran keyframes/clips on Higgsfield; the recipe runs the same models on fal (create-image-gpt-image-fal / create-video-fal). A ~28s 35mm-film-look (FILM_TAILGATE_35MM) 9:16 LIVE-ACTION-STYLE short film cut to an original anthem (NO separate VO). Pipeline: (1) ElevenLabs music_v1 anthem from song.structure -> mp3 + music_metadata.json (words_timestamps) -> build_word_timestamps.py -> words.json; (2) one Higgsfield gpt_image_2 keyframe per tableau (2k, 2:3~=9:16, one look_pack); (3) one Higgsfield kling3_0 i2v clip per tableau; (4) beat-locked hard-cut assembly + anthem mux (-14 LUFS) + cinematic lower-third serif captions via sync-captions-to-music (music-video preset, --placement low). Master 1080x1920. See scripts/PIPELINE.md for the source scripts (clients/hype-and-vice/ad-runs/run-01-game-day-girls/working/).",
   "brand_name": "Hype and Vice",
   "campaign": "every day is game day",
   "title": "Game Day Girls",
@@ -70,7 +70,7 @@
       }
     ],
     "global_styles": {
-      "_note": "music_metadata.composition_plan.positive_global_styles / negative_global_styles — the top-level vibe.",
+      "_note": "music_metadata.composition_plan.positive_global_styles / negative_global_styles — the top-level vibe. Demo values (indie pop + female vocal, negating rap/male vocal): write these from choices.song_style + choices.vocalist, never copy.",
       "positive": ["indie pop", "cinematic", "anthem", "confident female pop vocal", "triumphant", "120 bpm", "acoustic guitar"],
       "negative": ["rap", "male vocal", "slow tempo", "lo-fi", "dark"]
     },
@@ -82,7 +82,7 @@
   },
   "look_pack": {
     "name": "FILM_TAILGATE_35MM",
-    "_comment": "ONE look pack held across all 14 beats so they read as shot by one cinematographer. The style_opener (the 35mm-film clause) is prepended to EVERY keyframe prompt; the negative_tail is appended. This is the divider from the paper-craft molecule: a NAMED FILM STOCK + grain + flares + golden hour + handheld, hard-negating the AI-glossy sheen. The continuity_anchor (the branded garment in every frame) stitches 14 shots into one ad.",
+    "_comment": "ONE look pack held across all N beats (14 in the demo) so they read as shot by one cinematographer. The style_opener (the 35mm-film clause) is prepended to EVERY keyframe prompt; the negative_tail is appended. This is the divider from the paper-craft molecule: a NAMED FILM STOCK + grain + flares + natural light (the light of choices.setting; golden hour in the demo) + handheld, hard-negating the AI-glossy sheen. The continuity_anchor (the brand's REAL product in every frame; the branded garment in the demo) stitches the N shots into one ad.",
     "continuity_anchor": "The HYPE AND VICE branded garment appears in EVERY tableau in a different team color but the same brand mark + similar silhouette.",
     "palette_anchors": [
       "Kodak Portra warm skin tones",

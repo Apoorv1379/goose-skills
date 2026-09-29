@@ -1,5 +1,6 @@
 {
   "_note": "Worked example (Glossier). At remix time the orchestrator binds the brand's real product stills, wordmark, benefit phrases, and claim-free comments. Image paths are relative to --assets.",
+  "_comment": "Worked example (the Glossier build). Creative fields — slides[].phrase, slides[].comments, endcard.payoff, music.prompt — come from the recipe's choices (slide_story, copy_tone, music); never copy them as defaults.",
   "width": 1080,
   "height": 1920,
   "fps": 30,

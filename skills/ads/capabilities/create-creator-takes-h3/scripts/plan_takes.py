@@ -7,10 +7,14 @@
 --beats is any file with `beats: [{id, start, end, vo}]` (the footage-cutlist cut list
 works as-is). --character is:
 
-    {"image": "character.png",               # the approved still, local path
-     "identity": "a man in his late 20s ...", # who they are, VERBATIM into every take
-     "environment": "a sunlit apartment ...", # the room, VERBATIM into every take
-     "delivery": "optional: how they speak"}
+    {"image": "character.png",                     # the approved still, local path
+     "identity": "<age, gender, look the user chose>", # who they are, VERBATIM into every take
+     "environment": "<the room in the approved still>", # the room, VERBATIM into every take
+     "delivery": "<the tone the user chose>"}           # optional: how they speak
+
+The person, the room and the tone are the USER'S choices (the recipe's `choices`); this
+script has no default person or room. Without `delivery` a neutral conversational read is
+used and a note is printed.
 
 Writes <out>/takes.json (run_takes.py's spec) and <out>/<id>-prompt.txt per take.
 
@@ -35,6 +39,7 @@ import json
 import math
 import pathlib
 import re
+import sys
 
 MAX_TAKE = 15
 MIN_TAKE = 5
@@ -42,7 +47,9 @@ MAX_SPEECH = 14.2
 TAIL = 0.6
 RATIOS = {"21:9": 21 / 9, "16:9": 16 / 9, "4:3": 4 / 3, "1:1": 1.0, "3:4": 3 / 4, "9:16": 9 / 16}
 
-DEFAULT_DELIVERY = ("energetic and certain, telling a friend about something just found. Not presenting, "
+# Used only when character.json has no `delivery` (the tone is the user's choice). Neutral on
+# purpose: it carries the craft (unscripted, natural rhythm), not a tone or a persona.
+DEFAULT_DELIVERY = ("natural and conversational, speaking directly to one viewer. Not presenting, "
                     "not announcing, not reading. Sentences run together with almost no gap. Pitch falls on "
                     "the last word of each sentence. Consonants relaxed, volume varying word to word.")
 
@@ -141,6 +148,9 @@ def main():
         raise SystemExit("character image not found: %s" % img)
     if not (ch.get("identity") or "").strip():
         raise SystemExit("character.json needs `identity`: the person, in the words that made the image")
+    if not (ch.get("delivery") or "").strip():
+        print("[plan] note: character.json has no `delivery`; using a neutral conversational read. "
+              "Set it from the tone the user chose.", file=sys.stderr)
     out = pathlib.Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
 

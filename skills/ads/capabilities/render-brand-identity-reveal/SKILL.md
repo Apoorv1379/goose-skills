@@ -7,8 +7,8 @@ status: active
 # render-brand-identity-reveal
 
 Render the 'brand identity reveal' format from a config. The signature is a single fixed
-poster frame in a REAL, softly-lit space (the illuminated poster-frame look of a
-boutique/cinema): a real wall, a real soft-focus plant in the lower-left corner, dappled
+poster frame in a REAL, softly-lit space (the illuminated poster-frame look of a shop, café,
+cinema or metro — the setting and wall are chosen per video): a real wall, a real soft-focus plant in the lower-left corner, dappled
 leaf shadow. The artwork INSIDE the frame HARD-CUTS (no crossfade) through 11 beats — 10
 on-brand poster mockups + a brand END CARD held ~3s. Music bed only, NO voiceover; copy is
 baked into each mockup, never overlaid as captions.
@@ -16,6 +16,15 @@ baked into each mockup, never overlaid as captions.
 This capability is the **FREE** assembly only. The paid parts are separate generic
 capabilities the recipe names — `create-image-fal` (the one-shot environment plate) and
 `create-music-elevenlabs` (the bed). Never re-implement them here.
+
+## Choices
+
+The calling recipe asks the user these before any paid step; this capability only reads them
+from config. The worked example (Touchland) values are examples, never defaults.
+
+- **setting** — where the frame hangs → `config.plate.setting` (demo: premium boutique interior).
+- **wall_style** — the wall it is mounted on → `config.plate.wall_style` (demo: sage subway tile).
+- **music** — the bed's genre/mood → `config.music.direction` (demo: upbeat playful pop).
 
 ## Three layers
 
@@ -32,8 +41,8 @@ capabilities the recipe names — `create-image-fal` (the one-shot environment p
 
 ## Inputs
 
-- `config.json` — copy `scripts/config.example.json` and edit (canvas, plate prompt +
-  wall_style, camera crop, per-beat durations, end-card copy). Schema + per-file working-dir
+- `config.json` — copy `scripts/config.example.json` (the Touchland worked example) and edit
+  (canvas, plate prompt + setting + wall_style from the user's choices, camera crop, per-beat durations, end-card copy). Schema + per-file working-dir
   layout are documented in `scripts/PIPELINE.md`.
 - The brand's REAL product/packaging/lifestyle stills, wordmark, and icon (recreate the icon
   as an SVG `<mask>` if the only source has an occluding element). Approved copy only.
@@ -44,7 +53,7 @@ capabilities the recipe names — `create-image-fal` (the one-shot environment p
 CAP=skills/ads/capabilities/render-brand-identity-reveal
 RUN=<project>/working    # holds scene.html + assets/ + the create-image-fal plate in bg/
 
-python3 $CAP/scripts/recrop.py 0.72 0.13      # camera distance (bigger frac = bigger frame)
+python3 $CAP/scripts/recrop.py 0.72 0.13      # camera distance (bigger frac = bigger frame); src = first bg/plate_*.png
 python3 $CAP/scripts/measure_frame.py         # detect the blank poster interior quad
 python3 $CAP/scripts/render_art.py            # render each poster standalone (Playwright, dsf 2)
 python3 $CAP/scripts/composite.py             # warp into frame + shadow multiply + sheen

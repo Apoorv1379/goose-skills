@@ -39,7 +39,7 @@ python align_beats.py --beats cutlist.json --words work/creator.words.json \
 {"image": "character.png",
  "identity": "<age + gender + look from the user's brief>, <hair>, <wardrobe>",
  "environment": "<the real room in the approved still>, window daylight",
- "delivery": "optional: how they speak. For talking-head ads pass a calm, conversational tone; the energetic default can give a constant grin and busy hands that read as AI."}
+ "delivery": "<the tone the user chose>. Whatever the tone, keep the face relaxed: an over-energetic read can give a constant grin and busy hands that read as AI."}
 ```
 
 **The user chooses who the creator is.** Ask for gender, age and look (or ethnicity) before
@@ -48,6 +48,16 @@ copy a look from an example, a reference build or a demo reel.
 
 `identity` and `environment` go into every take **word for word**. Write them once from the
 approved still, then never retype them: a person described two ways drifts between takes.
+
+## Choices
+
+These are the user's calls (the recipe's `choices`), never defaults of this atom:
+
+- **Creator** (`identity`) — age, gender, look. Asked of the user; no default person.
+- **Setting** (`environment`) — the room behind them, written from the approved still. Asked of the user.
+- **Tone** (`delivery`) — how they speak. Asked of the user; if missing, `plan_takes.py`
+  falls back to a neutral conversational read and prints a note.
+- **Voice** — follows the creator (age, gender, accent) and is locked from t1.
 
 ## Rules
 

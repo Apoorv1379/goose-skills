@@ -1,19 +1,21 @@
 ---
 name: render-stopmotion-hand-swatch-cycle
-description: Assemble a stop-motion hand-swatch-cycle product-demo ad from a config — a sequence of still PLATES (one hand swiping a single-barrel cosmetic across a cream skin-patch, the barrel + swatch changing per plate while the hand, background, crop, and lighting stay locked) is PNG→mp4 loop-encoded at each plate's own stop-motion hold (fast motion frames 150–250ms, per-shade ~380ms, hero beats 1100–1800ms), concat-demuxed with HARD cuts into a silent master, closed on a Playwright HTML-rendered branded end card (serif tagline + sans subtitle + real logo SVG over a hero BG, never AI-rendered text), and muxed with a pre-sourced music track playing under the end card with a fade tail (no VO). This is the FREE deterministic assembly stage (loop-encode + concat-demux + end-card render + music mux); the master-anchor plate, shade plates, and end-card BG come from create-image-gpt-image-fal and the track from create-music-elevenlabs. Use for the stopmotion-hand-swatch-cycle format.
+description: Assemble a stop-motion hand-swatch-cycle product-demo ad from a config — a sequence of still PLATES (one hand swiping a single-barrel product across a test surface, the barrel + swatch changing per plate while the hand, background, crop, and lighting stay locked) is PNG→mp4 loop-encoded at each plate's own stop-motion hold (fast motion frames 150–250ms, per-shade ~380ms, hero beats 1100–1800ms), concat-demuxed with HARD cuts into a silent master, closed on a Playwright HTML-rendered branded end card (serif tagline + sans subtitle + real logo SVG over a hero BG, never AI-rendered text), and muxed with a pre-sourced music track playing under the end card with a fade tail (no VO). This is the FREE deterministic assembly stage (loop-encode + concat-demux + end-card render + music mux); the master-anchor plate, shade plates, and end-card BG come from create-image-gpt-image-fal and the track from create-music-elevenlabs. Use for the stopmotion-hand-swatch-cycle format.
 status: active
 ---
 
 # render-stopmotion-hand-swatch-cycle
 
 Assemble a **stop-motion hand-swatch-cycle** ad from a config: a fast, tactile product demo where a
-single hand swipes ONE cosmetic barrel across a cream "skin-patch" test surface, and the shade of
+single hand swipes ONE product barrel across a test surface, and the shade of
 the barrel AND the painted swatch stripe changes on every frame while the hand, background, crop,
 and lighting hold still — cycling the variant family so the viewer self-identifies their match, then
-a hero-pick payoff and a branded end card. This capability is the **FREE, deterministic assembly** —
+a hero-pick payoff and a branded end card. The hand, background color, test surface, hero variant
+and music are the recipe's user choices; this capability only assembles the plates it is given. This capability is the **FREE, deterministic assembly** —
 the per-plate PNG→mp4 loop encode, the concat-demux, the end-card render, and the music mux.
 
-`scripts/config.example.json` is the worked example (DIBS Beauty "Pick Your Match", ~16.6s 1080×1920
+`scripts/config.example.json` is the worked example — reference only, never the default (DIBS
+Beauty "Pick Your Match": a fair hand, bubblegum-pink background, cream skin-patch; ~16.6s 1080×1920
 9:16, ~24 cycle plates + finale beats + a 3s end card); `scripts/PIPELINE.md` maps every config
 block to its source step and `scripts/README.md` documents the free assembly.
 
@@ -41,7 +43,8 @@ the existing plates / track and cost **$0**.
 - **Concat-demux, not filter_complex.** The plates are silent stills, so the `concat` demuxer over
   the ordered plate list is correct and cheapest. (`filter_complex` is only needed when clips carry
   mismatched audio — these don't.)
-- **The music carries it — no VO.** A pre-sourced brand instrumental (128–130 BPM works well),
+- **The music carries it — no VO.** A pre-sourced or generated instrumental in the chosen feel
+  (the demo's was ~128 BPM bright pop),
   volume ≈0.4, fade in/out. Do not add a spoken voiceover or a second bed.
 - **End card via Playwright HTML from the real logo SVG — never AI-render brand text.** A serif
   tagline + sans subtitle + the real logo SVG composited over a hero product/swatch BG by an HTML

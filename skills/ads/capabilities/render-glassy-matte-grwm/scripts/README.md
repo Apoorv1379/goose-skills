@@ -10,7 +10,8 @@ re-timed cards, a swapped end card, caption chunking) reuse the existing VO / cl
 cost **$0**.
 
 `config.example.json` is the worked example (DIBS Beauty "5-Step Glassy Matte Routine", ~32s
-1080×1920). `PIPELINE.md` maps every config block to its source step. This README documents the
+1080×1920). Its creator, voice, setting, tone and music are the demo's picks; a new run takes them
+from the recipe's `choices`. `PIPELINE.md` maps every config block to its source step. This README documents the
 FREE assembly pieces that `render-glassy-matte-grwm` owns.
 
 ## 1. Re-cut to the VO word-starts + hard-concat on the cut
@@ -24,7 +25,8 @@ its VO window and **hard-concat on the cut** — no dissolves. **Re-encode `-c:v
 ## 2. Product cards — Playwright render + composite on the product-name beats
 
 Playwright renders the card template (`product-card.html.tmpl`) at **2× scale** → one PNG per
-product — a warm cream card, a pink accent bar, the real white-bg cutout thumb, the product name,
+product — a card in the brand's `palette.card_bg` with a `palette.accent` bar (the demo used warm
+cream + pink; never a default), the real white-bg cutout thumb, the product name,
 and the PDP-verified tagline. The cutout must match the REAL product (not the Seedance scene's
 hallucinated barrel), and the tagline is verified against the brand PDP (AI flat-lays hallucinate
 sublines). Each card is composited onto the master **snapped to its product-NAME word-start** (~1s

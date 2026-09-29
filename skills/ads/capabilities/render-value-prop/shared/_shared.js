@@ -6,7 +6,7 @@
 //   (a) Playwright can drive window.renderAt(t) at 1/25s steps for production rendering
 //   (b) the same HTML auto-loops in a browser tab for preview review
 //
-// Ported from everself-hb/working/doctor-christopher-avatar/working/hyperframes-v4/_shared.js
+// Ported from an earlier hyperframes build's _shared.js (brand-agnostic helpers).
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 const lerp = (a, b, t) => a + (b - a) * t;

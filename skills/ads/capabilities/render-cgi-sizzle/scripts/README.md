@@ -10,18 +10,19 @@ capabilities; the recipe orchestrates and gates them. Everything below is $0
 ## What's FREE here
 
 ### 1. PIL real-UI composite (the format's whole credibility)
-The nano-banana plate renders only the **phone shell, smoky-black studio, amaranth
-rim-light, bokeh, and placeholder burst-out shapes** — the screen is left a blank warm
+The nano-banana plate renders only the **phone shell, studio, rim-light, bokeh, and
+placeholder burst-out shapes** (look + phone from the recipe choices; demo: smoky-black studio,
+amaranth rim-light, gold phone) — the screen is left a blank warm
 glow on purpose. Then, deterministically in PIL:
 
 - **Screen composite** — auto-detect the bright warm phone-screen bbox in each plate,
   resize the **real App Store screenshot** to fit, warm-tint ~6%, brightness +5%, and
   feather it into a rounded-rect mask so it sits inside the bezel → `scene-NN-composite.png`.
-  The on-screen UI (feeds, cards, players, instructor faces) is ALWAYS the real screenshot —
+  The on-screen UI (feeds, cards, players, any faces) is ALWAYS the real screenshot —
   never AI-rendered, so no claim can be invented and nothing reads fake.
 - **Burst-out overlays** — where the burst-out element is real UI (e.g. the climax
-  instructor portrait tiles), bake the real portraits as glass-morphic tiles with the
-  rim-light baked BEFORE rotation (so frame + portrait rotate as one unit) + amaranth glow +
+  portrait tiles), bake the real portraits as glass-morphic tiles with the
+  rim-light baked BEFORE rotation (so frame + portrait rotate as one unit) + rim-light-colour glow +
   drop shadow, ringed around the plate. Where the burst-out is a generic device/glass icon,
   the AI plate's placeholder shape is used as-is (no real UI to protect).
 
@@ -39,13 +40,13 @@ clip. Hard assembly, no dissolves; the timeline is locked from the **measured VO
 
 ### 4. Audio mix (sidechain duck + loudnorm)
 - VO bus: `loudnorm -23 LUFS`, de-ess, high-pass 80Hz.
-- Music bus: premium-tech bed → trim the sparse intro (`music.trim_intro_sec`, default 2.5s)
+- Music bus: the bed from the music choice (demo: premium-tech) → trim the sparse intro (`music.trim_intro_sec`, default 2.5s)
   → `loudnorm -23 LUFS` → **sidechain-compress with the VO as key** (ratio 20:1, attack 5ms,
   release 250ms), ducking ~-9dB under VO; +2dB VO on the climax beat.
 - Master bus: `loudnorm -14 LUFS` (IG/TikTok safe), -1.5 dBTP true peak.
 
 ### 5. End card (PIL, never AI)
-Smoky-black canvas + amaranth bar + the brand's **real wordmark** (SVG/PNG, never
+Studio-background canvas + accent-colour bar (demo: smoky-black + amaranth) + the brand's **real wordmark** (SVG/PNG, never
 AI-rendered) + tagline (Montserrat) + vignette → a static `end-card.png` held for
 `end_card.dwell_sec`. Captions are suppressed here (the composited text is the message).
 

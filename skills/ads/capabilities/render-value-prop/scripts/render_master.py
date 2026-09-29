@@ -75,10 +75,19 @@ def find_shared(name):
 
 
 def hyperframe_script():
-    for cand in (HERE / "render_hyperframe.py", HERE / "scripts" / "render_hyperframe.py"):
+    # Bundled copy first (goose-skills render-value-prop); in the goose-studio repo the
+    # studio copy of this script falls back to the hyperframes atom. RENDER_HYPERFRAME
+    # overrides both.
+    cands = [Path(os.environ["RENDER_HYPERFRAME"])] if os.environ.get("RENDER_HYPERFRAME") else []
+    cands += [HERE / "render_hyperframe.py", HERE / "scripts" / "render_hyperframe.py"]
+    for up in HERE.parents:
+        cands.append(up / "skills" / "atoms" / "motion-graphics"
+                     / "create-motion-graphics-hyperframes" / "scripts" / "render_hyperframe.py")
+    for cand in cands:
         if cand.exists():
             return cand
-    raise FileNotFoundError("render_hyperframe.py not bundled next to render_master.py")
+    raise FileNotFoundError("render_hyperframe.py not found (bundle it next to render_master.py "
+                            "or set RENDER_HYPERFRAME)")
 
 
 def img_aspect(path, default=0.8):
@@ -285,10 +294,20 @@ def endcard_beat(cfg, pal, logo_src, dur):
 # ----------------------------------------------------------------------- main
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--config", required=True, help="brand config.json (recipe.config schema)")
+    ap.add_argument("--config", help="brand config.json (recipe.config schema). Default: "
+                    "<format>/config.json or scripts/config.json if present")
     ap.add_argument("--project", help="asset root + output dir (default: config's folder)")
     ap.add_argument("--out", help="output mp4 (default: <project>/finals/master-clean.mp4)")
     a = ap.parse_args()
+    if not a.config:
+        for cand in (HERE.parent / "config.json", HERE / "config.json"):
+            if cand.exists():
+                a.config = str(cand)
+                break
+        else:
+            sys.exit("ERROR: no --config given and no config.json found. Copy "
+                     "config.example.json to config.json and fill it with THIS brand's "
+                     "copy, SKUs, palette (choices.background) and logo.")
 
     cfg = json.loads(Path(a.config).read_text())
     project = Path(a.project).resolve() if a.project else Path(a.config).resolve().parent

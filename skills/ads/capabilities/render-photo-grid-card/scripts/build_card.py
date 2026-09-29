@@ -61,8 +61,10 @@ def tile_html(t):
                 f'<div class="cta-s">{esc(t.get("sub",""))}</div></div>')
     raise SystemExit(f"unknown tile type: {kind}")
 
-DEFAULT_PALETTE = {"ink":"#0E1B22","ink_soft":"#4A5961","bg":"#E6EEF3",
-                   "bg_tile":"#F4F8FB","bg_band":"#DCE6EC","accent":"#31ABE8"}
+# Neutral fallback only -- the palette is a BRAND FACT: bind config.palette from the brand kit.
+# (The Hume worked example used ink #0E1B22 / bg #E6EEF3 / accent #31ABE8.)
+DEFAULT_PALETTE = {"ink":"#111111","ink_soft":"#555555","bg":"#F2F2F2",
+                   "bg_tile":"#FAFAFA","bg_band":"#E6E6E6","accent":"#333333"}
 
 def main():
     ap = argparse.ArgumentParser()

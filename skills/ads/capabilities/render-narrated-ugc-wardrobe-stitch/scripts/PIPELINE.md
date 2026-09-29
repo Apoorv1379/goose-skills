@@ -8,6 +8,12 @@ per-state steps plus per-project drivers that live in
 `gen_veo_*.sh`, `stitch_full_master.sh`). Reference those directly, or drive the whole run via
 `video-orchestrator-with-control-plane`.
 
+**Creative values are choices, not defaults.** The creator (`character.descriptor`), voice
+(`vo.voice_id`), hook angle (`vo.hook_line` / `vo.script_md` / `vo.payoff_line`), the 3 worlds
+(`worlds.briefs`) and the music bed (`audio_mix.music_brief`) come from the recipe's `choices`. The
+Bioma values in `config.example.json` (blonde woman creator, "Do not buy" reversal, bedroom / kitchen
+/ bathroom) are one worked example.
+
 The seven steps run **in order** because each depends on the last: the VO sets the timeline (via
 its Whisper word boundaries), the word boundaries build the EDL, the EDL drives the cut count, the
 locked creator + worlds drive the wardrobe edits, the wardrobes + worlds seed the per-cut
@@ -35,8 +41,8 @@ captions, and end card.
 **Lock the VO FIRST — it sets the timeline.** Render the verbatim ~13-sentence testimonial with
 ElevenLabs v3 (`vo.voice_id` + `vo.settings`), atempo-clamp to the target pace (~1.24× → ~30–32s),
 then Whisper word-align → `audio/vo-final.mp3` + `audio/vo-final.words.json`. The word boundaries
-set the cut grid. Keep the testimonial verbatim ("I'ma" kept; "synbiotic" locked over Whisper's
-"symbiotic").
+set the cut grid. Keep the testimonial verbatim (Bioma demo: "I'ma" kept; "synbiotic" locked over
+Whisper's "symbiotic").
 
 ## 2. EDL → `working/build_edl.py`  (config: `edl`)  [FREE]
 

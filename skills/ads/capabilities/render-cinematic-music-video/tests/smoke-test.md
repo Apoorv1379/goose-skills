@@ -5,6 +5,10 @@ tableau, and the anthem's word timings, `render-cinematic-music-video` assembles
 cut each clip to its beat window, hard-cut on the beat, build cinematic lower-third captions,
 mux the anthem → 1080×1920 h264+aac (~28s).
 
+Use any cast, setting and song style for the placeholder inputs — they are user choices, not
+part of the format (the Hype and Vice demo is one example). Nothing in the assembly may assume
+the demo's people, place, vocalist or accent words.
+
 Pass when the assembly runs to a valid MP4 and:
 - clips are cut to their beat windows and hard-cut on the beat (bar the hero match-cut);
 - the one 35mm-film look pack holds across all N tableaux (a 3-act arc, live-action register);

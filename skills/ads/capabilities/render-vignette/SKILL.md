@@ -10,9 +10,19 @@ Assemble a short-form 'vignette' ad from clean product cutouts composited over a
 
 ## Run
 1. `strip_product_backgrounds.py` — birefnet cutout of each PDP shot to clean hard-edge alpha (no halo/shadow).
-2. `render_overlays.py` — PIL + `rsvg-convert` render the cold-open card (Boska Black, dead-center) + the annotated specimen-sheet end card (brand SVG logo + Space Grotesk annotations) as transparent 1080x1920 PNGs. FREE.
+2. `render_overlays.py` — PIL + `rsvg-convert` render the cold-open card (`cold_open_text` in `cold_open_font`, dead-center) + the annotated specimen-sheet end card (brand SVG logo + `end_card.lines` annotations) as transparent 1080x1920 PNGs. Text colour follows `end_card.logo_variant`. FREE.
 3. `composite_variants.py` — one FFmpeg `filter_complex` per BG variant: BG (palette-aware dim) → cold-open overlay → cutouts (width-anchored, vertically centered `y=(H-h)/2`) → end card. h264 crf20 yuv420p +faststart 30fps. FREE.
-4. `music_and_mux.py` — instrumental music bed → `acompressor + loudnorm I=-18:TP=-2:LRA=9` → muxed into every variant in a SEPARATE pass with explicit `-map 0:v:0 -map 1:a:0`. The mux is FREE; the music generation is a paid call that in prod routes through create-music-elevenlabs.
+4. `music_and_mux.py` — instrumental music bed from `config.music.prompt` → `acompressor + loudnorm I=-18:TP=-2:LRA=9` → muxed into every variant in a SEPARATE pass with explicit `-map 0:v:0 -map 1:a:0`. The mux is FREE; the music generation is a paid call that in prod routes through create-music-elevenlabs.
+
+Every script reads `config.json` (`--config <path>`, `$VIGNETTE_CONFIG`, `<project>/config.json` or `scripts/config.json`) and exits naming any missing required field — there are no built-in demo values.
+
+## Choices
+
+The recipe asks the user these before any paid step; this atom only reads the result from config. The demo build's value is an example, never a default.
+
+- **`bg_motif`** — the kinetic background's subject. Arrives as `bg_concepts[].brief` (BG sourced upstream). Demo: chrome molecular swarm / black ink blooming in cream.
+- **`bg_palette`** — the background's colour feel. Arrives as `bg_concepts[].dim` (heavy/light dim) + `end_card.logo_variant` (logo + text colour). Demo: cream with chrome + ink accents.
+- **`music`** — the instrumental bed's feel. Arrives as `music.prompt` (no brand names — ElevenLabs rejects them). Demo: slow ambient minimal electronic ~90 BPM.
 
 ## Contract
 - FREE assembly: birefnet cutout (see gap below) + PIL/rsvg overlays + FFmpeg composite + mux. No AI-rendered text; the product art/labels and on-screen copy are real, never invented.

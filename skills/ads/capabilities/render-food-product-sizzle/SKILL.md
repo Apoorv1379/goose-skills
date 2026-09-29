@@ -1,15 +1,15 @@
 ---
 name: render-food-product-sizzle
-description: Assemble a wordless macro-tabletop food-product sizzle ad from a config — normalize fps and SAR across ~4 photorealistic macro clips (hands tearing, flat lay, bite, box hero), concat them, apply a global anti-AI grain pass (eq plus hqdn3d plus noise), composite the audio (a non-diegetic acoustic music bed plus a couple of short diegetic SFX like a snap and a tear placed at measured cue points, loudnorm), composite a STATIC end card entirely in PIL (real logo PNG plus real product PNG plus a serif heritage headline plus a CTA — never AI-rendered text), and burn optional serif stat-callout pills at beats. This is the FREE deterministic assembly stage (normalized concat plus grain plus music and SFX mix plus PIL end card plus callouts); the macro keyframes, i2v clips, and music bed come from create-image-fal, create-video-fal, and create-music-elevenlabs. Use for the food-product-sizzle format.
+description: Assemble a wordless macro-tabletop food-product sizzle ad from a config — normalize fps and SAR across ~4 photorealistic macro clips (hands tearing, flat lay, bite, box hero), concat them, apply a global anti-AI grain pass (eq plus hqdn3d plus noise), composite the audio (a non-diegetic instrumental music bed plus a couple of short diegetic SFX like a snap and a tear placed at measured cue points, loudnorm), composite a STATIC end card entirely in PIL (real logo PNG plus real product PNG plus a serif heritage headline plus a CTA — never AI-rendered text), and burn optional serif stat-callout pills at beats. This is the FREE deterministic assembly stage (normalized concat plus grain plus music and SFX mix plus PIL end card plus callouts); the macro keyframes, i2v clips, and music bed come from create-image-fal, create-video-fal, and create-music-elevenlabs. Use for the food-product-sizzle format.
 status: active
 ---
 
 # render-food-product-sizzle
 
 Assemble a **food-product sizzle** ad from a config: a wordless macro-tabletop photorealistic sizzle
-for a physical food / CPG product — tactile sunlit tabletop photography in a warm tungsten kitchen
-register, ~4 dynamic macro scenes (hands tearing, a flat lay, a partial-face bite, a box / pack
-hero) flowing into a static end card, carried by a non-diegetic acoustic music bed + a few diegetic
+for a physical food / CPG product — tactile tabletop photography in ONE look pack (setting + light
+chosen per brand; the demo's is a warm tungsten kitchen), ~4 dynamic macro scenes (hands tearing, a flat lay, a partial-face bite, a box / pack
+hero) flowing into a static end card, carried by a non-diegetic instrumental music bed + a few diegetic
 SFX with NO voiceover. This capability is the **FREE, deterministic assembly** — normalized concat,
 the anti-AI grain pass, the audio (music bed + SFX) composite, the PIL end card, and the optional
 serif stat-callout pills.
@@ -18,12 +18,24 @@ serif stat-callout pills.
 1080×1920 9:16, ~4 macro scenes + a static end card); `scripts/PIPELINE.md` maps every config block
 to its source step and `scripts/README.md` documents the free assembly.
 
+## Choices
+
+The recipe asks these before any paid step; this capability only assembles what they produced.
+The demo's value is an example, never a default:
+
+- **`setting`** — surface + room → `look_pack.style_descriptor`, `scenes[].keyframe_prompt`,
+  `end_card.background`. Demo: warm rustic kitchen (linen, wood, butcher paper, cast iron).
+- **`light`** → `look_pack.style_descriptor` + `palette_anchors`. Demo: warm tungsten window light.
+- **`hands`** — whose hands / mouth appear, or product-only → `scenes[].keyframe_prompt` +
+  `motion_hint`. Demo: a man's weathered hands, stubbled jaw.
+- **`music`** → `music.prompt`. Demo: upbeat bluegrass (banjo, acoustic guitar, brush percussion).
+
 ## Run
 
 This is the **FREE, deterministic** assembly stage — it spends nothing. The paid inputs are separate
 capabilities: ~4 photographic macro keyframes (`create-image-fal`, Nano Banana; the box / pack hero
 grounds on the real product PNG); one locked-off, anti-shake i2v clip per keyframe (`create-video-fal`,
-Seedance); and a non-diegetic acoustic / bluegrass bed (`create-music-elevenlabs`). Given the ~4
+Seedance); and a non-diegetic instrumental bed in the `music` choice (`create-music-elevenlabs`). Given the ~4
 clips + the music bed + the diegetic SFX + the real logo PNG + the real product PNG,
 `render-food-product-sizzle` normalizes fps / SAR, concats the body clips, applies the anti-AI grain
 pass, composites the audio (bed + SFX at their cue points), composites the static PIL end card, burns
@@ -32,7 +44,7 @@ clips / music and cost **$0**.
 
 ## Contract (the free assembly)
 
-- **Wordless — the music bed is the audio, no VO.** A non-diegetic acoustic bed (no vocals) IS the
+- **Wordless — the music bed is the audio, no VO.** A non-diegetic instrumental bed (no vocals) IS the
   bed; do not add a spoken voiceover. The brand name + claim land on the STATIC end card, never in
   the body.
 - **~4 macro scenes, concat in order.** Normalize fps / SAR across the body clips and concat them in

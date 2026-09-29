@@ -9,7 +9,13 @@ uses. Config lives in `config.example.json`. The Soundboks reference implementat
 Two PAID calls total (Seedance i2v + ElevenLabs Music). Everything else is free
 PIL/ffmpeg. Guard **both** paid calls with skip-if-exists so a re-run never re-bills.
 
-Keys: `FAL_API_KEY` from `gtm-goose/.env`; alias `FAL_KEY=$FAL_API_KEY` (fal_client reads
+> **Worked example, not the format.** Soundboks values throughout (party energy, beach
+> festival deck, dusk magenta/blue rim, 124 BPM party banger, the spec strings, orange
+> accent) are the demo's build. Energy, environment, lighting and music come from the
+> recipe's `choices` (`energy`, `environment`, `lighting`, `music`); spec callouts, logo,
+> colours and CTA come from the brand kit.
+
+Keys: `FAL_API_KEY` from the repo-root `.env`; alias `FAL_KEY=$FAL_API_KEY` (fal_client reads
 `FAL_KEY`).
 
 ---
@@ -76,7 +82,10 @@ with a single rallying lyric is a feature here — no VO competes.
 
 Render each card 1080×1920 via PIL **frame-by-frame** → PNG sequence
 (`working/kinetic-frames/<label>/f%04d.png`) → ffmpeg-encode (yuv420p, libx264) →
-`working/kinetic-movs/<label>.mp4`. Reference impl: `gen_kinetic_v6.py` (spec/CTA cards),
+`working/kinetic-movs/<label>.mp4` — keep each card's `label` equal to its `text_cards` key
+(`intro`, `spec_1`..`spec_N`, `cta`, plus `endcard`) so `beat_structure.concat_order` resolves
+straight to `kinetic-movs/<key>.mp4`. (The demo's older config used content-named labels
+like `spec_126db` / `cta_party`; don't copy those.) Reference impl: `gen_kinetic_v6.py` (spec/CTA cards),
 `gen_endcard_v10.py` (end card).
 
 ### The 11 validated PIL techniques
@@ -92,7 +101,7 @@ Render each card 1080×1920 via PIL **frame-by-frame** → PNG sequence
 | Mask wipe | cover unwiped part with BG | reveal by wipe | colored leading edge |
 | Letterbox slide | line1 from left / line2 from right | two-line entry | x_off = ±W·(1−ease) |
 | Color flash | BG transition 0.15s + type invert | CTA energy | invert type too or legibility drops |
-| Inversion flash | full-frame BG/type swap 0.3s | mid-clip art moment | Soundboks: black↔orange |
+| Inversion flash | full-frame BG/type swap 0.3s | mid-clip art moment | bg↔accent (demo: black↔orange) |
 | Dark grain BG | `dark_grain_bg(w,h,(12,12,12),grain=12)` | industrial base | (paper_texture for editorial only — off-brand here) |
 
 ### Cards to render (per `config.text_cards` + `config.end_card`)
@@ -104,7 +113,7 @@ Render each card 1080×1920 via PIL **frame-by-frame** → PNG sequence
 - `endcard` (3.5s) — the **real logo PNG** with a slam-motion-blur entry, settle,
   **continuous micro-motion** (±1% scale pulse + ±3px drift — never freeze), an inversion
   flash at ~60% of the card, and a cascade reveal of the spec-dot subtitle
-  ("126 dB · 40 HRS · IP65") + CTA. Composite the logo scaled to `logo_target_w` (leaves
+  (from approved specs; demo: "126 dB · 40 HRS · IP65") + CTA. Composite the logo scaled to `logo_target_w` (leaves
   ~80px margin), LANCZOS resize, GaussianBlur the motion-blur frames.
 
 Entry-motion timing (kept across all V1–V10):
@@ -147,8 +156,10 @@ else:          d=t-0.70; scale=1.0+0.010*math.sin(d*1.4); x_off=int(3*math.sin(d
 - **20s (4 specs):** 5 segments (2.0×3, 1.5×2), CTA 1.0s, endcard 3.0s.
 - **30s (6 specs):** needs a 20s hypermotion source > Seedance's 15s cap — chain 2 calls or
   reuse one segment.
-- BPM alignment: at 124 BPM, 4 beats ≈ 2.0s (segment), 3 beats ≈ 1.5s (spec card). Sport/
-  utility at 100 BPM → round segments up to 2.5s, spec cards to 1.8s.
+- BPM alignment: `music.bpm` follows the user's `energy` + `music` choices (demo: 124 for
+  party). At ~120–128 BPM, 4 beats ≈ 2.0s (segment), 3 beats ≈ 1.5s (spec card). Slower
+  beds (~100 BPM, e.g. sport/utility/rock) → round segments up to 2.5s, spec cards to 1.8s.
+  Faster beds (drum & bass ~170 BPM) → cut on 8 beats ≈ 2.8s or keep 2-beat stabs.
 
 ---
 

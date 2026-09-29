@@ -13,8 +13,19 @@ line on the drop. This capability is the **FREE, deterministic assembly** — cu
 hard-concat, the logo bug + captions burn, and the solid-color end card.
 
 `scripts/config.example.json` is the worked example (Coinbase "Bet on anything", ~55s 1080×1920
-9:16, 16 body bars + a 3s end card); `scripts/PIPELINE.md` maps every config block to its source
+9:16, 16 body bars + a 3s end card — its felt look, character, story and song are that demo's
+picks, never defaults); `scripts/PIPELINE.md` maps every config block to its source
 step and `scripts/README.md` documents the free assembly.
+
+## Choices
+
+The creative calls are the caller's (the video-format recipe asks the user); this assembly
+never picks them. The demo's value is an example only:
+
+- **Art style / look pack** (felt stop-motion, claymation, 2D toon, cut-out…) — demo: felt-and-foam diorama.
+- **Character** — the ONE recurring animated figure — demo: a gender-neutral felt figure in a brand-blue jersey.
+- **Story arc** — demo: underdog payoff.
+- **Song style + lead vocal** — demo: hype dance-pop / EDM-trap, male half-rapped lead.
 
 ## Run
 
@@ -56,10 +67,10 @@ keyframes / clips and cost **$0**.
   ffmpeg lacks libass/drawtext, BOTH the captions and the logo bug are timed **PIL PNG overlays**
   (`overlay=x:y:enable='between(t,st,en)'`), not an ASS burn.
 - **QC PER SCENE, never just the master — the two failure modes are content, not assembly.** The
-  upstream keyframe/i2v steps can (a) drift the character **felt → smooth-3D "man"** partway
-  through and (b) hallucinate hands — realistic fingers in a hand macro, a **pointing finger** on a
+  upstream keyframe/i2v steps can (a) drift the character **off its look (felt → smooth-3D "man" in the demo)** partway
+  through (off the chosen look — in the felt demo, felt → smooth-3D) and (b) hallucinate hands — realistic fingers in a hand macro, a **pointing finger** on a
   "tap the phone" shot, or a **disembodied hand** sliding in from the frame edge. Both hide at
   thumbnail size. Extract a **2 fps** contact sheet + a per-bar **FACE** crop and **HAND** crop
-  (across each clip's full duration), confirm every bar is matte felt with the ONE character and no
+  (across each clip's full duration), confirm every bar holds the ONE chosen look (the demo: matte felt) with the ONE character and no
   human/floating hands, and re-check the **served** bytes after publish. A drifted bar means
   regenerating that bar's **KEYFRAME** (not re-cutting) — see the recipe STEP 3/6.

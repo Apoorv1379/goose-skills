@@ -1,6 +1,6 @@
 ---
 name: render-editorial-motion-podcast
-description: Assemble an editorial-motion podcast-clip ad from a config — a real clipped podcast MP3 carries the narrative while N flat 2-tone editorial-illustration keyframes are animated NOT by generative i2v but by DETERMINISTIC ffmpeg ken-burns (zoompan) + hard cuts (no crossfades, which expose geometric drift), each beat snapped to its spoken line, the real audio muxed, Whisper-driven captions burned only mid-sentence, and closed on a PIL brand end card — never AI-rendered text. This is the FREE deterministic assembly stage (ffmpeg ken-burns + hard concat + audio mux + captions + end card); the real audio is clipped from source and the keyframes come from create-image-fal. Use for the editorial-motion-podcast format.
+description: Assemble an editorial-motion podcast-clip ad from a config — a real clipped podcast MP3 carries the narrative while N flat limited-palette editorial-illustration keyframes (one look pack) are animated NOT by generative i2v but by DETERMINISTIC ffmpeg ken-burns (zoompan) + hard cuts (no crossfades, which expose geometric drift), each beat snapped to its spoken line, the real audio muxed, Whisper-driven captions burned only mid-sentence, and closed on a PIL brand end card — never AI-rendered text. This is the FREE deterministic assembly stage (ffmpeg ken-burns + hard concat + audio mux + captions + end card); the real audio is clipped from source and the keyframes come from create-image-fal. Use for the editorial-motion-podcast format.
 status: active
 ---
 
@@ -8,15 +8,26 @@ status: active
 
 Assemble an **editorial-motion podcast-clip** ad from a config: a real clipped podcast audio
 line carries the whole narrative and every visual beat is timed to the sentence it describes,
-in a bold flat 2-tone editorial-illustration look ("a New Yorker spot-illustration that
-moves"). The motion is **not generative video** but deterministic ffmpeg ken-burns on static
+in ONE flat, strictly limited-palette editorial-illustration look pack ("a magazine
+spot-illustration that moves" — the style and palette are the caller's choice). The motion is **not generative video** but deterministic ffmpeg ken-burns on static
 keyframes, so it reads as a printed page that moves. This capability is that **FREE,
 deterministic assembly** — the ffmpeg motion, hard-concat, audio mux, caption burn, and PIL
 end card.
 
 `scripts/config.example.json` is the worked example (Klarify "Rat Park", ~40.8s 1080×1920
-9:16, 6 beats); `scripts/PIPELINE.md` maps every config block to its source step and
+9:16, 6 beats — its 2-tone Niemann look, cream/charcoal/sage palette and Rat Park metaphor are
+that demo's picks, never defaults); `scripts/PIPELINE.md` maps every config block to its source step and
 `scripts/README.md` documents the free assembly.
+
+## Choices
+
+The creative calls are the caller's (the video-format recipe asks the user); this assembly
+never picks them. The demo's value is an example only:
+
+- **Illustration style** — demo: bold flat 2-tone silhouettes, halftone (Niemann / Steinberg lineage).
+- **Palette** — demo: cream #F4EBD9 + charcoal #1A1A1A + one sage #86987A accent.
+- **Central metaphor** — demo: the Rat Park study.
+- **Tone / voice** — demo: warm and reflective, the real podcast host (no generated voice).
 
 ## Run
 
@@ -37,7 +48,7 @@ card → the master. Re-cuts reuse the existing audio / keyframes and cost **$0*
   is the recipe's STEP-0 intake decision — if no source episode is supplied, ASK the user.)
 - **NO generative i2v — deterministic ffmpeg ken-burns only.** Animate each static keyframe
   with `zoompan` (push-in / pull-back, 1.0→~1.06×, 24fps); Seedance/Kling are photoreal-trained
-  and invent naturalistic middle states that collapse the 2-tone look. Never `-loop 1` with
+  and invent naturalistic middle states that collapse the flat limited-palette look look. Never `-loop 1` with
   `zoompan d=N` (it balloons the duration); feed a single image and clamp with `-t` + `trim`.
 - **Hard cuts on the beat — no crossfades.** Crossfades ghost two drifting cages through each
   other; hard-concat each beat's segments and split long beats into micro-cuts (target 8–10

@@ -32,3 +32,5 @@ master (or the swap just loops them); a subtle `setpts`-slow reads as cinematic.
 - Deterministic + FREE (Playwright frame-step + FFmpeg); no paid calls in this capability.
 - Tiles-per-row = grid columns (`cols`), NOT total tiles; the grid fills row-major.
 - The template recipe (DB) supplies the config; clips + music are separate capabilities.
+- `palette` is a brand fact — pass the brand kit's colors; `build_card.py` only falls back to neutral
+  greys. The occasion copy, clip moments and music feel are the recipe's user choices, never defaulted.

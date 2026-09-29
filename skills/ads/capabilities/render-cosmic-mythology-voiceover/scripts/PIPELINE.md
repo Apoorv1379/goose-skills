@@ -30,9 +30,10 @@ them + composites the VO + fades the hook on + burns the captions.
 
 ## 1. VO → ElevenLabs `eleven_v3`  (config: `vo`)  [PAID]
 
-**Lock the VO FIRST — it sets the timeline.** Feed the tone-tagged script (`[soft, casual]`
-opener) to ElevenLabs `eleven_v3` (`eleven_multilingual_v2` is the plainer fallback) with a warm
-female voice → `working/vo2/vo.mp3`. Measure the rendered duration, then **atempo time-stretch to
+**Lock the VO FIRST — it sets the timeline.** Feed the tone-tagged script (tags from the
+recipe's tone choice; the demo's `[soft, casual]` opener) to ElevenLabs `eleven_v3`
+(`eleven_multilingual_v2` is the plainer fallback) in the chosen voice (the demo: a warm female
+voice) → `working/vo2/vo.mp3`. Measure the rendered duration, then **atempo time-stretch to
 the target, CLAMPING the factor ≤ ~1.25** so the voice never chipmunks: the worked example rendered
 39.24s, a 23s target needed factor 1.71, so it clamped at 1.25 → **31.4s final** and flagged the
 overshoot rather than pushing the factor. **The delivered VO duration sets the timeline** —
@@ -42,7 +43,7 @@ distribute the cuts across it; never trim the VO to a pre-planned grid.
 
 `working/gen_images2.py` builds each prompt as `look_pack.style_descriptor` + `shots[i].prompt`
 and calls `fal-ai/flux-pro/v1.1` at `image_size: portrait_16_9`, `safety_tolerance: 5`, `png`.
-**6 hero cosmic stills**; stills are **reusable** — the sequence repeats a few to reach the ~10–12
+**4–6 hero stills** in the chosen visual world + art style; stills are **reusable** — the sequence repeats a few to reach the ~10–12
 cuts. The "no text, no words" tail on the style descriptor is load-bearing — the reel's only text
 is the hook + captions, added in post. Review all before step 3.
 

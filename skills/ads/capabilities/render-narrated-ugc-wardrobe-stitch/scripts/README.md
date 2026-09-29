@@ -9,7 +9,9 @@ separate capabilities — `create-vo-elevenlabs`, `create-image-gpt-image-fal`, 
 the finished master. Re-cuts (new caption timing, re-timed windows, an end-card swap) reuse the
 existing VO / start-frames / clips and cost **$0**.
 
-`config.example.json` is the worked example (Bioma "Do NOT buy Bioma Probiotics", ~37s 1080×1920).
+`config.example.json` is one worked example (Bioma "Do NOT buy Bioma Probiotics", ~37s 1080×1920).
+Its creator, voice, hook angle, worlds and music bed are the demo's answers to the recipe's
+`choices` — never copy them as defaults.
 `PIPELINE.md` maps every config block to its source step. This README documents the FREE assembly
 pieces that `render-narrated-ugc-wardrobe-stitch` owns.
 
@@ -39,16 +41,16 @@ from the paid start-frame stage grounded on the real product hero.
 ## 4. Karaoke-pop captions — from the VO word timings, re-spelled against the locked script
 
 Captions come from the VO's `vo-final.words.json` (VEED Whisper preset, bold yellow), on every word,
-throughout. Re-spell brand tokens Whisper mishears against the locked script ("synbiotic" over
-"symbiotic"; keep "I'ma" verbatim) — never edit the script to match Whisper. Captions are suppressed
+throughout. Re-spell brand tokens Whisper mishears against the locked script (Bioma demo:
+"synbiotic" over "symbiotic"; kept "I'ma" verbatim) — never edit the script to match Whisper. Captions are suppressed
 over the end card. If the host ffmpeg lacks libass (no `subtitles`/`ass` filter), render the cues as
 timed PIL PNG overlays composited with ffmpeg `overlay=…:enable='between(t,st,en)'` instead — same
 placement, no libass dependency.
 
 ## 5. VO + music mix + end card + composite
 
-- **Audio:** the VO IS the narration bed (the whole ad is cut to it). Mix the VO over an optional
-  instrumental bed sidechain-ducked UNDER the VO (−20dB, 20:1) so the VO stays clearly on top; the
+- **Audio:** the VO IS the narration bed (the whole ad is cut to it). Mix the VO over the optional
+  bed described by `audio_mix.music_brief` (skip it when the user chose no music), sidechain-ducked UNDER the VO (−20dB, 20:1) so the VO stays clearly on top; the
   bed can drop in on the payoff beat.
 - **End card:** append the brand's real end-card PNG (~2s) on the tail, captions suppressed. The
   brand text is **never** AI-rendered — a diffusion model garbles a wordmark.

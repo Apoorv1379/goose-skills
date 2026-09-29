@@ -2,10 +2,14 @@
 
 How `config.example.json` maps to the real production steps. This molecule ships a
 **config + this map**, not a bundled runner: the worked example (Everself "doctor-educator"
-listicle) was produced by per-project drivers that live in
+listicle — an example, not the default) was produced by per-project drivers that live in
 `clients/everself-hb/working/doctor-christopher-avatar/` (`voice/render_listicle_v2.py`,
-`working/render_hf.py`, `working/build_pexels_beats.py`, `working/grade_brolls_v4.py`,
-`working/build_master_v4.py`). Reference those directly, or drive the whole run via
+`working/render_hf.py`, `working/grade_brolls_v4.py`, `working/build_master_v4.py`).
+
+**Creative calls come from the recipe's `choices`** (asked of the user first; the demo's values are
+examples only): `narrator` → `voice.mode`/`voice.voice_id`; `tone` → the script + the read;
+`list_angle` → the script + `beats[]`; `visual_style` → `design.name`/`callout_style`/`accents`/
+`background_tiles` (colours + fonts still from the brand kit); `music` → `music.prompt` (`none` = no bed). Reference those directly, or drive the whole run via
 `video-orchestrator-with-control-plane`.
 
 The steps run **in order** because each depends on the last: the VO sets the timeline (its
@@ -22,17 +26,18 @@ bed + burns the window-masked captions.
 | `design.*`, `beats[].hero_numeral/headline/body/callout/accent` | 3 Beats | author N hyperframes (HTML + Web Animations `window.renderAt(t)`) in ONE design system -> `working/hyperframes-v4/beat-NN.html` + `_shared.css` + `_shared.js` | free |
 | `beats[].anchor_word`, `beats[].anchor_t` | 3 Beats | reveals anchored to word times in `words-flat.json` | free |
 | `render_engine`, `fps` | 5 Render | `working/render_hf.py` (Playwright frame-by-frame `renderAt(t)` -> ffmpeg encode; ALL beats share fps 25) | free |
-| `broll[].query`, `broll[].brand_clip`, `broll[].t_start/t_end`, `broll[].graded` | 4 B-roll | `working/build_pexels_beats.py` (download/trim) + `working/grade_brolls_v4.py` (color-grade to palette) | media-proxy (stock) |
+| `broll[].source`, `broll[].brand_clip`, `broll[].ai_prompt`, `broll[].t_start/t_end`, `broll[].graded` | 4 Breathers | brand clip, AI clip via `create-video-fal`, or a motion-graphic breather; trim + `working/grade_brolls_v4.py` (color-grade to palette). NO free stock source (`build_pexels_beats.py` / media-proxy stock was never wired) | brand clip / motion-graphic free; AI clip **PAID** |
 | `captions`, `captions.mask`, `captions.chunk_words`, `captions.gap_close_s`, `captions.ass_format_has_name_field` | 5 Captions | Whisper words -> ASS, kept only inside B-roll windows, 2-word chunks, close on >0.4s gaps (`Name`-field header) | free |
-| `music`, `music.bed_volume`, `audio_mix` | 5 Assembly | ElevenLabs Music bed (~0.18 vol) mixed under the VO | **PAID** (music bed) |
-| assembly | 5 Assembly | `working/build_master_v4.py` (concat beats + B-roll, mix VO+music, composite silent video + audio + burn window-masked captions -> `finals/everself-v4-master.mp4`) | free |
+| `music`, `music.prompt`, `music.bed_volume`, `audio_mix` | 5 Assembly | ElevenLabs Music bed (~0.18 vol, style from `choices.music`) mixed under the VO | **PAID** (music bed) |
+| assembly | 5 Assembly | `working/build_master_v4.py` (concat beats + B-roll, mix VO+music, composite silent video + audio + burn window-masked captions -> `finals/master.mp4`) | free |
 | `headshot` | — | kept for a FUTURE lipsync variant; UNUSED in the shipped master | — |
 
 ## 1. VO -> ElevenLabs clone/cast  (config: `voice`)  [PAID]
 
 **Lock the VO FIRST — it sets the timeline.** `voice/render_listicle_v2.py` narrates the listicle
-script with ElevenLabs `eleven_v3` — either a **cloned** voice (train from a short reference sample
-of the expert, then narrate) or a **cast** `voice_id` — then `atempo` to the target pace (v3's speed
+script with ElevenLabs `eleven_v3` — per `choices.narrator`, either a **cloned** voice (train from a
+short reference sample of that real person, then narrate) or a **cast** `voice_id` that fits the
+narrator + `choices.tone` — then `atempo` to the target pace (v3's speed
 param is weak; use ffmpeg `atempo` for real time-stretch) -> `voice/vo-render.mp3`. The delivered VO
 and its word-level timings, NOT the plan, set the timeline.
 
@@ -47,16 +52,21 @@ the right tool for SPOKEN VO word-level; script-window timing is only for SUNG a
 One HTML hyperframe per beat in ONE design system: `working/hyperframes-v4/beat-NN.html`, each
 exposing `window.renderAt(t)` driven by the Web Animations API so a renderer can seek any frame.
 Shared `working/hyperframes-v4/_shared.css` holds the design tokens (palette, type, alternating
-`background_tiles`, decorative SVG `accents`, the glass-pill callout) and `_shared.js` holds
+`background_tiles`, decorative `accents`, the callout style — look from `choices.visual_style`; the
+demo used glass pills) and `_shared.js` holds
 `initRenderer` + `revealWords` + easing. Reveals fire at each beat's `anchor_word`/`anchor_t` from
 `words-flat.json`. Alternate the background tile per beat for rhythm; keep numerals / body type /
-accents / pills CONSISTENT so N beats read as one designed reel. This is deterministic web motion
+accents / callouts CONSISTENT so N beats read as one designed reel. This is deterministic web motion
 graphics — NOT i2v.
 
-## 4. B-roll windows -> download/trim + color-grade  (config: `broll[]`)  [media-proxy stock]
+## 4. Breather windows -> source + trim + color-grade  (config: `broll[]`)
 
-For each `broll[]` window, `working/build_pexels_beats.py` downloads/trims the stock clip (or ingests
-a brand/procedure clip) and `working/grade_brolls_v4.py` color-grades it to the palette. Render B-roll
+How many windows and where they land are taste calls (0..N, on support-sentence pauses). There is
+**no free stock-footage source** — the old `build_pexels_beats.py` / media-proxy stock path was never
+wired. Per window pick `source`: `brand-clip` (a real clip the brand supplied — best, free),
+`ai-video` (`create-video-fal`, **PAID — gate it**; SCREEN-FREE people footage from the brand's own
+world, matched to the spoken line), or `motion-graphic` (a free on-brand animated breather). Trim it,
+then `working/grade_brolls_v4.py` color-grades it to the palette. Render B-roll
 at fps 25 to match the beats. These are the ONLY windows where captions burn — on the motion-graphic
 beats the on-screen type IS the caption.
 
@@ -71,7 +81,8 @@ beats the on-screen type IS the caption.
 - **Assembly (`build_master_v4.py`):** concat all beats + B-roll windows (ffmpeg demuxer) ->
   `master-silent.mp4`, mix the VO (full) under a LOW ElevenLabs Music bed (~0.18 vol), composite the
   silent video + the mixed audio + burn the window-masked captions, loudnorm to -14 LUFS ->
-  `finals/everself-v4-master.mp4` (1080×1920, 25fps, h264 crf18 + aac 192k, ~66s).
+  `finals/master.mp4` (1080×1920, 25fps, h264 crf18 + aac 192k, ~66s).
 
 Re-cuts (new caption chunking, re-timed beats, swapped B-roll, a different music bed level) reuse the
-existing VO / beats / B-roll and cost **$0** — only the VO clone/narration and the music bed spend.
+existing VO / beats / B-roll and cost **$0** — only the VO clone/narration, the Whisper pass, the
+music bed, and any AI breather clips spend.

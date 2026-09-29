@@ -1,5 +1,5 @@
 {
-  "_comment": "Bioma 'Do NOT buy Bioma Probiotics' narrated-ugc-wardrobe-stitch — THE WORKED EXAMPLE. Copy to config.json and edit. A ~37s (34.8s body + ~2s end card) fast-cut narrated UGC 'stitch reply' where a single synthetic VO carries a verbatim ~13-sentence testimonial (the 'don't buy X... here's why you SHOULD' reversal hook) across ONE creator in 5 wardrobes + ~3 rooms, interspersed with product B-roll (capsule macro, unboxing, landing-page scroll). Pipeline: (1) lock the VO FIRST (ElevenLabs v3 + Whisper word-align — the word boundaries set the cut grid); (2) build a ~30-cut role-tagged EDL from the word boundaries; (3) lock the creator (gpt-image-2 anchor + 5 wardrobe edits chained off the anchor) + 3 world wides; (4) one start-frame per cut (gpt-image-2 creator + product composites + a Playwright landing-page); (5) one Veo 3.1 i2v clip per cut (verb-led, ~4s); (6) trim + filter_complex concat, VO+music sidechain-ducked mix, karaoke-pop captions throughout, brand end-card append. Master 1080x1920 h264+aac, ~36.8s. See scripts/PIPELINE.md for the source scripts.",
+  "_comment": "Worked example (the Bioma 'Do NOT buy Bioma Probiotics' build). Creative fields — character.descriptor, character.name, vo.voice_id, vo.settings, vo.hook_line, vo.payoff_line, vo.script_md / vo.sentences, worlds.briefs, audio_mix.music_brief (plus brand_name/title/product/landing_page/end_card, which come from the brand) — come from the recipe's choices; never copy them as defaults. Copy to config.json and edit. A ~37s (34.8s body + ~2s end card) fast-cut narrated UGC 'stitch reply' where a single synthetic VO carries a verbatim ~13-sentence testimonial (this demo: the 'don't buy X... here's why you SHOULD' reversal hook; the angle is choices.hook_angle) across ONE creator in 5 wardrobes + ~3 rooms, interspersed with product B-roll (capsule macro, unboxing, landing-page scroll). Pipeline: (1) lock the VO FIRST (ElevenLabs v3 + Whisper word-align — the word boundaries set the cut grid); (2) build a ~30-cut role-tagged EDL from the word boundaries; (3) lock the creator (gpt-image-2 anchor + 5 wardrobe edits chained off the anchor) + 3 world wides; (4) one start-frame per cut (gpt-image-2 creator + product composites + a Playwright landing-page); (5) one Veo 3.1 i2v clip per cut (verb-led, ~4s); (6) trim + filter_complex concat, VO+music sidechain-ducked mix, karaoke-pop captions throughout, brand end-card append. Master 1080x1920 h264+aac, ~36.8s. See scripts/PIPELINE.md for the source scripts.",
   "brand_name": "Bioma",
   "campaign": "Do NOT buy (recreation)",
   "title": "Do NOT buy Bioma Probiotics",
@@ -11,7 +11,7 @@
   "body_end_s": 34.8,
   "end_card_hold_s": 2.0,
   "vo": {
-    "_comment": "Locked FIRST — the VO + its Whisper WORD BOUNDARIES set the cut grid. Verbatim Whisper transcript of source/source-ad.mp4, locked 2026-06-02. ElevenLabs v3 (Professional Speaker) reads slow; atempo ~1.24x clamps to ~32s. Kept 'I'ma' verbatim (creator-native); locked 'synbiotic' over Whisper's 'symbiotic' homophone. Payoff line 'and just look at my belly.' lands the payoff-hold beat.",
+    "_comment": "Locked FIRST — the VO + its Whisper WORD BOUNDARIES set the cut grid. voice_id/settings/hook_line/payoff_line/sentences are the DEMO values — take them from choices.voice + choices.hook_angle. Verbatim Whisper transcript of source/source-ad.mp4, locked 2026-06-02. ElevenLabs v3 (Professional Speaker) reads slow; atempo ~1.24x clamps to ~32s. Kept 'I'ma' verbatim (creator-native); locked 'synbiotic' over Whisper's 'symbiotic' homophone. Payoff line 'and just look at my belly.' lands the payoff-hold beat.",
     "provider": "elevenlabs",
     "model": "eleven_v3",
     "voice_id": "Fc5CaIGWKvLHapoOSM2K",
@@ -43,7 +43,7 @@
     ]
   },
   "character": {
-    "_comment": "ONE recurring UGC creator, locked once. `descriptor` threads VERBATIM (byte-identical block) into every creator start-frame; the anchor is passed as the ref (--anchor) on EVERY wardrobe/pose edit so identity holds across all 5 wardrobe changes. Chain every wardrobe off the CLEAN anchor.",
+    "_comment": "ONE recurring UGC creator, locked once. name/descriptor below are the DEMO creator — take them from choices.creator. `descriptor` threads VERBATIM (byte-identical block) into every creator start-frame; the anchor is passed as the ref (--anchor) on EVERY wardrobe/pose edit so identity holds across all 5 wardrobe changes. Chain every wardrobe off the CLEAN anchor.",
     "name": "hailey",
     "method": "anchor-ref",
     "max_drift": 0.05,
@@ -61,7 +61,7 @@
     "_note_w2": "W2 (gray tee + sweats, midriff MS, hem-lift pose) is the payoff-hold belly-reveal wardrobe (cut s11)."
   },
   "worlds": {
-    "_comment": "3 world wides, NO creator — the establishing rooms the creator start-frames composite into.",
+    "_comment": "3 world wides, NO creator — the establishing rooms the creator start-frames composite into. briefs are the DEMO worlds — take them from choices.worlds.",
     "count": 3,
     "briefs": ["bedroom / mirror room", "kitchen counter", "bathroom / vanity"],
     "outputs": [
@@ -138,6 +138,7 @@
     "vo": "audio/vo-final.mp3",
     "music": "audio/music/bed.mp3",
     "music_optional": true,
+    "music_brief": "optional ducked instrumental bed (demo value; from choices.music — 'no music' turns the bed off)",
     "ducking": "sidechain-20:1",
     "music_gain_db": -20,
     "music_drop_s": 14.21,

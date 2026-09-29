@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """build_endcard.py — the REAL-product end card (1080x1920), composited in PIL.
 
-Ports the validated end-card recipe from the Soteri "pH villain" run
-(generated/endcard/build_endcard.py). The end card is ALWAYS a composite of the real
+Ports the validated end-card recipe from the format's reference runs. The end card is ALWAYS a composite of the real
 retail product photo — NEVER an AI-rendered cartoon bottle (both reference runs shipped
 an AI bottle first and had to re-shoot with the real photo). ALL brand text is typeset
 here with PIL ImageDraw.text — never AI-rendered.
@@ -18,10 +17,16 @@ Layout (top -> bottom):
 
 Reads a config.json; writes endcard.png into --out (or the config's end_card.image).
 """
-import argparse, json, os
+import argparse, json, os, sys
 from PIL import Image, ImageDraw, ImageFont
 
 W, H = 1080, 1920
+
+# Neutral fallbacks used ONLY when config.brand_palette omits a colour. Every real run
+# passes the brand's own palette; these are deliberately brand-less greys.
+NEUTRAL_PRIMARY = (34, 34, 34)
+NEUTRAL_ACCENT = (34, 34, 34)
+NEUTRAL_GREY = (107, 107, 107)
 
 # Portable font fallback chain: DejaVu (ships with Pillow / most Linux), then macOS
 # Arial, then Pillow's built-in. Bold + regular variants each.
@@ -70,10 +75,14 @@ def main():
     ec = cfg["end_card"]
     palette = cfg.get("brand_palette", {})
 
-    primary = _hex(palette.get("primary"), (46, 111, 94))
+    missing = [k for k in ("primary", "accent") if not palette.get(k)]
+    if missing:
+        sys.stderr.write(f"WARNING: brand_palette missing {missing} — using neutral greys. "
+                         "Pass the brand's own hex colours.\n")
+    primary = _hex(palette.get("primary"), NEUTRAL_PRIMARY)
     primary_lite = _hex(palette.get("primary_lite") or palette.get("primary"), primary)
-    accent = _hex(palette.get("accent"), (232, 103, 76))
-    grey = _hex(palette.get("grey"), (107, 111, 105))
+    accent = _hex(palette.get("accent"), NEUTRAL_ACCENT)
+    grey = _hex(palette.get("grey"), NEUTRAL_GREY)
     white = (255, 255, 255)
 
     prod = Image.open(ec["product_image"]).convert("RGB")

@@ -20,5 +20,9 @@ fetch_icons.py --run-dir <run> ; build_overlays.py --config config.json --out-di
 - Deterministic + FREE (PIL + FFmpeg); no paid calls, no AI-rendered text — the score, checks, and wordmark are composited, never generated.
 - Config-driven off one `config.json` (`overlays`, `layout`, `duration_sec`, optional `music`/`post_production`); the template recipe supplies the config from `recipe.config`.
 - Always re-run `build_overlays.py` before `compose_master.py` — the compositor reads pre-rendered PNGs and silently reuses stale ones on a copy change.
-- Headers stay on 0-duration and must not cover the bottle face; proof pills cascade one-per-beat down the diagonal (NOT four-corners) — the cascade is the format's signature.
+- Headers stay on 0-duration and must not cover the product face; proof pills cascade one-per-beat down the diagonal (NOT four-corners) — the cascade is the format's signature.
 - Requires `Pillow` + `ffmpeg`. No API keys.
+- The overlay copy (`overlays.header.lines`, `overlays.subhead.lines`, `overlays.proof_points`) is per brand and must be the brand's own approved claims; `build_overlays.py` exits with a clear message if any of it is empty (the template recipe ships it empty, with `overlays._example_content` as the shape).
+
+## Choices
+This atom renders no people, setting or music. The template's creative choices (whose hand, the setting, the music style) are asked of the user by the recipe and go to the paid keyframe / i2v / music capabilities; this atom only composites the pills over whatever base clip and music bed it is given.

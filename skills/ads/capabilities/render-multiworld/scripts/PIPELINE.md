@@ -8,10 +8,24 @@ server-side. The real render/assembly scripts live in the source project:
 `render_endcard.py`, `build_master.py`) and `production/` (`scene-contract.json`,
 `generation-jobs.json`, `audio-plan.json`).
 
-## The 3×3 grid (from `idea-brief.md`)
+> **Worked example, not the format.** Everything named below — Primally Pure, the three
+> scents, the pilates / spa / farmers-market worlds, the "FIND YOUR DAILY." headline, the
+> acoustic music — is the demo's build. For a new video the worlds, look and music come from
+> the recipe's `choices` (`worlds`, `visual_style`, `music`); product names, copy and URL
+> come from the brand kit. Copy the structure, never the creative values.
+>
+> **Provider note.** The demo fired its clips through Higgsfield Marketing Studio (hence
+> `higgsfield.*` + `product_uuid` in `config.example.json`). The current recipe makes the
+> same six clips with `create-image-fal` (nano_banana_2 keyframe edit grounded on the real
+> `product_image`) → `create-video-fal` (Kling 3.0 i2v); its `config.keyframe` / `config.i2v`
+> / `config.worlds[*].*_keyframe_prompt` / `*_i2v_prompt` fields are the live schema.
 
-The format's core IP: three products, each locked to its own **world + palette +
-botanical companion**, so scent identity is carried by the *set*, not by bottle color.
+## The 3×3 grid — worked example (Primally Pure, from `idea-brief.md`)
+
+The format's core IP: three products/variants, each locked to its own **world + palette +
+companion prop**, so variant identity is carried by the *set*, not by product color. The
+worlds and palette come from `choices.worlds` / `choices.visual_style`; the table below is
+the demo's grid.
 
 | Scent (product) | Third place (world) | Palette | Botanical companion | Bottle color |
 |---|---|---|---|---|
@@ -50,16 +64,16 @@ so the two worlds don't read as the same scent.
   text/typography (`No text overlays, no typography, no captions`). Output → `working/endcard/layer1.png`; job → `generation-jobs.json` (`job-endcard-001`, model `nano_banana_2`).
 - `end_card.html` (the overlay layer) is screenshotted by Playwright over that
   background, then encoded to a `dwell_sec` (3.0s) mp4:
-  - `overlay.headline` "FIND YOUR DAILY." — Inter 900, "DAILY" outlined via
-    `-webkit-text-stroke`, rise-in animation.
-  - `overlay.scent_labels[]` — three handwritten Caveat-font labels, each with a
+  - `overlay.headline` (demo: "FIND YOUR DAILY.") — Inter 900, one key word outlined via
+    `-webkit-text-stroke`, rise-in animation. Approved brand copy only.
+  - `overlay.scent_labels[]` — three handwritten Caveat-font product/variant labels, each with a
     hand-drawn SVG arrow (staggered `drawArrow` animation) pointing to its bottle.
-  - `overlay.wordmark` "PRIMALLY / PURE" (Playfair Display, two rows) + `url`.
+  - `overlay.wordmark` (demo: "PRIMALLY / PURE") (Playfair Display, two rows) + `url`.
   - Text animates across ~0–2.4s, then a ~0.6s hold (`scene-contract.json` S07).
 - **Rule:** the end-card text is HTML-composited, NEVER AI-rendered. NB2 = background only.
 
 ### `music` → one ElevenLabs bed (curl → ElevenLabs, PAID)
-- `music.prompt` → a single instrumental bed (`force_instrumental: true`), `length_ms`
+- `music.prompt` (genre/mood from `choices.music`) → a single instrumental bed (`force_instrumental: true`), `length_ms`
   = 27000. Trimmed to `working/music/music_trimmed.mp3`. Job → `generation-jobs.json`
   (`job-music-001`, provider `elevenlabs`).
 - No VO, no captions anywhere in the scenes — the whole tour is silent-but-music-led
@@ -85,8 +99,8 @@ so the two worlds don't read as the same scent.
 - `production/generation-jobs.json` — the job ledger (models, costs, re-rolls, the
   sealed-bottle P0).
 - `production/audio-plan.json` — silent/music-led config.
-- `working/{lavender,blue_tansy,bergamot_eucalyptus}_product.json` — the imported product
-  refs (UUIDs + CloudFront media).
+- `working/<variant>_product.json` (demo: `lavender`, `blue_tansy`, `bergamot_eucalyptus`) —
+  the imported product refs (UUIDs + CloudFront media).
 - `working/endcard/{endcard.html, nb2_result.json}` — the overlay + the NB2 background job.
 - `working/{render_clips,render_endcard,build_master}.py` — the real render/assembly code.
 - `idea-brief.md` — the 3×3 grid + guardrails + the Touchland-departure table.

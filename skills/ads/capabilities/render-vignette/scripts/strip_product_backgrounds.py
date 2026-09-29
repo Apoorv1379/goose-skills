@@ -4,7 +4,8 @@ Reads PNGs from ../source/scraped-product-images/, fires birefnet-v2 in parallel
 saves cutouts to ../assets/product-cutouts/, validates alpha quality, writes
 manifest.json with per-file stats.
 
-Run from this directory: python3 01_strip_product_backgrounds.py
+Products come from config.products (the brand's 1-3 SKUs).
+Run: python3 strip_product_backgrounds.py [--config path/to/config.json]
 """
 from __future__ import annotations
 
@@ -23,11 +24,49 @@ SOURCE_DIR = PROJECT_ROOT / "source" / "scraped-product-images"
 OUTPUT_DIR = PROJECT_ROOT / "assets" / "product-cutouts"
 MANIFEST = OUTPUT_DIR / "manifest.json"
 
-PRODUCTS = [
-    "molecular-hero-serum.png",
-    "molecular-genesis.png",
-    "retinol-synergist.png",
-]
+# ── CONFIG ──────────────────────────────────────────────────────────────
+# Creative values come from config.json (copy scripts/config.example.json and fill it from the
+# recipe's `choices` + the brand kit). Lookup order: --config <path>, $VIGNETTE_CONFIG,
+# <project>/config.json, scripts/config.json.
+
+
+def load_config() -> dict:
+    import json
+    import os
+    candidates = []
+    if "--config" in sys.argv:
+        i = sys.argv.index("--config")
+        if i + 1 < len(sys.argv):
+            candidates.append(Path(sys.argv[i + 1]))
+    if os.environ.get("VIGNETTE_CONFIG"):
+        candidates.append(Path(os.environ["VIGNETTE_CONFIG"]))
+    candidates += [PROJECT_ROOT / "config.json", Path(__file__).resolve().parent / "config.json"]
+    for c in candidates:
+        if c.exists():
+            return json.loads(c.read_text())
+    sys.exit(
+        "No config.json found. Copy scripts/config.example.json to <project>/config.json and fill the "
+        "creative fields from the recipe's choices + the brand kit (or pass --config <path>)."
+    )
+
+
+def require(cfg: dict, dotted: str):
+    cur = cfg
+    for part in dotted.split("."):
+        if not isinstance(cur, dict) or cur.get(part) in (None, "", []):
+            sys.exit(f"config.{dotted} is missing — it comes from the recipe's choices / brand kit; set it in config.json.")
+        cur = cur[part]
+    return cur
+
+
+def _product_file(entry) -> str:
+    """products[] entry → PDP filename in source/scraped-product-images/ (handle.png or {"file": ...})."""
+    if isinstance(entry, str):
+        return f"{entry}.png"
+    return entry.get("file") or f"{entry['handle']}.png"
+
+
+PRODUCTS = [_product_file(p) for p in require(load_config(), "products")]
 
 
 def strip_one(filename: str) -> dict:

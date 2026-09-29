@@ -10,6 +10,26 @@ The five steps run **in order** because each depends on the last: the anthem set
 timeline, the timeline + look pack drive the keyframes, the keyframes seed the clips, the
 song's word timings drive the captions, and assembly stitches all of it.
 
+## Choices
+
+The creative values in `config.example.json` are the demo's. On a real run they come from the
+recipe's `choices`, asked of the user before any paid step:
+
+- **song_style** — genre, mood, BPM and per-section arrangement → `song.prompt`, `song.bpm`,
+  `song.global_styles`. The demo used a triumphant 120-BPM indie-pop cinematic anthem.
+- **vocalist** — who sings → the vocal clause of `song.prompt` / `song.global_styles`. The demo
+  used a confident-but-warm female lead.
+- **cast** — who is on screen → the people in `tableaux[].keyframe_prompt` / `motion_hint`. The
+  demo used four young college women.
+- **setting** — place + time of day → the place/light clause of `look_pack.style_opener`,
+  `look_pack.palette_anchors`, and every `keyframe_prompt`. The demo used an American college
+  town on game day, autumn, golden hour.
+- **story_arc** — the shape of the tableaux + lyrics → `tableaux[]` and `song.structure[].lines`.
+  The demo used one game day, morning → stadium peak → twilight, with an origin-story wink.
+
+The 35mm-film look (named stock, grain, light leaks, handheld), the anthem-first timeline, the
+hook on the chorus drop and the real-asset end card are the format and stay fixed.
+
 ## Field → source-script map
 
 | Config field | Source script (`…/run-01-game-day-girls/working/`) | Phase | Paid? |
@@ -34,7 +54,7 @@ song's word timings drive the captions, and assembly stitches all of it.
 **Generate the anthem FIRST — it sets the timeline.** Feed `song.structure` (the
 verse/pre-chorus/chorus/outro sections, each with `duration_ms`, per-section
 `positive_local_styles`/`negative_local_styles`, and the exact `lines`) and `song.prompt`
-(the 120-BPM indie-cinematic vibe) to ElevenLabs `music_v1`. The call returns:
+(the vibe from `choices.song_style` + `choices.vocalist`; the demo: a 120-BPM indie-cinematic anthem) to ElevenLabs `music_v1`. The call returns:
 - `audio/music.mp3` — the sung anthem (the narration; **no separate VO**).
 - `audio/music_metadata.json` — the `composition_plan` echo **plus `words_timestamps`**
   (word-level start/end in **ms**).
@@ -43,8 +63,8 @@ Then run `build_word_timestamps.py` — it maps `music_metadata.words_timestamps
 Whisper-shape `audio/words.json` (seconds) that the captions atom consumes. Derive the
 `stitch.py` `TIMELINE` — `(tableauId, tStart, tEnd)` per beat — by snapping each tableau
 boundary to the lyric-phrase edges in the returned word timings. The hook line
-(`song.hook_line` = "every day is game day") lands at ~14.4s, the chorus drop; the
-`HOOK_HERO` tableau (T08, the split-screen brand-range frame) is timed to it. No artist names
+(`song.hook_line`; demo: "every day is game day" at ~14.4s) lands on the chorus drop; the
+`is_hook` tableau (demo: `HOOK_HERO` T08, a split-screen brand-range frame) is timed to it. No artist names
 in `song.prompt` (ElevenLabs ToS filter — describe the arrangement only).
 
 ## 2. Keyframes → Higgsfield `gpt_image_2`  (config: `tableaux[].keyframe_prompt`, `look_pack`, `keyframe_engine`)  [PAID]
@@ -57,7 +77,7 @@ supported ratio to 9:16). Parallel batches of ≤8 threads (the config caps `bat
 for the Higgsfield burst-credit reserve). One PNG per beat → `assets/keyframes/<id>.png`.
 Idempotent — skips beats whose PNG already exists and is >80KB. The single `look_pack` (the
 `STYLE_OPENER` 35mm-film clause) is what makes N beats read as shot by one photographer, with
-the `HV_GARMENT` continuity anchor present each frame. The 35mm look is HARDER than
+the continuity anchor (the brand's real product; `HV_GARMENT` in the demo) present each frame. The 35mm look is HARDER than
 paper-craft — budget 1–2 re-rolls per tableau. **Review all N before step 3.**
 
 ## 3. Clips → Higgsfield `kling3_0` i2v  (config: `tableaux[].motion_hint`, `clip_engine`)  [PAID]
@@ -85,7 +105,7 @@ glide / CGI swoop.
 4. **`burn_captions`** — call the `sync-captions-to-music` atom's `sync.py` with
    `--video clips/master-no-captions.mp4 --lyrics source/lyrics-locked.md --timestamps
    audio/words.json --placement low --chunk-size 4 --style-preset music-video --accent-words
-   every,day,game,HER,Hype,Vice,girls,started,finish` → cinematic lower-third serif captions
+   <captions.accent_words>` (demo: `every,day,game,HER,Hype,Vice,girls,started,finish`) → cinematic lower-third serif captions
    (rendered ASS uses a serif font, New York) burned → `finals/master-final.mp4`.
 
 Captions come from the song's OWN `audio/words.json` (via `build_word_timestamps.py`), **not

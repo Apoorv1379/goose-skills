@@ -1,14 +1,26 @@
 ---
 name: render-flat-vector-explainer
-description: Assemble the FREE steps of the flat-vector-explainer video format — a flat-illustration creator-character walks a countable N-step product routine, one step per beat, and Remotion composites every chip/numeral/tagline/slate/CTA as an animated DOM overlay ON TOP of the Kling i2v character clips (text is NEVER baked into a keyframe — i2v warps type), the closing 'N products' grid is a PIL composite of the REAL product photos (not AI), full-sentence VO drives word-by-word burned captions over a VO-forward music bed, and the ~50s animated silent master is re-cut to a 30s deliverable FROM the animated master (never a static intermediate). Documentation-grade — ships config.example.json + PIPELINE.md + a README of the free assembly; the paid gen steps (keyframes, Kling i2v, VO, music) are separate capabilities the recipe orchestrates. Use for the flat-vector-explainer format.
+description: Assemble the FREE steps of the flat-vector-explainer video format — a flat-illustration host character (who, where, tone, voice and music come from the recipe choices) walks a countable N-step product routine, one step per beat, and Remotion composites every chip/numeral/tagline/slate/CTA as an animated DOM overlay ON TOP of the Kling i2v character clips (text is NEVER baked into a keyframe — i2v warps type), the closing 'N products' grid is a PIL composite of the REAL product photos (not AI), full-sentence VO drives word-by-word burned captions over a VO-forward music bed, and the ~50s animated silent master is re-cut to a 30s deliverable FROM the animated master (never a static intermediate). Documentation-grade — ships config.example.json + PIPELINE.md + a README of the free assembly; the paid gen steps (keyframes, Kling i2v, VO, music) are separate capabilities the recipe orchestrates. Use for the flat-vector-explainer format.
 status: active
 ---
 
 # render-flat-vector-explainer
 
-Assembles a flat-vector product-routine explainer: one illustrated creator-character walks through a countable N-step routine (e.g. collagen -> serum -> eye cream -> hair), one step per beat, each beat carrying a large corner numeral, a labelled chip + one-line tagline, and the step's real product photo, closing on an "N products" grid + brand CTA. It reads as a premium DTC explainer (Spotify/Anchor flat-vector lineage), not UGC.
+Assembles a flat-vector product-routine explainer: one illustrated host character walks through a countable N-step routine (e.g. the demo's collagen -> serum -> eye cream -> hair), one step per beat, each beat carrying a large corner numeral, a labelled chip + one-line tagline, and the step's real product photo, closing on an "N products" grid + brand CTA. It reads as a premium DTC explainer (Spotify/Anchor flat-vector lineage), not UGC.
 
 This capability is **documentation-grade**. The content-goose molecule is a documented recipe, not a runnable end-to-end app, so this capability ships the **config schema** (`scripts/config.example.json`), the **field-to-script map** (`scripts/PIPELINE.md`), and a **README** (`scripts/README.md`) describing the FREE assembly steps the agent runs by hand with ffmpeg + Remotion + PIL. The paid generative steps are separate capabilities the recipe orchestrates and gates.
+
+## Choices
+
+Creative calls the user makes (the recipe's `choices`, asked in one round before any paid step). The demo's value is only an example, never the default. The flat-vector 2D style itself is the format, not a choice.
+
+- **`host`** — who the illustrated host is (gender, age, look, outfit) -> `character.anchor_prompt`. Asked; the demo used a late-20s woman with brown wavy hair in a cream slip-dress.
+- **`setting`** — where the routine happens -> the character keyframe prompts. Asked; the demo used a bathroom counter.
+- **`tone`** — the script's tone -> VO lines + expressions. Asked; the demo used faintly comedic overwhelm -> satisfied payoff.
+- **`narrator_voice`** — the VO voice -> `voice.voice_id`. Asked; the demo used ElevenLabs "Eryn".
+- **`music`** — the bed -> `music.prompt` (or none). Asked; the demo used lo-fi pop, 95-105 BPM.
+
+`scripts/config.example.json` is the Spoiled Child worked example: copy its structure, never its creative values or its brand palette.
 
 ## The two non-negotiable separations
 
@@ -32,7 +44,7 @@ The recipe orchestrates and gates these; they are not part of this capability:
 - Flat-vector character anchor + per-scene keyframes + clean plates -> `create-image-fal` (nano-banana; re-render a FRESH flat-vector anchor, never chain a photoreal ref).
 - Kling i2v on the character scenes -> `create-video-fal` (Kling 2.5-turbo/pro, cfg 0.5, style-preserving negative, low motion; TEST one scene before batching).
 - Full-sentence VO -> `create-vo-elevenlabs` (eleven_v3, with-timestamps).
-- Lo-fi music bed -> `create-music-elevenlabs`.
+- Music bed in the chosen style (demo: lo-fi pop; skip if the user chose no music) -> `create-music-elevenlabs`.
 
 ## Contract
 

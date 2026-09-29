@@ -1,5 +1,5 @@
 {
-  "_comment": "Ladder run-02 'Laundromat 2am' podcast-skit — the worked example. Copy to config.json and edit. A ~49s two-host (skeptic Brittney + believer Brad) 9:16 fake-podcast skit at a 24hr laundromat set (unrelated to fitness — that's the joke). Pipeline: (1) ElevenLabs with-timestamps VO per line, one voice per host; (2) two base stills (gpt-image-2 quality=high, photoreal, mouths closed) + ~10 edit-anchored expression variants on the bases; (3) Veed Fabric 1.0 lipsync per (still, VO) pair @ 720p; (4) WHITE captions from the VO's char-level timestamps, <=5 words/cue, sentence-broken, word-wrapped; (5) hard-cut concat + a 2.5s Playwright/PIL brand end card, final-encode crf28. Master 1080x1920 h264+aac. NOTE: this Ladder example is worked-reference — write a FRESH script + hook for each brand, do not reuse these lines. See scripts/PIPELINE.md for the source scripts.",
+  "_comment": "Worked example (the Ladder run-02 'Laundromat 2am' build) — copy the STRUCTURE and field names, never the creative values. Creative fields — set_description, voices.HER/HIM (name, voice_id, settings.style), characters.bases + expression_variants, scenes[] (text/caption/still), brand_guardrails, end_card colours/CTA/URL — come from the format recipe's choices (tone, set, skeptic_host, believer_host) and the brand; never copy them as defaults. The demo combination was: comedy tone, an absurd laundromat set, a young-woman skeptic (Brittney) and a young-man believer (Brad). HER/HIM are the skeptic/believer SLOTS, not genders. Write a FRESH script + hook for each brand in the chosen tone; only a comedy tone gets jokes. Pipeline: (1) ElevenLabs with-timestamps VO per line, one voice per host; (2) two base stills (gpt-image-2 quality=high, photoreal, mouths closed) + ~10 edit-anchored expression variants on the bases; (3) Veed Fabric 1.0 lipsync per (still, VO) pair @ 720p; (4) WHITE captions from the VO's char-level timestamps, <=5 words/cue, sentence-broken, word-wrapped; (5) hard-cut concat + a 2.5s Playwright/PIL brand end card, final-encode crf28. Master 1080x1920 h264+aac. See scripts/PIPELINE.md.",
   "brand_name": "Ladder",
   "campaign": "podcast-skit — laundromat 2am",
   "title": "Ladder Podcast Ad run-02 — Laundromat 2am",
@@ -31,7 +31,7 @@
   },
 
   "voices": {
-    "_note": "Exactly TWO hosts, one voice each, held across the whole skit. Real ElevenLabs voice_ids. HER = skeptic (validated as the Ramp v1.2 skeptic); HIM = believer (Ramp v1 believer-bro). eleven_multilingual_v2 with-timestamps.",
+    "_note": "Exactly TWO hosts, one voice each, held across the whole skit. HER = the SKEPTIC slot, HIM = the BELIEVER slot — slot labels only, not genders. Pick each voice to match the chosen host; set settings.style for the chosen tone. The voices below are the Ladder demo cast (Brittney, Brad). eleven_multilingual_v2 with-timestamps.",
     "HER": {
       "role": "skeptic",
       "name": "Brittney",
@@ -59,7 +59,7 @@
     "still_rules": "Tight bust framing, broadcast mic foreground, over-ear headphones. MOUTH NEUTRAL/CLOSED (open-mouth still breaks lipsync). State the hairstyle EXPLICITLY and coherently (e.g. 'short neatly tousled hair above the collar, no long strands'). Photorealistic, 35mm lens, shallow background blur.",
     "variant_template": "Use the reference image as the EXACT base — the SAME real person. Keep the face, skin texture, hair (same length + shape), headphones, clothing, background, microphone, and lighting IDENTICAL. Change ONLY: {change} Lips remain closed naturally, no open mouth, no smile showing teeth.",
     "bases": [
-      { "who": "HER", "file": "brittney-base.png", "_note": "generate FIRST; sets the laundromat set" },
+      { "who": "HER", "file": "brittney-base.png", "_note": "generate FIRST; sets the set (Ladder demo: the laundromat)" },
       { "who": "HIM", "file": "brad-base.png",     "_note": "generate SECOND with brittney-base.png as a bg reference so the set matches" }
     ],
     "expression_variants": [

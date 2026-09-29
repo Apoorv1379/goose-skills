@@ -11,8 +11,9 @@ master. Re-cuts (re-timed windows, a swapped blurred-fill, new caption chunking,
 restyle, a longer end-card hold) reuse the existing VO / lip-sync / clips and cost
 **$0**.
 
-`config.example.json` is the worked example (Perplexity concept-10 "Bloomberg
-terminal", ~40s 1080×1920). `PIPELINE.md` maps every config block to its source
+`config.example.json` is one worked example (Perplexity concept-10 "Bloomberg
+terminal", ~40s 1080×1920). Its creator, voice, script, divider colour and
+caption style were that build's choices — copy the structure, not the values. `PIPELINE.md` maps every config block to its source
 step. This README documents the FREE assembly pieces that
 `render-split-screen-creator` owns.
 
@@ -39,7 +40,7 @@ it to the scene length.
 ## 3. Hard-concat + end card — last sharp frame, no black tail
 
 The scenes are **hard-concatenated** (no dissolves). The body audio is the
-concatenated creator VO slices timed per `timing.json` — the sung/spoken creator VO
+concatenated creator VO slices timed per `timing.json` — the spoken creator VO
 IS the bed, no separate music. The end card is appended holding the last **sharp**
 frame ~3s; if the end-card clip fades to black, hold the last sharp second
 (`endcard.clip_end`), not the black tail.
@@ -50,7 +51,7 @@ Captions come from transcribing the **assembled** cut (`master-precaption.mp4`) 
 local Whisper — **never the raw `vo.mp3`**. Concat drops inter-scene silence, so the
 ad timeline ≠ the VO timeline; only the final cut's audio yields correct caption
 timing. Build word-level cues (sentence-aware chunking) and burn the ASS in the
-chosen style (`serif-accent`, `kinetic-pop`, `neon-glow`, `clean-bubble`). Keep the
+style set by `captions.style` (`serif-accent`, `kinetic-pop`, `neon-glow`, `clean-bubble`). Keep the
 `-precaption` cut + the `.ass` sidecar so captions restyle without re-rendering the
 composite. If the host ffmpeg lacks libass, render the cues as timed PIL PNG overlays
 composited with ffmpeg `overlay=…:enable='between(t,st,en)'` instead.

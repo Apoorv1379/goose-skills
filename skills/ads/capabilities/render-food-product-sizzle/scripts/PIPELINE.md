@@ -18,7 +18,7 @@ grain pass + audio composite + optional callouts.
 | `look_pack.style_descriptor`, `look_pack.negative_tail`, `look_pack.palette_anchors` | 1 Keyframes | threaded verbatim into every keyframe prompt | (defines cost) |
 | `scenes[].keyframe_prompt`, `scenes[].uses_product_ref`, `keyframe_engine` | 1 Keyframes | `create-image-fal` macro stills, 9:16 (box hero grounds on the real product PNG) | **PAID** |
 | `scenes[].motion_hint`, `clip_engine` | 2 Clips | `create-video-fal` i2v, locked-off anti-shake, 3–4s | **PAID** |
-| `music.prompt`, `music.request_length_ms`, `music.model` | 3 Music | ElevenLabs Music ~22s acoustic bluegrass | **PAID** |
+| `music.prompt`, `music.request_length_ms`, `music.model` | 3 Music | ElevenLabs Music ~22s bed in the `music` choice | **PAID** |
 | `music.trim_intro_sec`, `music.target_length_sec`, `music.fade_in_sec`/`.fade_out_sec`, `music.loudnorm_i` | 3 Music | trim the 2.5s sparse intro, loudnorm, fades | free |
 | `sfx.cues` | 3 SFX | ffmpeg lavfi `anoisesrc` → `snap.wav` / `tear.wav` at cue points | free |
 | `end_card` | 4 End card | PIL — bg + real logo PNG + real product PNG + serif headline / CTA | free |
@@ -44,8 +44,8 @@ a hand lifting one stick straight out of the box.
 
 ## 3. Music + SFX → ElevenLabs Music + ffmpeg lavfi  (config: `music`, `sfx`)  [PAID music]
 
-ElevenLabs Music requests ~22s of upbeat acoustic bluegrass (banjo + guitar + light brush
-percussion, NO vocals, no artist names). Then **trim the ~2.5s sparse intro** (`atrim=start=2.5`),
+ElevenLabs Music requests ~22s of the `music` choice (the demo: upbeat bluegrass — banjo + guitar
++ light brush percussion; always NO vocals, no artist names). Then **trim the ~2.5s sparse intro** (`atrim=start=2.5`),
 `loudnorm`, and fade in / out to the master length. `make_sfx.sh` synthesizes two diegetic hits with
 ffmpeg lavfi `anoisesrc` — a crisp ~120ms `snap.wav` (white noise, fast envelope) at the fiber-tear
 cue (~1.5s) and a ~180ms `tear.wav` (pink noise) at the box-open cue (~11s). Time each to its beat.
@@ -59,7 +59,7 @@ cue (~1.5s) and a ~180ms `tear.wav` (pink noise) at the box-open cue (~11s). Tim
 - Assembly (`build_master_v2.sh`): normalize fps / SAR, concat the ~4 body clips, apply the anti-AI
   grain pass GLOBALLY (`eq=contrast=1.06:saturation=0.93,hqdn3d=1.5:1.5:3:3,noise=alls=8:allf=t+u`),
   composite the audio (music bed + `snap.wav` + `tear.wav` at their cue points, loudnorm), append
-  the static end card holding ~3s WITH the music under it (fade the tail — no silent tail), and burn
+  the static end card holding ~3s WITH the music under it (so `music.target_length_sec` = body + `end_card.hold_sec`) (fade the tail — no silent tail), and burn
   the OPTIONAL serif stat-callout pills at their beats → `edits/master-final.mp4` (1080×1920, 24fps,
   h264 + aac, ~14s). **Write `%` strings to a textfile and use `textfile=` + `expansion=none`** —
   ffmpeg `drawtext` reads a raw `%` as a strftime spec.

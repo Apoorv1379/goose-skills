@@ -58,7 +58,7 @@ NO LETTERS, NO LABELS", L-misc).
 `clients/klarify/ad-runs/future-of-therapy-rat-park/scripts/build_v4.sh` renders each
 keyframe as a ken-burns segment and hard-concats them. **NO generative i2v** — Seedance
 hallucinated a photoreal drawing hand + morphed rats into humanoids + hallucinated cartoon
-clouds; it's photoreal-trained and can't hold the 2-tone discipline (L1, retired). The two
+clouds; it's photoreal-trained and can't hold a flat limited-palette discipline (L1, retired). The two
 reusable helpers:
 
 - `render_kb  <src> <out> <dur> [zoom_end=1.04]` — push-in: scale to 2×, crop, `zoompan

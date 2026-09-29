@@ -1,5 +1,5 @@
 {
-  "_comment": "Soundboks 'product hypermotion + specs' \u2014 the worked example (GOOSE-1783, V10 shipped 2026-05-28, $17.43 total / $4.99 marginal). Copy to config.json and edit. ONE 12-15s Seedance 2.0 i2v hypermotion clip of the hero product, diced into 5-6 segments, INTERCUT with 5-7 PIL kinetic-typography spec/CTA cards, capped by a real-logo end card, over a 124 BPM bass bed. 1080x1920 9:16. Two PAID model calls total (Seedance i2v + ElevenLabs Music); every text card + all assembly is free PIL/ffmpeg. Guard both paid calls with skip-if-exists so re-runs never re-bill.",
+  "_comment": "WORKED EXAMPLE ONLY (the Soundboks build). Creative fields \u2014 brand_voice, hypermotion_i2v.prompt_blocks.1_style_anchor / 2_cinematography / 3_subject_environment / 4_multi_shot_timecodes, music.prompt, music.bpm \u2014 come from the recipe's choices (energy, environment, lighting, music); brand fields (brand_name, product_image, logo_png, accent/bg hex, spec_callouts, text_cards.*.text, end_card copy) come from the brand kit. Never copy them as defaults. Card labels equal their text_cards keys (spec_1..spec_5, cta) so beat_structure.concat_order resolves. Soundboks 'product hypermotion + specs' \u2014 the worked example (GOOSE-1783, V10 shipped 2026-05-28, $17.43 total / $4.99 marginal). Copy to config.json and edit. ONE 12-15s Seedance 2.0 i2v hypermotion clip of the hero product, diced into 5-6 segments, INTERCUT with 5-7 PIL kinetic-typography spec/CTA cards, capped by a real-logo end card, over a 124 BPM bass bed. 1080x1920 9:16. Two PAID model calls total (Seedance i2v + ElevenLabs Music); every text card + all assembly is free PIL/ffmpeg. Guard both paid calls with skip-if-exists so re-runs never re-bill.",
   "brand_name": "Soundboks",
   "brand_voice": "party",
   "width": 1080,
@@ -35,7 +35,7 @@
     }
   },
   "text_cards": {
-    "_note": "Each card is a full-frame 1080x1920 PIL clip. hero_stat = the headline number (3D extrusion in accent color); the rest cycle italic + outline-echo / sparkle / shadow-stack. All on the dark industrial grain BG.",
+    "_note": "Each card is a full-frame 1080x1920 PIL clip. hero_stat = the headline number (3D extrusion in accent color); the rest cycle italic + outline-echo / sparkle / shadow-stack. All on the dark grain BG in the brand's bg colour.",
     "intro": {
       "label": "intro",
       "text": "INTRODUCING",
@@ -43,37 +43,37 @@
       "treatment": "italic_outline_echo"
     },
     "spec_1": {
-      "label": "spec_126db",
+      "label": "spec_1",
       "text": "126 dB SPL",
       "duration_s": 1.5,
       "treatment": "extruded_3d_accent"
     },
     "spec_2": {
-      "label": "spec_40hour",
+      "label": "spec_2",
       "text": "40-HOUR BATTERY",
       "duration_s": 1.5,
       "treatment": "italic_slam_white_on_black"
     },
     "spec_3": {
-      "label": "spec_swappable",
+      "label": "spec_3",
       "text": "SWAPPABLE BATTERY",
       "duration_s": 1.5,
       "treatment": "italic_outline_echo"
     },
     "spec_4": {
-      "label": "spec_ip65",
+      "label": "spec_4",
       "text": "IP65 RATED",
       "duration_s": 1.5,
       "treatment": "italic_sparkle_accent"
     },
     "spec_5": {
-      "label": "spec_pair5",
+      "label": "spec_5",
       "text": "PAIR 5 SPEAKERS",
       "duration_s": 1.5,
       "treatment": "italic_shadow_stack"
     },
     "cta": {
-      "label": "cta_party",
+      "label": "cta",
       "text": "OWN THE PARTY",
       "duration_s": 1.5,
       "treatment": "extruded_3d_color_flash"
@@ -150,7 +150,7 @@
   "post_production": {
     "music": {
       "default": "on",
-      "note": "124 BPM bass bed, default on"
+      "note": "beat-driven music bed (genre + BPM from choices), default on"
     },
     "captions": {
       "default": "n/a",

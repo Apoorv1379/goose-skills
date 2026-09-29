@@ -1,5 +1,5 @@
 {
-  "_comment": "Lineage Provisions 'Beef Sticks Sizzle' food-product sizzle — THE WORKED EXAMPLE. Copy to config.json and edit. A ~14s warm-tungsten macro-tabletop 9:16 sizzle for a physical grass-fed beef-stick product: WORDLESS (no VO), driven by a non-diegetic bluegrass bed + diegetic snap/tear SFX. Pipeline: (1) ~4 photographic macro keyframes via create-image-fal (the box hero grounds on the REAL product PNG); (2) one locked-off anti-shake create-video-fal i2v clip per keyframe (tear / flat-lay / bite / box-hero); (3) an ElevenLabs Music ~22s bluegrass bed trimmed of its 2.5s sparse intro + two ffmpeg-lavfi diegetic SFX; (4) a STATIC PIL end card (real Lineage logo PNG + real product PNG + serif headline + CTA) + ffmpeg filter_complex concat + anti-AI grain pass + audio composite + 5 serif stat-callout pills. Master 1080x1920 h264+aac, ~14.04s (24fps). See scripts/PIPELINE.md for the source scripts.",
+  "_comment": "Lineage Provisions 'Beef Sticks Sizzle' food-product sizzle — THE WORKED EXAMPLE. Copy to config.json and edit. A ~14s warm-tungsten macro-tabletop 9:16 sizzle for a physical grass-fed beef-stick product: WORDLESS (no VO), driven by a non-diegetic bluegrass bed + diegetic snap/tear SFX. Pipeline: (1) ~4 photographic macro keyframes via create-image-fal (the box hero grounds on the REAL product PNG); (2) one locked-off anti-shake create-video-fal i2v clip per keyframe (tear / flat-lay / bite / box-hero); (3) an ElevenLabs Music ~22s bluegrass bed trimmed of its 2.5s sparse intro + two ffmpeg-lavfi diegetic SFX; (4) a STATIC PIL end card (real Lineage logo PNG + real product PNG + serif headline + CTA) + ffmpeg filter_complex concat + anti-AI grain pass + audio composite + 5 serif stat-callout pills. Master 1080x1920 h264+aac, ~14.04s (24fps). See scripts/PIPELINE.md for the source scripts. Worked example (the Lineage beef-stick build). Creative fields — look_pack.style_descriptor, look_pack.palette_anchors, scenes[].keyframe_prompt, scenes[].motion_hint, end_card.background, music.prompt — come from the recipe's choices (setting, light, hands, music); never copy them as defaults. The warm-tungsten kitchen, the man's weathered hands and the bluegrass bed are this demo's picks, not the format.",
   "brand_name": "Lineage Provisions",
   "campaign": "Beef Sticks Sizzle",
   "title": "Grass-fed. Air-dried. Nothing else.",
@@ -10,6 +10,7 @@
   "duration_sec": 14.04,
   "look_pack": {
     "name": "WARM_TUNGSTEN_KITCHEN",
+    "_name_note": "the demo's look pack (setting + light choices); name yours after the chosen setting + light",
     "palette_anchors": [
       "ivory #F6F1E7 background tone",
       "ranch brown #3B2A1E shadows",

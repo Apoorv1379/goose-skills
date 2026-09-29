@@ -7,15 +7,31 @@ status: active
 # render-narrated-ugc-wardrobe-stitch
 
 Assemble a **narrated-UGC "stitch reply"** ad from a config: a fast-cut vertical testimonial
-where a single spoken VO carries a verbatim ~13-sentence reversal-hook monologue over ONE creator
-across ~5 wardrobe changes in ~3 micro-worlds, interspersed with product B-roll (capsule macro,
+where a single spoken VO carries a verbatim ~13-sentence testimonial over ONE creator
+across ~5 wardrobe changes in ~3 micro-worlds, interspersed with product B-roll (e.g. product macro,
 unboxing, a landing-page scroll), ~30 hard cuts on the VO cadence, closing on a brand end card.
 This capability is the **FREE, deterministic assembly** — trim-to-EDL, hard-concat, the VO+music
 mix, the karaoke-pop caption burn, the landing-page zoompan, and the end-card append.
 
-`scripts/config.example.json` is the worked example (Bioma "Do NOT buy Bioma Probiotics", ~37s
-1080×1920 9:16, ~30 body cuts + a ~2s end card); `scripts/PIPELINE.md` maps every config block to
+`scripts/config.example.json` is one worked example (Bioma "Do NOT buy Bioma Probiotics", ~37s
+1080×1920 9:16, ~30 body cuts + a ~2s end card) — its creator, voice, hook, worlds and music are
+that demo's answers, not defaults; `scripts/PIPELINE.md` maps every config block to
 its source step and `scripts/README.md` documents the free assembly.
+
+## Choices
+
+The creative calls are made upstream by the user (the recipe's `choices`) and arrive in the config;
+this assembly never picks them.
+
+- **creator** — who is on camera → `character.descriptor` / `character.name`. The demo used a
+  28-year-old blonde woman.
+- **voice** — the narration voice → `vo.voice_id` / `vo.settings`. The demo used an excited voice
+  matched to its creator.
+- **hook_angle** — the testimonial's hook → `vo.hook_line` / `vo.script_md` / `vo.payoff_line`. The
+  demo used a "Do not buy <brand>" reversal.
+- **worlds** — the 3 places → `worlds.briefs`. The demo used bedroom / kitchen / bathroom.
+- **music** — the bed under the VO, or none → `audio_mix.music_brief`. With "no music", skip the bed
+  and mix the VO alone.
 
 ## Run
 
@@ -41,10 +57,10 @@ end card → the master. Re-cuts reuse the existing VO / start-frames / clips an
   drawtext/scale step shaves a clip a few ms below its window. No dissolves.
 - **Karaoke-pop captions on every word, throughout.** From the VO's `vo-final.words.json` (VEED
   Whisper preset, bold yellow), on every word; re-spell brand tokens Whisper mishears against the
-  locked script ("synbiotic" over "symbiotic"; keep "I'ma" verbatim) — never edit the script to
+  locked script (Bioma demo: "synbiotic" over "symbiotic"; kept "I'ma" verbatim) — never edit the script to
   match Whisper. Captions are suppressed over the end card. If VEED mis-captions a brand token,
   hand-patch that sentence with local ASS karaoke.
-- **Product B-roll breaks up the talking head.** Capsule macro, unboxing, and a landing-page
+- **Product B-roll breaks up the talking head.** Product macro (Bioma: capsules), unboxing, and a landing-page
   scroll are interspersed with the creator cuts. The landing-page scroll is FFmpeg **zoompan** over
   a Playwright-rendered PNG — **not** an i2v clip (i2v hallucinates the UI).
 - **VO over a ducked bed.** Mix the optional instrumental bed sidechain-ducked UNDER the VO

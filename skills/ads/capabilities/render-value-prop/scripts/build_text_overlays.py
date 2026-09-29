@@ -7,7 +7,11 @@ Each PNG is 1080x1080 with:
 
 Beat 7 (endcard) is FULL frame (no transparency — replaces the motion clip entirely
 for the endcard duration).
+
+Brand colours / name / logo come from shot-list.yml `project:` or the project's
+config.json (see load_theme) — nothing is baked in for one brand.
 """
+import json
 import sys
 from pathlib import Path
 
@@ -28,6 +32,43 @@ BEATS_DIR.mkdir(parents=True, exist_ok=True)
 OVERLAY_DIR.mkdir(parents=True, exist_ok=True)
 
 
+# ---- brand theme (NO baked-in brand) --------------------------------------
+# Colours, brand name, logo and hero image come from shot-list.yml `project:`
+# (ink / bg / brand_name / logo / hero_image), falling back to the project's
+# config.json (palette.ink, palette.bg, brand_name, logo). The background is the
+# recipe's choices.background; ink comes from the brand kit. Neutral defaults
+# only when neither says anything.
+NEUTRAL_THEME = {"ink": "#111111", "bg": "#FFFFFF", "brand_name": "",
+                 "logo": "source/logo.png", "hero_image": "source/hero.png"}
+
+
+def load_theme(project):
+    cfg = {}
+    for cand in (PROJECT / "config.json", PROJECT / "scripts" / "config.json"):
+        if cand.exists():
+            try:
+                cfg = json.loads(cand.read_text())
+            except Exception:
+                cfg = {}
+            break
+    pal = cfg.get("palette", {}) or {}
+    t = dict(NEUTRAL_THEME)
+    for key, val in (("ink", pal.get("ink")), ("bg", pal.get("bg")),
+                     ("brand_name", cfg.get("brand_name")), ("logo", cfg.get("logo"))):
+        if val and not str(val).startswith("<"):
+            t[key] = val
+    for key in NEUTRAL_THEME:
+        if project.get(key):
+            t[key] = project[key]
+    h = t["ink"].lstrip("#")
+    if len(h) == 3:
+        h = "".join(c * 2 for c in h)
+    t["ink_rgb"] = ", ".join(str(int(h[i:i + 2], 16)) for i in (0, 2, 4))
+    t["logo_src"] = "../../" + str(t["logo"]).lstrip("/")
+    t["hero_src"] = "../../" + str(t["hero_image"]).lstrip("/")
+    return t
+
+
 TEXT_OVERLAY_TEMPLATE = """<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -44,7 +85,7 @@ TEXT_OVERLAY_TEMPLATE = """<!DOCTYPE html>
     position: relative;
     background: transparent;
     font-family: "Instrument Sans", sans-serif;
-    color: #0B253C;
+    color: {ink};
   }}
   .text-zone {{
     position: absolute;
@@ -52,7 +93,7 @@ TEXT_OVERLAY_TEMPLATE = """<!DOCTYPE html>
     height: 380px;
     padding: 56px 70px 24px;
     text-align: center;
-    background: #FFFFFF;
+    background: {bg};
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -62,7 +103,7 @@ TEXT_OVERLAY_TEMPLATE = """<!DOCTYPE html>
     font-size: {headline_size_px}px;
     letter-spacing: {headline_letter_spacing};
     line-height: {headline_line_height};
-    color: #0B253C;
+    color: {ink};
     text-transform: {headline_text_transform};
     margin: 0;
   }}
@@ -71,7 +112,7 @@ TEXT_OVERLAY_TEMPLATE = """<!DOCTYPE html>
     font-size: {sub_size_px}px;
     letter-spacing: {sub_letter_spacing};
     line-height: 1.35;
-    color: rgba(11, 37, 60, 0.78);
+    color: rgba({ink_rgb}, 0.78);
     margin-top: 22px;
     text-transform: {sub_text_transform};
   }}
@@ -99,10 +140,10 @@ ENDCARD_FULL_TEMPLATE = """<!DOCTYPE html>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
 <style>
   * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-  html, body {{ background: #fff; }}
+  html, body {{ background: {bg}; }}
   .frame {{
     width: {width}px; height: {height}px;
-    background: #fff;
+    background: {bg};
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -119,7 +160,7 @@ ENDCARD_FULL_TEMPLATE = """<!DOCTYPE html>
     font-size: 124px;
     letter-spacing: -0.015em;
     line-height: 1.0;
-    color: #0B253C;
+    color: {ink};
     text-align: center;
     margin: 0;
   }}
@@ -128,14 +169,14 @@ ENDCARD_FULL_TEMPLATE = """<!DOCTYPE html>
     font-size: 32px;
     letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: rgba(11, 37, 60, 0.65);
+    color: rgba({ink_rgb}, 0.65);
     margin-top: 80px;
   }}
 </style>
 </head>
 <body>
 <div class="frame">
-  <img class="logo" src="../../source/logo-som-blue.png" alt="Som Sleep">
+  <img class="logo" src="{logo_src}" alt="{brand_name}">
   <h1 class="tagline">{tagline}</h1>
   <div class="cta">{cta}</div>
 </div>
@@ -144,9 +185,11 @@ ENDCARD_FULL_TEMPLATE = """<!DOCTYPE html>
 """
 
 
-def write_overlay_html(beat, project):
+def write_overlay_html(beat, project, theme):
+    colours = dict(ink=theme["ink"], ink_rgb=theme["ink_rgb"], bg=theme["bg"])
     if beat.get("canvas") == "endcard":
         html = ENDCARD_FULL_TEMPLATE.format(
+            **colours, logo_src=theme["logo_src"], brand_name=theme["brand_name"],
             width=project["width"],
             height=project["height"],
             tagline=beat["headline"],
@@ -157,6 +200,7 @@ def write_overlay_html(beat, project):
         if beat.get("sub_sentence"):
             sub_html = f'<div class="sub-sentence">{beat["sub_sentence"]}</div>'
         html = TEXT_OVERLAY_TEMPLATE.format(
+            **colours,
             id=beat["id"],
             width=project["width"],
             height=project["height"],
@@ -202,10 +246,11 @@ def main():
     data = yaml.safe_load(SHOT_LIST.read_text())
     project = data["project"]
     beats = data["beats"]
+    theme = load_theme(project)
 
     print(f"Rendering {len(beats)} overlay PNGs at {project['width']}x{project['height']}...")
     for beat in beats:
-        html_path = write_overlay_html(beat, project)
+        html_path = write_overlay_html(beat, project, theme)
         png_path = OVERLAY_DIR / f"overlay-{beat['id']}-{beat['slug']}.png"
         is_endcard = beat.get("canvas") == "endcard"
         render(html_path, png_path, project["width"], project["height"], with_alpha=not is_endcard)

@@ -36,7 +36,7 @@ Writes `chrome.html` + `chrome-pressed.html`, screenshots both to
 # 1. Build the two card HTML files.
 python3 build_card.py --brand "acme." --message "would like to share a candle" \
                       --tagline "The bestselling collection - 4.9 stars" \
-                      --accent "#d98695" --band-color "#f5e9da" \
+                      --accent "#0A84FF" --band-color "#F2F2F7" \
                       --out-dir /tmp/airdrop-smoke
 
 # 2. Screenshot chrome.html / chrome-pressed.html (fullPage) to
