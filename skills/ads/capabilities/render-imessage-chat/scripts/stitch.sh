@@ -75,6 +75,7 @@ def onset(path):
             return i / 48000
     return 0.0
 ONSET = {}
+SFX_MAX = {'receive': (0.20, 0.06)}  # name -> (length s, fade s)
 has_music = music != "NONE"
 # Base: a silent stereo bed of the full length so amix always has an anchor.
 inputs = ["-f", "lavfi", "-t", str(total), "-i", "anullsrc=r=44100:cl=stereo"]
@@ -105,10 +106,16 @@ for n, c in enumerate(cues):
     # A phone restarts the alert for each message: cut this sound (40 ms fade) where the
     # next one starts, or a long receive tone masks the next bubble's sound entirely.
     cut = ""
+    # The shipped receive file is a two-note chime whose LOUD second note lands ~0.25 s in, so
+    # the hit reads late against the bubble. Messages in an open chat play one short sound:
+    # keep only the first note (0.20 s, 60 ms fade).
+    own = SFX_MAX.get(c['name'])
+    if own:
+        cut = f"atrim=0:{own[0]:.3f},afade=t=out:st={own[0] - own[1]:.3f}:d={own[1]:.3f},"
     if n + 1 < len(cues):
         room = (starts[n + 1] - delay) / 1000
         room -= 0.005  # silent by 5 ms before the next sound starts
-        if room > 0.05:
+        if room > 0.05 and (not own or room < own[0]):
             cut = f"atrim=0:{room:.3f},afade=t=out:st={max(0, room - 0.04):.3f}:d=0.04,"
     filter_parts.append(f"[{idx}:a]{cut}adelay={delay}|{delay},volume={vol}[s{idx}]")
     mix_labels.append(f"[s{idx}]")
