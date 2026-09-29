@@ -57,6 +57,30 @@ eleven_music(prompt, 10500, "music.mp3", force_instrumental=True)
 - **Only the final `*.fal.media` url is a real public URL** — everything else is behind
   the proxy.
 
+## No CLI login? The MCP relay
+
+A session that only has the GooseWorks MCP connector (the Claude desktop app, a Codex
+session without `gooseworks login`) has no `~/.gooseworks/credentials.json`, so scripts
+cannot reach the proxies over HTTP. Then every paid call is **relayed through the agent**:
+
+1. The script writes the exact MCP tool call to `working/mcp-requests/<kind>-<hash>.json`
+   and exits with code **3**, printing what to do.
+2. The agent makes that call through the connector:
+   - fal → `data_post_provider { provider: "fal", path: <model>, body, project_id }`, then
+     `job_get { job_id }` until `complete`; save `result.output` (fal's JSON).
+   - ElevenLabs → `data_post_provider { provider: "elevenlabs", ... }`; save the reply
+     (it carries `download_url`).
+   - A local file → `media_upload { scope: "video_project", ... }` with the bytes of
+     `local_file`; save `{ "url": <its url> }`.
+3. It saves that JSON to `save_result_to` and **re-runs the same command**. The script finds
+   the result and continues; the next paid call relays the same way.
+
+Set `GW_PROJECT_ID` (required: every call is billed to that video project, the same
+attribution the HTTP proxy records) and `GW_BRAND_ID` (for uploads). The MCP tools bill
+through the same server proxy code, so price and project attribution are identical.
+`GW_MEDIA_VIA=mcp` forces the relay (e.g. the CLI login points at another environment);
+`GW_MEDIA_VIA=proxy` forces HTTP.
+
 ## Related
 - Used by `create-image-fal`, `create-video-fal`, `create-music-elevenlabs`.
 - The `goose-video` orchestrator hosts local inputs (MCP upload → presign) before calling these.
