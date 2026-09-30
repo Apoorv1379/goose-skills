@@ -23,6 +23,7 @@ import json
 import math
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -41,10 +42,14 @@ PASS, FAIL, WARN, NA = "pass", "fail", "warn", "not_applicable"
 # Platform UI covers these bands on TikTok / Reels / Shorts at 1080x1920 (px).
 SAFE_TOP, SAFE_BOTTOM, SAFE_RIGHT = 220, 400, 140
 
-# Per match mode: (pass at or above, fail below). A whole-image match of the right logo
-# scores ~0.95 even after video compression; a different logo on a similar background ~0.5-0.65.
-LOGO_THRESHOLDS = {"silhouette": (0.70, 0.55), "image": (0.85, 0.70)}
-MIN_LOGO_SHORT_SIDE = 256
+# Per match mode: (pass at or above, fail below). Measured 2026-09-30: the right logo scores
+# 0.91-0.99 at any size and polarity; a different brand's wordmark 0.42-0.49; a different
+# mascot photo on a similar background 0.52-0.62; a same-font near-copy lands ~0.8 (warn).
+LOGO_THRESHOLDS = {"mark": (0.85, 0.75), "image": (0.85, 0.70)}
+# Favicon guard: a logo file this small goes blurry when it is shown big. Judge by the
+# long side AND the pixel area so a wide, short wordmark (400x120) is not called a favicon.
+MIN_LOGO_LONG_SIDE = 256
+MIN_LOGO_AREA = 40_000
 PALETTE_WARN_DELTA_E = 25.0
 
 
@@ -90,7 +95,31 @@ def analyse(video: str, has_audio: bool, silence_d: float, scene_threshold: floa
     if has_audio:
         cmd += ["-filter:a", f"silencedetect=n=-45dB:d={silence_d:.2f}"]
     cmd += ["-f", "null", "-"]
-    return run(cmd).stderr
+    out = run(cmd)
+    if out.returncode != 0:
+        raise RuntimeError(f"ffmpeg could not decode the video: {out.stderr.strip()[-300:]}")
+    return out.stderr
+
+
+NUM = r"-?\d+(?:\.\d+)?(?:e-?\d+)?"
+
+
+def load_image(path: str) -> Image.Image:
+    """Open an image; an SVG (kits often have one) is rasterised to a 1024px-wide PNG first."""
+    head = Path(path).read_bytes()[:512].lower()
+    if path.lower().endswith(".svg") or b"<svg" in head:
+        png = Path(tempfile.mkdtemp(prefix="rfa-svg-")) / "logo.png"
+        try:
+            import cairosvg  # type: ignore
+            cairosvg.svg2png(url=path, write_to=str(png), output_width=1024)
+        except Exception:  # not installed, or installed without its cairo library (OSError)
+            if shutil.which("rsvg-convert"):
+                run(["rsvg-convert", "-w", "1024", "-o", str(png), path])
+        if not png.exists():
+            raise RuntimeError(f"{path} is an SVG and no rasteriser is available: "
+                               "pip install cairosvg (or install rsvg-convert), or pass a PNG of the logo")
+        return Image.open(png)
+    return Image.open(path)
 
 
 def spans(log: str, key: str, duration: float) -> list[tuple[float, float]]:
@@ -98,10 +127,10 @@ def spans(log: str, key: str, duration: float) -> list[tuple[float, float]]:
     out: list[tuple[float, float]] = []
     start = None
     for line in log.splitlines():
-        m = re.search(rf"{key}_start:\s*([\d.]+)", line)
+        m = re.search(rf"{key}_start:\s*({NUM})", line)
         if m:
             start = float(m.group(1))
-        m = re.search(rf"{key}_end:\s*([\d.]+)", line)
+        m = re.search(rf"{key}_end:\s*({NUM})", line)
         if m and start is not None:
             out.append((start, float(m.group(1))))
             start = None
@@ -195,90 +224,66 @@ class Matcher:
             return np.where(denom > 1e-6 * tnorm, corr / denom, 0.0)
 
 
-def edges(a: np.ndarray) -> np.ndarray:
-    gy, gx = np.gradient(a)
-    return np.hypot(gx, gy)
-
-
-def otsu(a: np.ndarray) -> float:
-    hist, bins = np.histogram(a, 64)
-    centres = (bins[:-1] + bins[1:]) / 2
-    w = hist.cumsum()
-    m = (hist * centres).cumsum()
-    best, thr = -1.0, float(centres[0])
-    for i in range(len(hist) - 1):
-        w0, w1 = w[i], w[-1] - w[i]
-        if w0 == 0 or w1 == 0:
-            continue
-        v = w0 * w1 * (m[i] / w0 - (m[-1] - m[i]) / w1) ** 2
-        if v > best:
-            best, thr = v, float(centres[i])
-    return thr
-
-
 def has_transparency(img: Image.Image) -> bool:
     return img.mode in ("RGBA", "LA", "P") and np.asarray(img.convert("RGBA"))[:, :, 3].min() < 250
 
 
-def _search(f: np.ndarray, tpl_gray: np.ndarray, aspect: float, work_width: int, use_edges: bool):
-    """Best (score, box) of the template over f across 16 sizes, in work-width pixels."""
-    widths = [int(w) for w in np.unique(np.geomspace(20, work_width * 0.9, 16).astype(int))]
-    image = edges(f) if use_edges else f
-    matcher = Matcher(image, max(4, round(max(widths) * aspect)) + 1, max(widths))
-    best_score, best_box = 0.0, None
-    for width in widths:
-        height = max(4, round(width * aspect))
-        if height >= f.shape[0]:
-            continue
-        tpl = np.asarray(Image.fromarray(tpl_gray.astype(np.uint8)).resize((width, height), Image.BILINEAR),
-                         dtype=np.float64)
-        m = matcher.ncc(edges(tpl) if use_edges else tpl)
+def _search(f: np.ndarray, tpl_gray: np.ndarray, aspect: float, work_width: int,
+            keep: int = 2, min_width: int = 40, polarity_free: bool = False):
+    """Placements of the template over f (work-width pixels), best first, as (score, box).
+    Grayscale normalised correlation; with polarity_free the score is |ncc|, so a white
+    version of a dark mark (or the reverse) still counts. A coarse pass over 16 sizes,
+    then a fine pass (+-15% in 2% steps, aspect +-3%) around the `keep` best sizes: a thin
+    wordmark's score collapses when the size is off by the ~10% a coarse step leaves."""
+    coarse = [int(w) for w in np.unique(np.geomspace(min_width, work_width * 0.9, 16).astype(int))]
+    max_w = int(max(coarse) * 1.2) + 1
+    matcher = Matcher(f, max(4, round(max_w * aspect * 1.05)) + 1, max_w)
+    tpl_img = Image.fromarray(tpl_gray.astype(np.uint8))
+
+    def score_at(width: int, asp: float):
+        height = max(4, round(width * asp))
+        if width < 4 or height >= f.shape[0] or width >= f.shape[1]:
+            return None
+        tpl = np.asarray(tpl_img.resize((width, height), Image.BILINEAR), dtype=np.float64)
+        m = matcher.ncc(tpl)
+        if polarity_free:
+            m = np.abs(m)
         y, x = np.unravel_index(int(np.argmax(m)), m.shape)
-        if m[y, x] > best_score:
-            best_score, best_box = float(m[y, x]), (int(x), int(y), width, height)
-    return best_score, best_box
+        return float(m[y, x]), (int(x), int(y), width, height)
+
+    found = [c for c in (score_at(w, aspect) for w in coarse) if c]
+    found.sort(key=lambda c: -c[0])
+    fine = []
+    for _, box in found[:keep]:
+        for k in np.arange(0.85, 1.151, 0.02):
+            for a in (aspect * 0.97, aspect, aspect * 1.03):
+                c = score_at(int(round(box[2] * k)), a)
+                if c:
+                    fine.append(c)
+    return sorted(found + fine, key=lambda c: -c[0])
 
 
-def find_logo(frame: Image.Image, logo: Image.Image, work_width: int = 360) -> dict:
-    """Find the kit logo in a frame. `score` is 0-1.
+def find_logo(frame: Image.Image, logo: Image.Image, work_width: int = 540) -> dict:
+    """Find the kit logo in a frame by grayscale normalised correlation. `score` is 0-1.
 
-    - An OPAQUE logo file (a JPEG, a photo mascot, a square app icon) is composited as the
-      whole image, so it is matched as the whole image: multi-scale grayscale correlation.
-    - A TRANSPARENT logo (a PNG/SVG mark) sits on any background in any colour, so:
-      1. edge correlation picks the place and size (edges ignore colour: a white or
-         recoloured version of the logo is still found), then
-      2. the logo's own silhouette is compared with the frame crop binarised at that spot
-         (either polarity). The overlap (IoU) is the score, so a different logo in the same
-         place scores low even when its edges correlate.
+    - An OPAQUE logo file (a JPEG, a mascot photo, a square app icon) is composited as the
+      whole image, so the whole image is matched as-is.
+    - A TRANSPARENT mark (PNG/SVG) is trimmed to its content, laid on white and matched
+      polarity-free (|ncc|), so the same mark in white on a dark card still counts.
+    Correlation, not edges or silhouettes: thin wordmark strokes from two resamplings rarely
+    land on the same pixels, which made edge/silhouette scores swing with the logo's size.
     """
     scale = work_width / frame.width
     f = gray(frame.resize((work_width, max(1, round(frame.height * scale))), Image.BILINEAR))
-    if not has_transparency(logo):
-        rgb = logo.convert("RGB")
-        score, box = _search(f, gray(rgb), rgb.height / rgb.width, work_width, use_edges=False)
-        if box is None:
-            return {"score": 0.0, "mode": "image", "bbox": None}
-        x, y, w, h = box
-        return {"score": round(max(score, 0.0), 3), "mode": "image",
-                "bbox": [round(x / scale), round(y / scale), round(w / scale), round(h / scale)]}
-
-    logo = trim_to_content(logo)
-    alpha = np.asarray(logo)[:, :, 3] > 16
-    lg = gray(flatten(logo, (255, 255, 255)))
-    corr, box = _search(f, lg, logo.height / logo.width, work_width, use_edges=True)
-    if box is None:
-        return {"score": 0.0, "mode": "silhouette", "edge_corr": 0.0, "bbox": None}
-    x, y, w, h = box
-    crop = f[y:y + h, x:x + w]
-    mask = np.asarray(Image.fromarray(alpha.astype(np.uint8) * 255).resize((w, h))) > 127
-    dark = crop < otsu(crop)
-    iou = max(float((mask & b).sum()) / max(float((mask | b).sum()), 1.0) for b in (dark, ~dark))
-    return {
-        "score": round(iou, 3),
-        "mode": "silhouette",
-        "edge_corr": round(corr, 3),
-        "bbox": [round(x / scale), round(y / scale), round(w / scale), round(h / scale)],
-    }
+    opaque = not has_transparency(logo)
+    src = logo.convert("RGB") if opaque else flatten(trim_to_content(logo), (255, 255, 255))
+    found = _search(f, gray(src), src.height / src.width, work_width, polarity_free=not opaque)
+    mode = "image" if opaque else "mark"
+    if not found:
+        return {"score": 0.0, "mode": mode, "bbox": None}
+    score, (x, y, w, h) = found[0]
+    return {"score": round(max(score, 0.0), 3), "mode": mode,
+            "bbox": [round(x / scale), round(y / scale), round(w / scale), round(h / scale)]}
 
 
 def hex_to_rgb(h: str) -> tuple[int, int, int]:
@@ -330,7 +335,7 @@ def check_ratio(meta: dict, expect: tuple[int, int]) -> Check:
 
 def check_hook(meta: dict, silences, freezes, hook_audio_s: float) -> Check:
     problems = []
-    lead = next((e for s, e in silences if s <= 0.05), 0.0)
+    lead = max((e for s, e in silences if s <= 0.3), default=0.0)
     if meta["has_audio"] and lead > hook_audio_s:
         problems.append(f"no sound for the first {lead:.1f}s")
     if not meta["has_audio"]:
@@ -345,6 +350,8 @@ def check_hook(meta: dict, silences, freezes, hook_audio_s: float) -> Check:
 
 def check_pacing(meta: dict, freezes, cuts, max_freeze_s: float, endcard_s: float) -> Check:
     body_end = meta["duration"] - endcard_s
+    if body_end < 1.0:
+        return Check(WARN, f"video is {meta['duration']:.1f}s, too short to judge pacing before a {endcard_s:.1f}s end card")
     long_freezes = [(s, e) for s, e in freezes if s < body_end and (min(e, body_end) - s) > max_freeze_s]
     shots = [b - a for a, b in zip([0.0] + cuts, cuts + [meta["duration"]])]
     data = {"cuts": len(cuts), "longest_shot_s": round(max(shots), 2) if shots else None,
@@ -383,8 +390,7 @@ def check_logo_asset(logo: Image.Image | None) -> Check:
     # An opaque logo (a JPEG mascot, an app icon) is used as the whole image; only a
     # transparent mark has padding to trim before judging its real size.
     trimmed = trim_to_content(logo) if has_transparency(logo) else logo
-    short = min(trimmed.size)
-    if short < MIN_LOGO_SHORT_SIDE and max(trimmed.size) < 2 * MIN_LOGO_SHORT_SIDE:
+    if max(trimmed.size) < MIN_LOGO_LONG_SIDE or trimmed.width * trimmed.height < MIN_LOGO_AREA:
         return Check(FAIL, f"logo file is {trimmed.width}x{trimmed.height}: favicon-grade, it will be blurry. "
                            "Ask the user for a real logo, or set the wordmark as text in the brand font",
                      {"size": list(trimmed.size)})
@@ -400,7 +406,7 @@ def check_logo(frames: list[tuple[float, Image.Image]], logo: Image.Image | None
         if m["score"] > best["score"]:
             best = {**m, "t": round(t, 2)}
     s = best["score"]
-    LOGO_PASS, LOGO_FAIL = LOGO_THRESHOLDS[best.get("mode", "silhouette")]
+    LOGO_PASS, LOGO_FAIL = LOGO_THRESHOLDS[best.get("mode", "mark")]
     if s >= LOGO_PASS:
         return Check(PASS, f"logo found at {best['t']}s (match {s:.2f})", best)
     if s < LOGO_FAIL:
@@ -412,7 +418,14 @@ def check_logo(frames: list[tuple[float, Image.Image]], logo: Image.Image | None
 def check_palette(frames: list[tuple[float, Image.Image]], palette: list[str]) -> Check:
     if not palette:
         return Check(NA, "no palette given")
-    kit = [hex_to_rgb(h) for h in palette]
+    kit = []
+    for h in palette:
+        try:
+            kit.append(hex_to_rgb(h))
+        except ValueError:
+            continue
+    if not kit:
+        return Check(NA, "no readable hex colours in --palette")
     img = frames[-1][1]
     dom = [c for c in dominant_colours(img) if c[1] >= 0.05][:4]
     dists = [min(delta_e(c, k) for k in kit) for c, _ in dom]
@@ -485,13 +498,13 @@ def review(args: argparse.Namespace) -> dict:
     silences = spans(log, "silence", dur)
     freezes = spans(log, "freeze", dur)
     blacks = spans(log, "black", dur)
-    cuts = [float(m) for m in re.findall(r"pts_time:([\d.]+)", log)]
+    cuts = [float(m) for m in re.findall(rf"pts_time:({NUM})", log)]
 
-    logo = Image.open(args.logo) if args.logo else None
+    logo = load_image(args.logo) if args.logo else None
     tmp = Path(tempfile.mkdtemp(prefix="rfa-"))
     # One frame per shot (mid-shot) + the end card.
     bounds = [0.0] + cuts + [dur]
-    shot_times = [(a + b) / 2 for a, b in zip(bounds, bounds[1:]) if b - a > 0.2][:11]
+    shot_times = [(a + b) / 2 for a, b in zip(bounds, bounds[1:]) if b - a > 0.2][:17]
     end_times = [max(0.0, dur - s) for s in (1.6, 0.9, 0.3)]
     frames = [(t, Image.open(grab(args.video, t, tmp / f"f{i:02d}.png")).convert("RGB"))
               for i, t in enumerate(shot_times)]
@@ -518,7 +531,10 @@ def review(args: argparse.Namespace) -> dict:
         refs.append(("logo", flatten(trim_to_content(logo), (255, 255, 255))))
     for p in (args.product_images or "").split(","):
         if p.strip() and Path(p.strip()).exists():
-            refs.append(("product", Image.open(p.strip())))
+            try:
+                refs.append(("product", Image.open(p.strip())))
+            except OSError:
+                continue
     spec = font_specimen(args.font, args.brand_name or "")
     if spec is not None:
         refs.append(("font", spec))
@@ -526,6 +542,7 @@ def review(args: argparse.Namespace) -> dict:
     sheet.parent.mkdir(parents=True, exist_ok=True)
     build_sheet(frames + end_frames[-1:], refs, sheet)
 
+    shutil.rmtree(tmp, ignore_errors=True)
     failed = [k for k, c in checks.items() if c.status == FAIL]
     return {
         "verdict": "FAIL" if failed else "PASS",
@@ -538,7 +555,8 @@ def review(args: argparse.Namespace) -> dict:
             "font: on-screen text uses the font in the reference specimen",
             "product_likeness: every product shot matches the reference product images (shape, label, colour)",
             "product_consistency: the product looks the same in every scene",
-            "logo_unaltered: the logo is not warped, recoloured, cropped or redrawn",
+            "logo_unaltered: the logo is not warped, recoloured, cropped or redrawn "
+            "(with no --logo, e.g. a text wordmark: the brand name is set in the brand font)",
         ],
     }
 

@@ -5,6 +5,7 @@ Every video is synthesised here with ffmpeg, so each test states the defect it p
 """
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -223,6 +224,75 @@ def test_audio_tail_past_last_frame_still_reads_the_end_card(tmp, logos):
     code, r = run(tmp, longer, "--logo", str(acme))
     assert code in (0, 2), "must not ERROR when the audio outlasts the picture"
     assert r["checks"]["logo"]["status"] == "pass", r["checks"]["logo"]
+
+
+def _wordmark(tmp, name, text):
+    im = Image.new("RGBA", (900, 160), (0, 0, 0, 0))
+    ImageDraw.Draw(im).text((10, 20), text, font=_font(100), fill=(10, 10, 10, 255))
+    out = tmp / f"{name}.png"
+    rfa.trim_to_content(im).save(out)
+    return out
+
+
+def _card_with(logo_path, width, bg=(240, 236, 228), fill=None):
+    card = Image.new("RGB", (1080, 1920), bg)
+    logo = Image.open(logo_path).convert("RGBA")
+    logo = logo.resize((width, round(logo.height * width / logo.width)))
+    if fill:
+        solid = Image.new("RGBA", logo.size, fill + (255,))
+        logo = Image.composite(solid, Image.new("RGBA", logo.size, (0, 0, 0, 0)), logo.split()[3])
+    card.paste(logo, ((1080 - width) // 2, 800), logo)
+    return card
+
+
+@pytest.mark.parametrize("width", [130, 218, 348, 600])
+def test_thin_wordmark_is_found_at_any_size_and_polarity(tmp, width):
+    """Reviewer probe (GOOSE-3761): the old edge + silhouette match failed a correct thin
+    wordmark at 348px (0.27). Any size, dark or white, must pass; another brand must fail."""
+    good = _wordmark(tmp, "good", "Gooseworks")
+    other = _wordmark(tmp, "other", "Acme Labs")
+    logo = Image.open(good)
+    lo, hi = rfa.LOGO_THRESHOLDS["mark"][1], rfa.LOGO_THRESHOLDS["mark"][0]
+    assert rfa.find_logo(_card_with(good, width), logo)["score"] >= hi
+    assert rfa.find_logo(_card_with(good, width, bg=(20, 20, 20), fill=(255, 255, 255)), logo)["score"] >= hi
+    assert rfa.find_logo(_card_with(other, width), logo)["score"] < lo
+
+
+def test_wide_wordmark_file_is_not_called_a_favicon():
+    assert rfa.check_logo_asset(Image.new("RGBA", (400, 120), (0, 0, 0, 255))).status == "pass"
+    assert rfa.check_logo_asset(Image.new("RGB", (180, 180))).status == "fail"
+
+
+def test_svg_logo_is_rasterised(tmp, logos):
+    if not (shutil.which("rsvg-convert") or _cairosvg_works()):
+        pytest.skip("no SVG rasteriser installed")
+    svg = tmp / "logo.svg"
+    svg.write_text('<svg xmlns="http://www.w3.org/2000/svg" width="600" height="200">'
+                   '<circle cx="100" cy="100" r="90" fill="#1438c8"/>'
+                   '<rect x="220" y="40" width="360" height="120" fill="#1438c8"/></svg>')
+    img = rfa.load_image(str(svg))
+    assert img.width == 1024
+
+
+def _cairosvg_works():
+    try:
+        import cairosvg  # noqa: F401
+        return True
+    except Exception:
+        return False
+
+
+def test_undecodable_video_is_an_error(tmp):
+    bad = tmp / "bad.mp4"
+    bad.write_bytes(b"\x00" * 4096)
+    assert rfa.main(["--video", str(bad), "--json", str(tmp / "o.json")]) == 3
+
+
+def test_silence_starting_just_after_zero_fails_hook(tmp, logos):
+    acme, _ = logos
+    v = make_video(tmp, make_endcard(tmp / "card.png", acme), gap=(0.2, 2.6))
+    code, r = run(tmp, v)
+    assert r["checks"]["hook"]["status"] == "fail", r["checks"]["hook"]
 
 
 def test_missing_video_is_an_error(tmp):

@@ -24,8 +24,13 @@ python3 scripts/review_finished_ad.py \
   --font working/brand/font.ttf --brand-name "Acme"
 ```
 
-- `--logo` is the brand kit's logo **file** (download `logoUrl` / `logos[0]`). Never
-  a generated logo. Omit it only when the brand has no logo at all.
+- `--logo` is the logo **file the video actually composites**: the kit's `logoUrl` /
+  `logos[0]`, or the wordmark file the recipe's end card uses. PNG, JPEG or SVG (an SVG is
+  rasterised with `cairosvg` or `rsvg-convert`). Never a generated logo.
+- **No logo image in the video** (the brand name set as text in the brand font, because the
+  kit only has a favicon or no logo): omit `--logo`, and judge the text wordmark on the sheet.
+- `--endcard-s` is the end card's length (default 3.0). Set it to the real length: a longer
+  silent or static end card would otherwise read as dead air or a freeze.
 - `--logo-at 3.2` (repeatable) adds a timestamp where the logo also appears
   mid-video; the end card (last ~1.6s) is always checked.
 - `--no-speech` for formats with no voiceover or dialogue (music-only), so
@@ -46,21 +51,21 @@ re-run. Never publish blind.
 | `pacing` | the picture is frozen for > 2.5s before the end card | add motion (push-in, b-roll, a cut) or trim the hold |
 | `dead_air` | silence > 1.0s mid-video (skipped with `--no-speech`) | tighten the VO timing or run the music bed under the gap |
 | `black_frames` | a black stretch > 0.3s | fix the concat / transition |
-| `logo_asset` | the logo file is favicon-sized (short side < 256px) | do not upscale it: ask for a real logo, or set the wordmark as text in the brand font |
+| `logo_asset` | the logo file is favicon-sized (long side < 256px, or under 40,000 px²) | do not upscale it: ask for a real logo, or set the wordmark as text in the brand font (then drop `--logo`) |
 | `logo` | the kit logo is not found on the end card (below the fail line for its mode) | composite the uploaded logo file onto the end card; never regenerate or retype it |
 | `palette` | *(warn only)* no kit colour among the end card's main colours | use a kit colour for the end-card background or text |
 
-`logo` has two modes, picked from the logo file:
+`logo` is grayscale correlation with a fine size search, so the right logo scores
+0.9+ at any size:
 
-- **Transparent logo** (a PNG/SVG mark): edges find it (so a white or
-  single-colour version still counts), then the logo's silhouette is compared
-  with the frame at that spot. Pass ≥ 0.70, fail < 0.55.
-- **Opaque logo** (a JPEG, a mascot photo, a square app icon): it is composited
-  as the whole image, so the whole image is matched. Pass ≥ 0.85, fail < 0.70.
-  A different mascot on a similar background scores about 0.5.
+- **Transparent mark** (PNG/SVG wordmark or symbol): matched in either polarity, so a white
+  version on a dark card counts. Pass ≥ 0.85, fail < 0.75. Another brand's wordmark scores
+  about 0.6-0.7; a same-font near-copy about 0.8 (warn).
+- **Opaque logo** (a JPEG, a mascot photo, a square app icon): matched as the whole image.
+  Pass ≥ 0.85, fail < 0.70. A different mascot on a similar background scores about 0.5.
 
-Between the two lines it is a `warn`: look at the sheet for a warped, cropped or
-redrawn logo.
+Between the two lines it is a `warn`: look at the sheet for a warped, cropped or redrawn
+logo.
 
 ## Eye checks — read the sheet every time
 
