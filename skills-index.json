@@ -6025,6 +6025,35 @@
       }
     },
     {
+      "slug": "render-apple-notes-chat",
+      "name": "render-apple-notes-chat",
+      "category": "capabilities",
+      "domain": "ads",
+      "description": "Assemble an Apple Notes list video ad from a note + end-card JSON — a frame-accurate fake iPhone screen recording of a short list being typed into Apple Notes (character by character, key pops, blinking caret, the note scrolling up as it fills) crossfaded into a checklist end card (the note's picks as ticked rows, real product photos, logo, CTA, in the brand's colours and fonts), with an optional music bed. FREE assembly (Playwright + ffmpeg); the recipe supplies the per-brand note + end card and gates the paid music call to its own capability. The Apple Notes sibling of render-imessage-chat and render-chatgpt-chat. Use for the apple-notes format.",
+      "tags": "ads",
+      "path": "skills/ads/capabilities/render-apple-notes-chat",
+      "files": [],
+      "metadata": {
+        "slug": "render-apple-notes-chat",
+        "category": "capabilities",
+        "domain": "ads",
+        "tags": [
+          "ads"
+        ],
+        "installation": {
+          "base_command": "npx goose-skills install render-apple-notes-chat",
+          "supports": [
+            "claude",
+            "cursor",
+            "codex"
+          ]
+        },
+        "requires_skills": [
+          "watch"
+        ]
+      }
+    },
+    {
       "slug": "render-brand-identity-reveal",
       "name": "render-brand-identity-reveal",
       "category": "capabilities",
