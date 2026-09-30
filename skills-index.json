@@ -1,6 +1,6 @@
 {
   "version": "1.3.0",
-  "generated": "2026-09-29",
+  "generated": "2026-09-30",
   "skills": [
     {
       "slug": "ad-angle-miner",
@@ -1854,6 +1854,7 @@
         "skills/ads/capabilities/create-creator-takes-h3/scripts/align_beats.py",
         "skills/ads/capabilities/create-creator-takes-h3/scripts/character-prompt.json",
         "skills/ads/capabilities/create-creator-takes-h3/scripts/join_takes.py",
+        "skills/ads/capabilities/create-creator-takes-h3/scripts/make_character.py",
         "skills/ads/capabilities/create-creator-takes-h3/scripts/media_proxy.py",
         "skills/ads/capabilities/create-creator-takes-h3/scripts/plan_takes.py",
         "skills/ads/capabilities/create-creator-takes-h3/scripts/run_takes.py",
@@ -2246,7 +2247,8 @@
         "skills/ads/capabilities/create-vo-elevenlabs/scripts/gen_vo.py",
         "skills/ads/capabilities/create-vo-elevenlabs/scripts/media_proxy.py",
         "skills/ads/capabilities/create-vo-elevenlabs/skill.meta.json",
-        "skills/ads/capabilities/create-vo-elevenlabs/tests/smoke-test.md"
+        "skills/ads/capabilities/create-vo-elevenlabs/tests/smoke-test.md",
+        "skills/ads/capabilities/create-vo-elevenlabs/tests/test_gen_vo.py"
       ],
       "metadata": {
         "slug": "create-vo-elevenlabs",
@@ -7296,6 +7298,38 @@
         "source": "orthogonal",
         "installation": {
           "base_command": "npx goose-skills install restaurant-booking",
+          "supports": [
+            "claude",
+            "cursor",
+            "codex"
+          ]
+        }
+      }
+    },
+    {
+      "slug": "review-finished-ad",
+      "name": "review-finished-ad",
+      "category": "capabilities",
+      "domain": "ads",
+      "description": "Final QC gate for a rendered 9:16 video ad, run before it is published. One script checks what a machine can decide — exact 1080x1920 size, a hook that moves and speaks in the first second, no frozen stretches, no dead air, no black frames, the brand's real logo on the end card (never a favicon, never a redrawn or wrong logo), end-card colours near the brand palette — and builds one contact sheet (frames with the TikTok/Reels UI safe zones shaded, beside the logo, product images and a font specimen) for the checks that need eyes: font, product likeness, product consistency across scenes, safe zones. Exit 0 PASS / 2 FAIL / 3 ERROR. Use on every finished video master before pinning it.",
+      "tags": "ads, brand",
+      "path": "skills/ads/capabilities/review-finished-ad",
+      "files": [
+        "skills/ads/capabilities/review-finished-ad/SKILL.md",
+        "skills/ads/capabilities/review-finished-ad/scripts/review_finished_ad.py",
+        "skills/ads/capabilities/review-finished-ad/skill.meta.json",
+        "skills/ads/capabilities/review-finished-ad/tests/test_review_finished_ad.py"
+      ],
+      "metadata": {
+        "slug": "review-finished-ad",
+        "category": "capabilities",
+        "domain": "ads",
+        "tags": [
+          "ads",
+          "brand"
+        ],
+        "installation": {
+          "base_command": "npx goose-skills install review-finished-ad",
           "supports": [
             "claude",
             "cursor",
