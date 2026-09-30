@@ -250,13 +250,21 @@ What is getting **earned** reach right now, on TikTok, Instagram Reels, YouTube 
 1. **Free first** (GooseWorks): the competitor dossiers (`competitor_read` with a slug) hold recent
    posts; `social_inspiration_library` and `social_inspiration_search` hold saved and researched posts.
 2. **Paid searches, ask once**: "I'd run about N searches (TikTok, Instagram Reels, YouTube Shorts,
-   plus X mentions of your competitors). Each is billed per call. Go ahead?" On yes: keyword
-   searches through `scrapecreators-api` (GooseWorks: `data_call_provider` with provider
-   scrapecreators; TikTok keyword search, Instagram reels search, YouTube search) and
-   `competitor_search_mentions` for X. Terms: the user's own first, then the category, the main
-   problem it solves, each competitor's name. If an endpoint errors, drop that source and say so;
-   never guess another path. On no: continue with the free evidence and say the list has no fresh
-   social data behind it.
+   plus X mentions of your competitors). Each is billed per call. Go ahead?" On yes, run these
+   through `scrapecreators-api` (GooseWorks: `data_call_provider` with provider scrapecreators,
+   GET). Terms: the user's own first, then the category, the main problem it solves, each
+   competitor's name.
+
+   | Platform | Path | Query | Notes |
+   |---|---|---|---|
+   | TikTok | /v1/tiktok/search/keyword | query, date_posted last-3-months, sort_by most-liked | Views in statistics.play_count |
+   | Instagram Reels | /v2/instagram/reels/search | query, date_posted last-month | Google-indexed, so best-effort; page 1-11 |
+   | YouTube Shorts | /v1/youtube/search | query, type shorts, **nothing else** | Adding uploadDate or sortBy with type shorts returns no results. Rows carry only id, url, title and views: for the 3-5 you'd cite, call /v1/youtube/video (url) for the channel and publish date |
+   | X | none | none | ScrapeCreators has no X keyword search. Use `competitor_search_mentions` with platform x, or /v1/twitter/user-tweets for a competitor's own handle |
+
+   The full, current list is the official OpenAPI (docs.scrapecreators.com/openapi.json). If a
+   call errors, read it there; never guess a path. On no: continue with the free evidence and
+   say the list has no fresh social data behind it.
 3. Keep vertical videos only. Keep posts far above their account's usual views (an outlier at 10×
    its normal beats a big account's average post), from the last ~90 days.
 4. Watch the 3-5 strongest (the `watch` skill, or `social_inspiration_watch` for saved posts) so the
@@ -267,8 +275,9 @@ What is getting **earned** reach right now, on TikTok, Instagram Reels, YouTube 
 For every post or ad you might cite:
 
 - **paid**: it came from an ad library; or the post is marked as an ad (TikTok ad / commercial
-  content flag, Instagram paid partnership or sponsor tags, "Sponsored"); or the same creative also
-  runs as that advertiser's ad (**boosted**).
+  content flag, Instagram paid partnership or sponsor tags, "Sponsored", a YouTube paid-promotion
+  disclosure: /v1/youtube/video/sponsors returns isPaidPromotion and the likely sponsor); or the
+  same creative also runs as that advertiser's ad (**boosted**).
 - **organic**: a post with none of the above.
 - **unknown**: you can't tell. Say so; never guess organic.
 
