@@ -111,11 +111,14 @@ def spans(log: str, key: str, duration: float) -> list[tuple[float, float]]:
 
 
 def grab(video: str, t: float, dest: Path) -> Path:
-    run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-ss", f"{max(t, 0):.3f}",
-         "-i", video, "-frames:v", "1", str(dest)])
-    if not dest.exists():
-        raise RuntimeError(f"could not grab a frame at {t:.2f}s")
-    return dest
+    """One frame at t. The container can run longer than the picture (an audio tail past the
+    last frame), so a grab near the end steps back until a frame exists."""
+    for back in (0.0, 0.3, 0.8, 1.5, 3.0):
+        run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-ss", f"{max(t - back, 0):.3f}",
+             "-i", video, "-frames:v", "1", str(dest)])
+        if dest.exists():
+            return dest
+    raise RuntimeError(f"could not grab a frame at {t:.2f}s")
 
 
 # ---------------------------------------------------------------- image helpers
@@ -355,8 +358,10 @@ def check_pacing(meta: dict, freezes, cuts, max_freeze_s: float, endcard_s: floa
 def check_dead_air(meta: dict, silences, max_silence_s: float, endcard_s: float) -> Check:
     if not meta["has_audio"]:
         return Check(FAIL, "no audio track")
-    body_end = meta["duration"] - min(endcard_s, 1.5)
-    gaps = [(s, e) for s, e in silences if s > 0.3 and s < body_end and (e - s) > max_silence_s]
+    # A silent end card is normal (most recipes append one), so silence that starts inside
+    # the end-card window is not dead air. Anything that starts earlier is.
+    body_end = meta["duration"] - endcard_s
+    gaps = [(s, e) for s, e in silences if s > 0.3 and s < body_end and (min(e, body_end) - s) > max_silence_s]
     if gaps:
         s, e = gaps[0]
         return Check(FAIL, f"silence {s:.1f}-{e:.1f}s: tighten the VO or extend the music bed",
@@ -375,7 +380,9 @@ def check_black(blacks) -> Check:
 def check_logo_asset(logo: Image.Image | None) -> Check:
     if logo is None:
         return Check(NA, "no logo given")
-    trimmed = trim_to_content(logo)
+    # An opaque logo (a JPEG mascot, an app icon) is used as the whole image; only a
+    # transparent mark has padding to trim before judging its real size.
+    trimmed = trim_to_content(logo) if has_transparency(logo) else logo
     short = min(trimmed.size)
     if short < MIN_LOGO_SHORT_SIDE and max(trimmed.size) < 2 * MIN_LOGO_SHORT_SIDE:
         return Check(FAIL, f"logo file is {trimmed.width}x{trimmed.height}: favicon-grade, it will be blurry. "

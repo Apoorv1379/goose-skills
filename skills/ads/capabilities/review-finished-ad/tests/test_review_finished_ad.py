@@ -55,7 +55,8 @@ def make_endcard(path, logo_path, size=(1080, 1920), bg=(245, 240, 230), logo_wi
     return path
 
 
-def make_video(tmp, endcard, size="1080x1920", body_s=4.5, still_body=False, silent_lead=0.0, gap=None):
+def make_video(tmp, endcard, size="1080x1920", body_s=4.5, still_body=False, silent_lead=0.0, gap=None,
+               silent_endcard=False):
     """Moving test pattern for the body, then 2.5s end card; a tone over all of it."""
     w, h = size.split("x")
     out = Path(tmp) / "v.mp4"
@@ -64,6 +65,8 @@ def make_video(tmp, endcard, size="1080x1920", body_s=4.5, still_body=False, sil
     vol = [f"between(t,0,{silent_lead})"] if silent_lead else []
     if gap:
         vol.append(f"between(t,{gap[0]},{gap[1]})")
+    if silent_endcard:
+        vol.append(f"gte(t,{body_s})")
     af = f"volume=enable='{'+'.join(vol)}':volume=0" if vol else "anull"
     cmd = [
         "ffmpeg", "-y", "-loglevel", "error",
@@ -187,12 +190,39 @@ def test_mid_video_silence_fails_dead_air_unless_no_speech(tmp, logos):
     assert r["checks"]["dead_air"]["status"] == "not_applicable"
 
 
+def test_silent_end_card_is_not_dead_air(tmp, logos):
+    acme, _ = logos
+    v = make_video(tmp, make_endcard(tmp / "card.png", acme), silent_endcard=True)
+    code, r = run(tmp, v)
+    assert r["checks"]["dead_air"]["status"] == "pass", r["checks"]["dead_air"]
+
+
+def test_opaque_logo_size_is_the_whole_image(tmp):
+    big = _photo_logo(tmp, "big", "ACME", (20, 60, 200, 255), "circle", (170, 205, 140))
+    assert rfa.check_logo_asset(Image.open(big)).status == "pass"
+    small = tmp / "small.jpg"
+    Image.open(big).resize((64, 64)).save(small)
+    assert rfa.check_logo_asset(Image.open(small)).status == "fail"
+
+
 def test_off_palette_end_card_warns_not_fails(tmp, logos):
     acme, _ = logos
     v = make_video(tmp, make_endcard(tmp / "card.png", acme))
     code, r = run(tmp, v, "--palette", "#00ff00,#ff00ff")
     assert r["checks"]["palette"]["status"] == "warn"
     assert code == 0
+
+
+def test_audio_tail_past_last_frame_still_reads_the_end_card(tmp, logos):
+    acme, _ = logos
+    v = make_video(tmp, make_endcard(tmp / "card.png", acme))
+    longer = tmp / "tail.mp4"
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(v), "-f", "lavfi",
+                    "-i", "sine=frequency=330:sample_rate=44100:duration=9.0", "-map", "0:v", "-map", "1:a",
+                    "-c:v", "copy", "-c:a", "aac", str(longer)], check=True)
+    code, r = run(tmp, longer, "--logo", str(acme))
+    assert code in (0, 2), "must not ERROR when the audio outlasts the picture"
+    assert r["checks"]["logo"]["status"] == "pass", r["checks"]["logo"]
 
 
 def test_missing_video_is_an_error(tmp):
