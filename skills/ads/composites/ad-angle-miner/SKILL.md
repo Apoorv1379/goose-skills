@@ -70,7 +70,7 @@ sources, once. Never widen the scope on your own.
 | Brand context (1-0) | yes | yes | yes |
 | Reviews: G2 / Capterra / Amazon (1A) | yes | only if asked | only if asked |
 | Reddit / community (1B) | yes | only if asked | only if asked |
-| Social comments (1C) | yes | yes (on the top posts found in 1F) | no |
+| Social comments (1C) | yes | optional: only on 1-2 top posts, via the TikTok, Instagram or YouTube comments endpoints | no |
 | Competitor ads (1D) | copy text only | video ads first, then any | static ads first, then any |
 | Internal data (1E) | if provided | if provided | if provided |
 | Organic short-form reach (1F) | **no** | yes | no |
@@ -221,12 +221,16 @@ Run 3-5 queries covering:
 ### 1D: Competitor Ad Mining
 
 With the GooseWorks MCP, read the competitor ads already imported: `ads_template_read` in
-competitor mode (filter by format video or image to match the output; page with a small limit,
-rows are heavy). If a tracked competitor has none, `ads_library_scrape` with its source id starts
+competitor mode, one competitor at a time (filter by its source id). Rows are heavy (about 4KB
+each, full layout descriptions): page with a small limit and keep only the fields below. Rows
+carry no video/image field, and today the imported ads are mostly images; their copy is still
+angle evidence. If a tracked competitor has none, `ads_library_scrape` with its source id starts
 a free import; read it when the job finishes. For each ad keep the Ad Library link
 (facebook.com/ads/library with the ad's source ad id), the hook (first line of the primary text),
-the offer, the CTA and **days running** (end date minus start date). The library may hold only
-image ads for a competitor; their copy is still angle evidence.
+the offer, the CTA and **days running** (end date minus start date). For an ad that is still
+live, the end date is just the day it was imported, so write "at least N days, still running".
+Group ads with the same primary text: **many variants of one message** is as strong a signal as
+a long run.
 
 Otherwise:
 
@@ -249,6 +253,7 @@ What is getting **earned** reach right now, on TikTok, Instagram Reels, YouTube 
 
 1. **Free first** (GooseWorks): the competitor dossiers (`competitor_read` with a slug) hold recent
    posts; `social_inspiration_library` and `social_inspiration_search` hold saved and researched posts.
+   These are often empty (research still pending). If they are, go straight to the paid ask below.
 2. **Paid searches, ask once**: "I'd run about N searches (TikTok, Instagram Reels, YouTube Shorts,
    plus X mentions of your competitors). Each is billed per call. Go ahead?" On yes, run these
    through `scrapecreators-api` (GooseWorks: `data_call_provider` with provider scrapecreators,
@@ -257,9 +262,9 @@ What is getting **earned** reach right now, on TikTok, Instagram Reels, YouTube 
 
    | Platform | Path | Query | Notes |
    |---|---|---|---|
-   | TikTok | /v1/tiktok/search/keyword | query, date_posted last-3-months, sort_by most-liked | Views in statistics.play_count |
-   | Instagram Reels | /v2/instagram/reels/search | query, date_posted last-month | Google-indexed, so best-effort; page 1-11 |
-   | YouTube Shorts | /v1/youtube/search | query, type shorts, **nothing else** | Adding uploadDate or sortBy with type shorts returns no results. Rows carry only id, url, title and views: for the 3-5 you'd cite, call /v1/youtube/video (url) for the channel and publish date |
+   | TikTok | /v1/tiktok/search/keyword | query, date_posted last-3-months, sort_by most-liked | About 2MB per call: parse it, keep url (tiktok.com/@author/video/id), author, follower count, statistics.play_count, create_time, desc, commerce_info |
+   | Instagram Reels | /v2/instagram/reels/search | query, date_posted last-month | Google-indexed, best-effort, about 9 results a page (1-11). No follower count, so reach can't be compared to the account's usual |
+   | YouTube Shorts | /v1/youtube/search | query, type shorts, **nothing else** | Adding uploadDate or sortBy with type shorts returns no results. Rows carry only id, url, title and views, and results skew old. For the 3-5 you'd cite, call /v1/youtube/video (url): channel, publishDate, and isPaidPromotion. YouTube evidence is evergreen: cite its date, skip the 90-day rule |
    | X | none | none | ScrapeCreators has no X keyword search. Use `competitor_search_mentions` with platform x, or /v1/twitter/user-tweets for a competitor's own handle |
 
    The full, current list is the official OpenAPI (docs.scrapecreators.com/openapi.json). If a
@@ -268,16 +273,25 @@ What is getting **earned** reach right now, on TikTok, Instagram Reels, YouTube 
 3. Keep vertical videos only. Keep posts far above their account's usual views (an outlier at 10×
    its normal beats a big account's average post), from the last ~90 days.
 4. Watch the 3-5 strongest (the `watch` skill, or `social_inspiration_watch` for saved posts) so the
-   hook and structure you describe are what's actually in them.
+   hook and structure you describe are what's actually in them. When neither is available, read
+   the video's transcript (YouTube: /v1/youtube/video/transcript; TikTok and Reels: the caption
+   plus the first line of speech) rather than guessing from the title.
 
 ### 1G: Label Every Reference Paid or Organic (video and static)
 
 For every post or ad you might cite:
 
-- **paid**: it came from an ad library; or the post is marked as an ad (TikTok ad / commercial
-  content flag, Instagram paid partnership or sponsor tags, "Sponsored", a YouTube paid-promotion
-  disclosure: /v1/youtube/video/sponsors returns isPaidPromotion and the likely sponsor); or the
-  same creative also runs as that advertiser's ad (**boosted**).
+- **paid**: any of
+  - it came from an ad library;
+  - TikTok: commerce_info.bc_label_test_text says "Paid partnership", "Promotional content" or
+    "Creator earns commission" (a TikTok Shop affiliate post is paid). The is_ads flag is almost
+    always false, so don't rely on it; ad_source or adv_promotable alone means unknown;
+  - Instagram: is_paid_partnership or sponsor tags, **or** the caption says #ad, sponsored,
+    gifted or tags the brand as a partner (the flag misses many disclosed posts);
+  - YouTube: isPaidPromotion from /v1/youtube/video. Call /v1/youtube/video/sponsors only when you
+    need the sponsor's name; if the two disagree, mark it unknown;
+  - **boosted**: the same caption or script on several accounts, or plays far above the account's
+    followers (100K plays on a 58-follower account), or the same creative in the ad library.
 - **organic**: a post with none of the above.
 - **unknown**: you can't tell. Say so; never guess organic.
 
@@ -326,7 +340,8 @@ these formats can be made; never map to one that isn't listed. For each angle wr
 - **Format**: the template id, its card description quoted (never reworded), and why it fits.
   Match the product to the format: a creator holding a product needs a physical product; a
   screen-recording format needs an app.
-- **Needs**: the card's needs against what the brand has. A missing need lowers the rank; say it.
+- **Needs**: the card's needs against what the brand has. Check the actual files: an SVG logo or a
+  small resized thumbnail is not a clean product photo. A missing need lowers the rank; say it.
 - **References**: 1-3 links, each with platform, account, paid / organic / unknown, and the number
   that matters (views vs usual, or days running).
 
@@ -335,9 +350,13 @@ filtered by industry or style, community mode, or a competitor ad from 1D as a r
 each angle write the headline, the template id with one line on why its layout fits, what the
 brand must supply (product photo, logo), and the references.
 
+**Claims**: a hook may only claim what the brand's own data says (certifications, guarantees,
+ingredients, offers). Flag any claim the brand should approve, such as a review count or a
+health benefit, rather than writing it as fact.
+
 Adapt the pattern, never copy: take the hook shape, structure and angle, never another brand's
 words, claims, faces, footage or offer. Spread the list: no more than 3 ideas on one format or
-template, and no more than 3 on one angle.
+template, and no more than 3 on one angle (variants of the same angle count toward that 3).
 
 ## Phase 3: Scoring & Ranking
 
