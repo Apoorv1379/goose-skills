@@ -39,8 +39,12 @@
           "reddit-post-finder",
           "review-site-scraper",
           "twitter-mention-tracker",
-          "comment-mining"
-        ]
+          "comment-mining",
+          "competitor-ad-intelligence",
+          "scrapecreators-api",
+          "watch"
+        ],
+        "example_prompt": "What video ads should I make for my brand? Show me the posts behind each idea."
       }
     },
     {
