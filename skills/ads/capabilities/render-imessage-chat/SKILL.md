@@ -159,3 +159,8 @@ thread; real conversations open with it and the clock is read from it.
     they are downloaded once (with retries), cached, and inlined as data URIs.
 14. **Take end-card colours from the brand's live CSS variables**, not the product photo
     (Graza: `--color-background #F6E6D9`, `--color-text #3C422E`, `--color-brand #D1E030`).
+15. **The mix was clipping** (-4.8 LUFS, peaks above 0 dBFS, limiter squashing every chime).
+    Now ~-11.4 LUFS, peaks ~-1.2 dBFS.
+16. **The real-time capture can stall under CPU load** (a sync marker missed; bubbles bunched
+    by 637 ms). `record-chat.js` exits 4 when the marker is missing or any bubble is >250 ms
+    off plan, and `render.sh` re-records up to 3 times.

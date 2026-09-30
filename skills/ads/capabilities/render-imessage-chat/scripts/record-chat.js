@@ -477,6 +477,13 @@ function snapCuesToPicture(cues, mp4) {
   });
   const found = lags.filter(x => x != null);
   console.log(`sfx  → snapped ${found.length}/${cues.length} cues to the picture; capture lag ${Math.min(...found)}..${Math.max(...found)} ms`);
+  // A real-time capture can stall under CPU load and bunch bubbles together. The pacing is
+  // the story, so a bubble more than 250 ms off its plan (or not found) means record again.
+  const worst = Math.max(...found.map(Math.abs));
+  if (found.length < cues.length || worst > 250) {
+    console.error(`CAPTURE STALLED: ${cues.length - found.length} cue(s) not seen, worst drift ${worst} ms; re-record.`);
+    process.exit(4);
+  }
   return out;
 }
 
@@ -613,7 +620,10 @@ async function main() {
     return out;
   });
   if (bleed.length) { console.error('TEXT BLEED in: ' + bleed.join(', ') + ' (split the line into two bubbles)'); process.exit(3); }
-  await page.waitForTimeout(600);
+  // Make sure the curtain has actually been painted (two animation frames), then hold it
+  // long enough for the screencast to emit frames of it.
+  await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
+  await page.waitForTimeout(1000);
   await page.evaluate(() => window.__startDriver());
   await page.waitForTimeout(total * 1000);
   const typed = await page.evaluate(() => window.__typedMismatch || []);

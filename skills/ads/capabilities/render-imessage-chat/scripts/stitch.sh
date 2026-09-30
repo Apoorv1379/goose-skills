@@ -122,7 +122,7 @@ n = len(mix_labels)
 # normalize=0 so amix doesn't divide each input by N (preserves SFX peaks).
 filter_parts.append(
     "".join(mix_labels) +
-    f"amix=inputs={n}:duration=first:dropout_transition=0:normalize=0,volume=2.5,alimiter=limit=0.95[aout]")
+    f"amix=inputs={n}:duration=first:dropout_transition=0:normalize=0,volume=0.85,alimiter=limit=0.84:level=false[aout]")
 fc = ";".join(filter_parts)
 cmd = ["ffmpeg", "-y"] + inputs + ["-filter_complex", fc, "-map", "[aout]", "-c:a", "aac", "-b:a", "192k", out]
 subprocess.run(cmd, check=True, stderr=subprocess.DEVNULL)

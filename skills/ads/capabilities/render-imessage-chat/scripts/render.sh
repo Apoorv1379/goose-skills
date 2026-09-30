@@ -18,7 +18,14 @@ done
 [ -n "$CONFIG" ] && [ -n "$OUT" ] || { echo "usage: render.sh --config c.json --out final.mp4" >&2; exit 1; }
 WORK="$(dirname "$OUT")/work-$(basename "${OUT%.mp4}")"
 mkdir -p "$WORK"
-node "$HERE/record-chat.js" --config "$CONFIG" --out-dir "$WORK"
+# The capture is real-time; if the sync marker is missed or the capture stalled (exit 4),
+# record again, up to 3 tries.
+for try in 1 2 3; do
+  set +e; node "$HERE/record-chat.js" --config "$CONFIG" --out-dir "$WORK"; rc=$?; set -e
+  [ $rc -eq 0 ] && break
+  [ $rc -eq 4 ] && [ $try -lt 3 ] && { echo "capture not usable (sync marker or stall); recording again ($((try+1))/3)"; continue; }
+  exit $rc
+done
 node "$HERE/render-end-card.js" --config "$CONFIG" --out-dir "$WORK"
 bash "$HERE/stitch.sh" --chat "$WORK/master-chat.mp4" --end "$WORK/scene-end-endcard.mp4" \
   --sfx "$WORK/master-chat.sfx.json" --out "$OUT" ${EXTRA[@]+"${EXTRA[@]}"}
