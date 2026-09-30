@@ -121,6 +121,29 @@ def test_smaller_recoloured_logo_is_still_found(tmp, logos):
     assert r["checks"]["logo"]["status"] == "pass", r["checks"]["logo"]
 
 
+def _photo_logo(tmp, name, text, colour, shape, bg):
+    """An OPAQUE logo file (like a mascot JPEG): the mark on its own coloured square."""
+    src = make_logo(tmp / f"{name}.png", text, colour, shape)
+    im = Image.new("RGB", (700, 700), bg)
+    mark = Image.open(src)
+    im.paste(mark, (0, 200), mark)
+    out = tmp / f"{name}.jpg"
+    im.save(out, quality=92)
+    return out
+
+
+def test_opaque_photo_logo_right_passes_wrong_fails(tmp):
+    right = _photo_logo(tmp, "right", "ACME", (20, 60, 200, 255), "circle", (170, 205, 140))
+    wrong = _photo_logo(tmp, "wrong", "ZETA", (200, 40, 40, 255), "tri", (170, 205, 140))
+    v = make_video(tmp, make_endcard(tmp / "card.png", right, logo_width=460))
+    code, r = run(tmp, v, "--logo", str(right))
+    assert r["checks"]["logo"]["status"] == "pass", r["checks"]["logo"]
+    assert r["checks"]["logo"]["data"]["mode"] == "image"
+    v = make_video(tmp, make_endcard(tmp / "card2.png", wrong, logo_width=460))
+    code, r = run(tmp, v, "--logo", str(right))
+    assert r["checks"]["logo"]["status"] == "fail", r["checks"]["logo"]
+
+
 def test_favicon_logo_file_fails(tmp, logos):
     acme, _ = logos
     fav = tmp / "fav.png"

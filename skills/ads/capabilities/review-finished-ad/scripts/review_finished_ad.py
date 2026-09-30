@@ -41,7 +41,9 @@ PASS, FAIL, WARN, NA = "pass", "fail", "warn", "not_applicable"
 # Platform UI covers these bands on TikTok / Reels / Shorts at 1080x1920 (px).
 SAFE_TOP, SAFE_BOTTOM, SAFE_RIGHT = 220, 400, 140
 
-LOGO_PASS, LOGO_FAIL = 0.70, 0.55
+# Per match mode: (pass at or above, fail below). A whole-image match of the right logo
+# scores ~0.95 even after video compression; a different logo on a similar background ~0.5-0.65.
+LOGO_THRESHOLDS = {"silhouette": (0.70, 0.55), "image": (0.85, 0.70)}
 MIN_LOGO_SHORT_SIDE = 256
 PALETTE_WARN_DELTA_E = 25.0
 
@@ -211,49 +213,67 @@ def otsu(a: np.ndarray) -> float:
     return thr
 
 
-def find_logo(frame: Image.Image, logo: Image.Image, work_width: int = 360) -> dict:
-    """Find the kit logo in a frame.
+def has_transparency(img: Image.Image) -> bool:
+    return img.mode in ("RGBA", "LA", "P") and np.asarray(img.convert("RGBA"))[:, :, 3].min() < 250
 
-    1. Multi-scale edge correlation picks the best place and size (edges ignore colour,
-       so a white or recoloured version of the logo is still found).
-    2. Shape check: the logo's own silhouette vs the frame crop binarised at that spot
-       (either polarity). `score` is that overlap (IoU): a different logo in the same
-       place scores low even when its edges correlate.
-    """
-    scale = work_width / frame.width
-    f = gray(frame.resize((work_width, max(1, round(frame.height * scale))), Image.BILINEAR))
-    logo = trim_to_content(logo)
-    alpha = np.asarray(logo)[:, :, 3] > 16
-    if alpha.all():  # opaque file: the silhouette is whatever differs from its corners
-        g = gray(logo)
-        corner = np.median([g[0, 0], g[0, -1], g[-1, 0], g[-1, -1]])
-        alpha = np.abs(g - corner) > 24
-    lg = gray(flatten(logo, (255, 255, 255)))
-    aspect = logo.height / logo.width
-    fe = edges(f)
+
+def _search(f: np.ndarray, tpl_gray: np.ndarray, aspect: float, work_width: int, use_edges: bool):
+    """Best (score, box) of the template over f across 16 sizes, in work-width pixels."""
     widths = [int(w) for w in np.unique(np.geomspace(20, work_width * 0.9, 16).astype(int))]
-    max_th = max(4, round(max(widths) * aspect))
-    matcher = Matcher(fe, max_th, max(widths))
-    best_corr, best_box = 0.0, None
+    image = edges(f) if use_edges else f
+    matcher = Matcher(image, max(4, round(max(widths) * aspect)) + 1, max(widths))
+    best_score, best_box = 0.0, None
     for width in widths:
         height = max(4, round(width * aspect))
         if height >= f.shape[0]:
             continue
-        tpl = np.asarray(Image.fromarray(lg.astype(np.uint8)).resize((width, height), Image.BILINEAR), dtype=np.float64)
-        m = matcher.ncc(edges(tpl))
+        tpl = np.asarray(Image.fromarray(tpl_gray.astype(np.uint8)).resize((width, height), Image.BILINEAR),
+                         dtype=np.float64)
+        m = matcher.ncc(edges(tpl) if use_edges else tpl)
         y, x = np.unravel_index(int(np.argmax(m)), m.shape)
-        if m[y, x] > best_corr:
-            best_corr, best_box = float(m[y, x]), (int(x), int(y), width, height)
-    if best_box is None:
-        return {"score": 0.0, "edge_corr": 0.0, "bbox": None}
-    x, y, w, h = best_box
+        if m[y, x] > best_score:
+            best_score, best_box = float(m[y, x]), (int(x), int(y), width, height)
+    return best_score, best_box
+
+
+def find_logo(frame: Image.Image, logo: Image.Image, work_width: int = 360) -> dict:
+    """Find the kit logo in a frame. `score` is 0-1.
+
+    - An OPAQUE logo file (a JPEG, a photo mascot, a square app icon) is composited as the
+      whole image, so it is matched as the whole image: multi-scale grayscale correlation.
+    - A TRANSPARENT logo (a PNG/SVG mark) sits on any background in any colour, so:
+      1. edge correlation picks the place and size (edges ignore colour: a white or
+         recoloured version of the logo is still found), then
+      2. the logo's own silhouette is compared with the frame crop binarised at that spot
+         (either polarity). The overlap (IoU) is the score, so a different logo in the same
+         place scores low even when its edges correlate.
+    """
+    scale = work_width / frame.width
+    f = gray(frame.resize((work_width, max(1, round(frame.height * scale))), Image.BILINEAR))
+    if not has_transparency(logo):
+        rgb = logo.convert("RGB")
+        score, box = _search(f, gray(rgb), rgb.height / rgb.width, work_width, use_edges=False)
+        if box is None:
+            return {"score": 0.0, "mode": "image", "bbox": None}
+        x, y, w, h = box
+        return {"score": round(max(score, 0.0), 3), "mode": "image",
+                "bbox": [round(x / scale), round(y / scale), round(w / scale), round(h / scale)]}
+
+    logo = trim_to_content(logo)
+    alpha = np.asarray(logo)[:, :, 3] > 16
+    lg = gray(flatten(logo, (255, 255, 255)))
+    corr, box = _search(f, lg, logo.height / logo.width, work_width, use_edges=True)
+    if box is None:
+        return {"score": 0.0, "mode": "silhouette", "edge_corr": 0.0, "bbox": None}
+    x, y, w, h = box
     crop = f[y:y + h, x:x + w]
     mask = np.asarray(Image.fromarray(alpha.astype(np.uint8) * 255).resize((w, h))) > 127
     dark = crop < otsu(crop)
     iou = max(float((mask & b).sum()) / max(float((mask | b).sum()), 1.0) for b in (dark, ~dark))
     return {
         "score": round(iou, 3),
-        "edge_corr": round(best_corr, 3),
+        "mode": "silhouette",
+        "edge_corr": round(corr, 3),
         "bbox": [round(x / scale), round(y / scale), round(w / scale), round(h / scale)],
     }
 
@@ -373,6 +393,7 @@ def check_logo(frames: list[tuple[float, Image.Image]], logo: Image.Image | None
         if m["score"] > best["score"]:
             best = {**m, "t": round(t, 2)}
     s = best["score"]
+    LOGO_PASS, LOGO_FAIL = LOGO_THRESHOLDS[best.get("mode", "silhouette")]
     if s >= LOGO_PASS:
         return Check(PASS, f"logo found at {best['t']}s (match {s:.2f})", best)
     if s < LOGO_FAIL:

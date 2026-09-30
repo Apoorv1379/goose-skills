@@ -47,13 +47,20 @@ re-run. Never publish blind.
 | `dead_air` | silence > 1.0s mid-video (skipped with `--no-speech`) | tighten the VO timing or run the music bed under the gap |
 | `black_frames` | a black stretch > 0.3s | fix the concat / transition |
 | `logo_asset` | the logo file is favicon-sized (short side < 256px) | do not upscale it: ask for a real logo, or set the wordmark as text in the brand font |
-| `logo` | the kit logo is not found on the end card (shape overlap < 0.55) | composite the uploaded logo file onto the end card; never regenerate or retype it |
+| `logo` | the kit logo is not found on the end card (below the fail line for its mode) | composite the uploaded logo file onto the end card; never regenerate or retype it |
 | `palette` | *(warn only)* no kit colour among the end card's main colours | use a kit colour for the end-card background or text |
 
-`logo` matches edges first (so a white or single-colour version of the logo is
-still found), then compares the logo's silhouette with the frame at that spot. A
-different logo in the same place scores low. Between 0.55 and 0.70 it is a
-`warn`: look at the sheet for a warped, cropped or redrawn logo.
+`logo` has two modes, picked from the logo file:
+
+- **Transparent logo** (a PNG/SVG mark): edges find it (so a white or
+  single-colour version still counts), then the logo's silhouette is compared
+  with the frame at that spot. Pass ≥ 0.70, fail < 0.55.
+- **Opaque logo** (a JPEG, a mascot photo, a square app icon): it is composited
+  as the whole image, so the whole image is matched. Pass ≥ 0.85, fail < 0.70.
+  A different mascot on a similar background scores about 0.5.
+
+Between the two lines it is a `warn`: look at the sheet for a warped, cropped or
+redrawn logo.
 
 ## Eye checks — read the sheet every time
 
