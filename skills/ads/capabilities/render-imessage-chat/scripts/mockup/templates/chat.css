@@ -752,11 +752,12 @@ body.theme-dark .keyboard .input {
   to   { opacity: 1; }
 }
 
-/* For long composer text, allow it to truncate gracefully. */
-.keyboard .input { overflow: hidden; }
+/* Long composer text wraps and the field grows, as in Messages (it never truncates with
+   an ellipsis, so what you see typed is exactly what gets sent). */
+.keyboard .input.has-text { height: auto; min-height: 36px; padding-top: 7px; padding-bottom: 7px;
+  align-items: flex-end; }
 .keyboard .input .composer-text {
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.3;
   max-width: calc(100% - 36px);
 }
 

@@ -108,8 +108,13 @@ for n, c in enumerate(cues):
     if n + 1 < len(cues):
         room = (starts[n + 1] - delay) / 1000
         room -= 0.005  # silent by 5 ms before the next sound starts
+        # The receive chime's loud second note lands ~0.3 s in. If another message arrives
+        # before the chime ends, that note would ring just BEFORE the next bubble, so stop
+        # this chime after its first note (0.20 s). Isolated messages keep the full tone.
+        if c['name'] == 'receive' and room < 1.3:
+            room = min(room, 0.20)
         if room > 0.05:
-            cut = f"atrim=0:{room:.3f},afade=t=out:st={max(0, room - 0.04):.3f}:d=0.04,"
+            cut = f"atrim=0:{room:.3f},afade=t=out:st={max(0, room - 0.06):.3f}:d=0.06,"
     filter_parts.append(f"[{idx}:a]{cut}adelay={delay}|{delay},volume={vol}[s{idx}]")
     mix_labels.append(f"[s{idx}]")
     idx += 1

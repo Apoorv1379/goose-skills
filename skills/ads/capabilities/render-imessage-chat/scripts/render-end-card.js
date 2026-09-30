@@ -107,7 +107,8 @@ function main() {
   const F = ec.fonts || {};
   const face = (k, fb) => F[k] ? `font-family:'${F[k].family}',${fb};font-weight:${F[k].weight || 400};font-style:${F[k].style || 'normal'};` : `font-family:${fb};`;
   const gf = Object.values(F).filter(f => f.google).map(f => 'family=' + f.google).join('&');
-  const fontLink = gf ? `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?${gf}&display=block">` : '';
+  const fontCssUrl = gf ? `https://fonts.googleapis.com/css2?${gf}&display=block` : '';
+  let fontLink = '';  // filled below with inlined @font-face (no network while rendering)
   let editorial = '';
   if (ec.layout === 'editorial') {
     const hl = (ec.headline || []).map((line, i) =>
@@ -133,7 +134,6 @@ function main() {
     .replace('{{URL}}', ec.url_text ? `<div class="url">${esc(ec.url_text)}</div>` : '')
     // Legal line (e.g. the FDA disclaimer every supplement benefit claim needs). Sits
     // above y=1635 so it stays inside the 4:5 safe zone.
-    .replace('{{FONTLINK}}', fontLink)
     .replace('{{BODY}}', editorial)
     .replace('{{LAYOUT}}', ec.layout === 'editorial' ? 'editorial' : 'badges')
     .replace('{{BADGES_START}}', ec.layout === 'editorial' ? '<template>' : '')
@@ -148,7 +148,38 @@ function main() {
   const dwell = ec.dwell_sec || 2.5;
   fs.writeFileSync(htmlPath, html);
 
+  // Download the Google Fonts CSS + font files once, cache them, and inline them as data URIs,
+  // so a slow or flaky network can never swap the brand type for a fallback mid-render.
+  async function inlineFonts(url) {
+    const crypto = require('crypto'), os = require('os');
+    const dir = path.join(os.tmpdir(), 'imsg-fonts'); fs.mkdirSync(dir, { recursive: true });
+    const cssFile = path.join(dir, crypto.createHash('sha1').update(url).digest('hex') + '.css');
+    if (fs.existsSync(cssFile)) return fs.readFileSync(cssFile, 'utf-8');
+    const get = async (u, asText) => {
+      for (let i = 0; i < 4; i++) {
+        try {
+          const r = await fetch(u, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36' } });
+          if (r.ok) return asText ? await r.text() : Buffer.from(await r.arrayBuffer());
+        } catch (e) { /* retry */ }
+        await new Promise(res => setTimeout(res, 800 * (i + 1)));
+      }
+      throw new Error('could not download ' + u);
+    };
+    let css = await get(url, true);
+    for (const m of [...new Set(css.match(/https:\/\/fonts\.gstatic\.com\/[^)'"]+/g) || [])]) {
+      const buf = await get(m, false);
+      css = css.split(m).join('data:font/woff2;base64,' + buf.toString('base64'));
+    }
+    fs.writeFileSync(cssFile, css);
+    return css;
+  }
+
   (async () => {
+    if (fontCssUrl) {
+      try { fontLink = `<style>${await inlineFonts(fontCssUrl)}</style>`; }
+      catch (e) { console.error('END CARD FONT DOWNLOAD FAILED: ' + e.message); process.exit(5); }
+      fs.writeFileSync(htmlPath, html.replace('{{FONTLINK}}', fontLink));
+    }
     const browser = await chromium.launch();
     const ctx = await browser.newContext({ viewport: { width: 1080, height: 1920 }, deviceScaleFactor: 1 });
     const page = await ctx.newPage();

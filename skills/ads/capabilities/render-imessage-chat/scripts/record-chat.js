@@ -211,6 +211,10 @@ function injectedStyle({ zoom, logicalH, theme, bgCss }) {
     /* iOS tapback: a round reaction bubble sitting mostly ABOVE the reacted message, on its
        outer top corner (left on your blue bubbles, right on theirs), with a two-dot tail
        pointing down at the message. Theirs is grey, yours is blue. */
+    /* Caret sits right after the last typed character, even when the text wraps. */
+    .keyboard .input.has-text .caret { display: none; }
+    .keyboard .input [data-composer-text]::after { content: ''; display: inline-block; width: 2px; height: 1.15em;
+      margin-left: 1px; vertical-align: -0.2em; background: #0a84ff; animation: caret-blink 1s step-end infinite; }
     .tapback { position: absolute; top: -34px; width: 38px; height: 38px; border-radius: 50%;
       display: flex; align-items: center; justify-content: center; z-index: 3;
       box-shadow: 0 0 0 2.5px ${dark ? '#000' : '#fff'};
@@ -334,11 +338,21 @@ function makeDriverScript(timeline, emojiMap = {}) {
       const span = composerSpan();
       if (!span) return;
       span.textContent = '';
+      span.dataset.expect = text;
+      // Keystrokes on an absolute schedule that finishes at 90% of the window, with a
+      // seeded human rhythm. Cumulative random sleeps used to overrun the send, so a
+      // message could leave the composer half typed.
       const graphemes = [...SEG.segment(text)].map(x => x.segment);
-      const perChar = (durSec * 1000) / Math.max(1, graphemes.length);
-      for (const g of graphemes) {
-        span.appendChild(emojiNode(g));
-        await sleep(perChar * (0.7 + Math.random() * 0.6));
+      let seed = text.length * 7919;
+      const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+      const w = graphemes.map(() => 0.7 + rnd() * 0.6), total = w.reduce((a, b) => a + b, 0);
+      const start = performance.now(), span_ms = durSec * 1000 * 0.9;
+      let acc = 0;
+      for (let i = 0; i < graphemes.length; i++) {
+        const due = start + (acc / total) * span_ms; acc += w[i];
+        const wait = due - performance.now(); if (wait > 0) await sleep(wait);
+        if (!span.isConnected) return;
+        span.appendChild(emojiNode(graphemes[i]));
       }
     }
 
@@ -364,7 +378,15 @@ function makeDriverScript(timeline, emojiMap = {}) {
           case 'typing-pop':     popBubble(findRow(ev.id)); break;
           case 'typing-swap':    swapTyping(ev.id, ev.toId); break;
           case 'composer':       typeComposer(ev.text, ev.dur); break;
-          case 'composer-clear': clearComposer(); break;
+          case 'composer-clear': {
+            // What was typed must be exactly what is sent.
+            const sp = document.querySelector('[data-composer-text]');
+            if (sp && sp.dataset.expect != null) {
+              const shown = [...sp.childNodes].map(n => n.nodeType === 3 ? n.nodeValue : (n.alt || '')).join('');
+              if (shown !== sp.dataset.expect) (window.__typedMismatch = window.__typedMismatch || []).push([sp.dataset.expect, shown]);
+            }
+            clearComposer(); break;
+          }
           case 'scroll':         smoothScroll(ev.dur); break;
           case 'tapback':        addTapback(ev); break;
           case 'noop':           break;
@@ -594,6 +616,11 @@ async function main() {
   await page.waitForTimeout(600);
   await page.evaluate(() => window.__startDriver());
   await page.waitForTimeout(total * 1000);
+  const typed = await page.evaluate(() => window.__typedMismatch || []);
+  if (typed.length) {
+    console.error('TYPED != SENT: ' + typed.map(([want, got]) => `"${got}" was on screen when "${want}" sent`).join(' | '));
+    process.exit(6);
+  }
   const videoPath = await page.video().path();
   await ctx.close();
   await browser.close();

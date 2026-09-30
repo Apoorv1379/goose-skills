@@ -147,3 +147,15 @@ thread; real conversations open with it and the clock is read from it.
 9. **No push-in on the link.** It read as a camera move a phone recording can't make; removed.
 10. **The generic badge end card looked the same for every brand.** Use the editorial layout
    with the brand's fonts (or named free stand-ins).
+11. **Keep the receive chime; shorten it only when another message follows fast.** Its loud
+    second note lands ~0.3 s in, so with two received messages ~0.8 s apart it rang just
+    before the second bubble (Som Sleep). Cutting every chime to one note changed the tone
+    everywhere and was rejected; `stitch.sh` now cuts only a chime followed within 1.3 s.
+12. **Typed text must equal sent text.** Cumulative random keystroke sleeps overran the send,
+    and the composer truncated long lines with an ellipsis. Keystrokes now run on an absolute
+    seeded schedule ending at 90% of the window, the composer wraps like Messages, the caret
+    follows the last character, and the render fails (`TYPED != SENT`) on any mismatch.
+13. **Embed end-card fonts.** Loading Google Fonts live during capture failed intermittently;
+    they are downloaded once (with retries), cached, and inlined as data URIs.
+14. **Take end-card colours from the brand's live CSS variables**, not the product photo
+    (Graza: `--color-background #F6E6D9`, `--color-text #3C422E`, `--color-brand #D1E030`).
