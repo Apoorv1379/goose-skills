@@ -1,0 +1,145 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>terminal</title>
+<style>
+  :root{
+    --bg:#0f0f0f; --chrome:#1c1c1c; --win:#191919;
+    --fg:#d6d3ce; --dim:#8a8681; --faint:#6b6763;
+    --accent:#d97757;      /* claude orange */
+    --ok:#3fb950;          /* tool bullet */
+    --chip:#2a2a28;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);overflow:hidden}
+  body{display:flex;align-items:flex-start;justify-content:flex-start;padding-top:430px}
+
+  .win{
+    width:1560px;flex:0 0 auto;margin-left:26px;background:var(--win);border-radius:14px;overflow:hidden;
+    box-shadow:0 40px 120px rgba(0,0,0,.6);
+    font:26px/1.62 "Cascadia Code","JetBrains Mono","SF Mono",Consolas,monospace;
+    color:var(--fg);
+  }
+  .bar{
+    height:74px;background:var(--chrome);display:flex;align-items:center;
+    padding:0 26px;position:relative;
+  }
+  .dots{display:flex;gap:12px}
+  .dot{width:18px;height:18px;border-radius:50%}
+  .r{background:#ff5f57}.y{background:#febc2e}.g{background:#28c840}
+  .title{
+    position:absolute;left:0;right:0;text-align:center;color:var(--dim);
+    font-size:24px;pointer-events:none;
+  }
+  .body{padding:34px 40px 44px}
+
+  .cmdline{display:flex;align-items:baseline;gap:14px}
+  .avatar{
+    width:38px;height:38px;border-radius:8px;background:#3a3632;flex:0 0 auto;
+    display:inline-block;transform:translateY(6px);
+  }
+  .kw{color:var(--accent);font-weight:600}
+  .dim{color:var(--dim)}
+  .faint{color:var(--faint)}
+  .meta{margin-left:52px}
+  hr{border:0;border-top:1px solid #2b2b2b;margin:28px 0}
+
+  .prompt{display:flex;gap:14px;align-items:flex-start}
+  .caret{color:var(--accent)}
+  .typed{white-space:pre-wrap;word-break:break-word}
+  .cursor{
+    display:inline-block;width:13px;height:28px;background:var(--fg);
+    transform:translateY(4px);animation:blink 1.05s steps(1) infinite;
+  }
+  @keyframes blink{50%{opacity:0}}
+
+  .step{margin-top:26px;opacity:0;transform:translateY(6px);
+        transition:opacity .22s ease,transform .22s ease}
+  .step.on{opacity:1;transform:none}
+  .bullet{color:var(--ok);margin-right:12px}
+  .tool{font-weight:600}
+  .args{color:var(--dim)}
+  .sub{color:var(--faint);margin-left:34px;display:block;font-size:24px}
+  b{font-weight:700;color:#fff}
+  .chip{background:var(--chip);border-radius:6px;padding:2px 10px;color:#cfe8d0}
+</style>
+
+<div class="win" id="win">
+  <div class="bar">
+    <div class="dots"><i class="dot r"></i><i class="dot y"></i><i class="dot g"></i></div>
+    <div class="title" id="title"></div>
+  </div>
+  <div class="body">
+    <div class="cmdline">
+      <span class="avatar"></span>
+      <span><span class="kw" id="cmd"></span> <span class="dim" id="flags"></span></span>
+    </div>
+    <div class="meta dim" id="version"></div>
+    <div class="meta dim" id="path"></div>
+    <hr>
+    <div class="prompt">
+      <span class="caret">&gt;</span>
+      <span class="typed" id="typed"></span><span class="cursor" id="cursor"></span>
+    </div>
+    <div id="steps"></div>
+  </div>
+</div>
+
+<script>
+// Driven by window.SESSION, injected by render-terminal.js.
+// Exposes window.__marks so the recorder can report exactly when each step landed --
+// which is what turns the `notify` cue from a hand-pinned guess into a measurement.
+window.__marks = {};
+const $ = (id) => document.getElementById(id);
+
+function esc(s){ return s.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+function rich(s){
+  return esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/`(.+?)`/g,'<span class="chip">$1</span>');
+}
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+async function type(el, text, cps){
+  const per = 1000/cps;
+  for (let i=0;i<text.length;i++){
+    el.textContent += text[i];
+    // brief hesitation at spaces reads as human rather than metronomic
+    await sleep(per * (text[i]===' ' ? 1.9 : (0.7 + Math.random()*0.7)));
+  }
+}
+
+async function run(){
+  const S = window.SESSION;
+  $('title').textContent   = S.title;
+  $('cmd').textContent     = S.header.cmd;
+  $('flags').textContent   = S.header.flags;
+  $('version').textContent = S.header.version;
+  $('path').textContent    = S.header.path;
+
+  await sleep(S.timing.before_typing ?? 700);
+  window.__marks.typing_start = performance.now();
+  await type($('typed'), S.prompt, S.timing.cps ?? 26);
+  window.__marks.typing_end = performance.now();
+  $('cursor').style.display='none';
+  await sleep(S.timing.after_typing ?? 620);
+
+  const host = $('steps');
+  for (const [i, st] of S.steps.entries()){
+    const d = document.createElement('div');
+    d.className = 'step';
+    if (st.type === 'text')  d.innerHTML = `<span class="dim">${rich(st.text)}</span>`;
+    if (st.type === 'tool')  d.innerHTML =
+      `<span class="bullet">●</span><span class="tool">${esc(st.name)}</span>` +
+      `<span class="args">(${esc(st.args)})</span>` +
+      (st.result ? `<span class="sub">└ ${esc(st.result)}</span>` : '');
+    if (st.type === 'final') d.innerHTML = rich(st.text);
+    host.appendChild(d);
+    void d.offsetWidth;
+    d.classList.add('on');
+    window.__marks['step_'+i] = performance.now();
+    if (st.deliverable) window.__marks.deliverable = performance.now();
+    await sleep(st.pause ?? 900);
+  }
+  window.__marks.done = performance.now();
+  document.title = 'DONE';
+}
+run();
+</script>

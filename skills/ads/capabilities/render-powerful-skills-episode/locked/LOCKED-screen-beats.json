@@ -1,0 +1,26 @@
+{
+ "$comment": "Defaults for every episode. The only thing that changes per episode is `skill`, which make_screen_recording.py fills in from the episode's featured_skill. Nothing here is episode-specific.",
+ "url": "https://skills.gooseworks.ai",
+ "address_bar": "skills.gooseworks.ai",
+ "capture": {
+  "width": 3840,
+  "height": 3400,
+  "zoom": 2
+ },
+ "out": {
+  "width": 1080,
+  "height": 1920
+ },
+ "record_sec": 60,
+ "beats": [
+  {
+   "label": "install command",
+   "selector": "npx gooseworks install"
+  },
+  {
+   "label": "terminal",
+   "selector": "div.overflow-hidden.rounded-xl.border"
+  }
+ ],
+ "terminal_selector": "div.overflow-hidden.rounded-xl.border"
+}

@@ -1,0 +1,41 @@
+{
+ "$comment": "LOCKED -- the approved screen-recording LOOK for this series. Reproduce it. Do not re-tune the camera, the chrome or the choreography to fix something else. A change needs approval FIRST, and both the change and the reason recorded here and in TAKES.md. This file exists because re-anchoring the final beat to suit the notify cue silently reframed the approved take and cut its payoff off.",
+ "locked_on": "2026-09-08",
+ "approved_take": {
+  "file": "LOCKED-screen-recording.mp4",
+  "sha256_16": "bf38ff6406eb529a",
+  "duration_sec": 18.533,
+  "skill": "Make a LinkedIn carousel",
+  "category": "Content",
+  "beats_sec": {
+   "beat_1": 0.9,
+   "beat_2": 2.95,
+   "beat_3": 4.55
+  },
+  "notify_sec": 18.4
+ },
+ "inputs_that_define_the_look": {
+  "LOCKED-camera.json": "1b6f42f4f60e712f",
+  "LOCKED-screen-beats.json": "2873fc6355181488",
+  "LOCKED-address-bar.png": "84d34cd879a48c52"
+ },
+ "reproduce": "python scripts/make_screen_recording.py --episode <ep>/episode.json --out <ep>/screen-recording/",
+ "measured_against_the_hand_made_reference": {
+  "source": "episode-2/screen-recording/zoom-edit.mp4",
+  "beats_settle_sec": {
+   "address bar": 0.9,
+   "install command": 2.95,
+   "terminal": 4.55
+  },
+  "move_duration_sec": 0.9,
+  "holds": "dead still; the reference measures 0.00 frame-to-frame difference",
+  "address_bar_mean_pixel_diff_of_255": 3.4,
+  "bar_height_frac_of_frame": 0.0651,
+  "bar_centre_frac_of_frame": 0.463
+ },
+ "deliberately_NOT_locked": {
+  "duration_sec": "varies with how long that skill's transcript takes; the take ends 1.2s after its own deliverable",
+  "notify_sec": "measured per run; it never changes the picture"
+ },
+ "final_beat": "Frames the WHOLE terminal, bottom-aligned with a small margin. The terminal is a fixed-height window whose content fills top-down, so framing all of it guarantees the artefact the run produced is on screen without chasing it -- and the install command and the command being run stay above it. X IS NEVER ADJUSTED: shifting sideways to keep a long file path whole pushes the command itself off the left edge, trading what the episode is about for what it ends on. A long path may run off the right, as it does in the hand-made reference."
+}

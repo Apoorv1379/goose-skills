@@ -1,0 +1,4 @@
+{
+ "$comment": "featured_skill -> the site's own name for that demo, for the cases where they differ. The resolver matches by slug first, so this only needs entries the slug cannot find. Checked before episode.json's screen_skill, which still overrides everything.",
+ "goose-graphics": "Make a LinkedIn carousel"
+}

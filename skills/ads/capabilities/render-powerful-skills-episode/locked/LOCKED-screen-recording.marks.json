@@ -1,0 +1,13 @@
+{
+ "video": "zoom-edit.mp4",
+ "duration_sec": 18.533,
+ "plate_start_sec": 32.751,
+ "beats_sec": {
+  "beat_1": 0.9,
+  "beat_2": 2.95,
+  "beat_3": 4.55
+ },
+ "notify_sec": 18.4,
+ "skill": "Make a LinkedIn carousel",
+ "category": "Content"
+}

@@ -1,0 +1,57 @@
+{
+ "$comment": "Measured off episode 2's finished edit, not designed. Holds are DEAD STILL (the reference's frame-to-frame difference across every hold is 0.00); every move is 0.9s, eased. Three moves: in, across, then OUT -- nothing zooms in after the pull-out. All three zooms are sized off the install box so the scales are commensurable.",
+ "beats": [
+  {
+   "label": "address bar",
+   "scale_on": "install command",
+   "fill_w": 0.748,
+   "center_on": "address url",
+   "on": [
+    0.0,
+    0.5
+   ],
+   "center": [
+    0.225,
+    0.463
+   ],
+   "open_move_sec": 0.9,
+   "hold_sec": 1.15,
+   "$note": "crop clamps to the window's left edge; bar centre sits at 0.463 of frame, black above"
+  },
+  {
+   "label": "install command",
+   "fill_w": 0.89,
+   "center": [
+    0.505,
+    0.367
+   ],
+   "move_sec": 0.9,
+   "hold_sec": 0.7
+  },
+  {
+   "label": "install command",
+   "fill_w": 0.565,
+   "center": [
+    0.505,
+    0.33
+   ],
+   "move_sec": 0.9,
+   "hold_sec": 14.0,
+   "$note": "hold deliberately long; tail_after_notify_sec trims back to the measured deliverable"
+  }
+ ],
+ "chrome": {
+  "url": "skills.gooseworks.ai",
+  "bar_frac": 0.0224
+ },
+ "settle_sec": 0.3,
+ "open": {
+  "label": "install command",
+  "fill_w": 0.33,
+  "center": [
+   0.505,
+   0.6
+  ]
+ },
+ "tail_after_notify_sec": 1.2
+}
