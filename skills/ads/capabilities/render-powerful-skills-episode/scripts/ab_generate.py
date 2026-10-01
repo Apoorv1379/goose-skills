@@ -243,6 +243,10 @@ def veo_prompt(line: str, shake: str, framing: str, garment: str,
         (PACE_EARLY if finish_early else '') +
         'A man speaks one line straight to camera: "' + line + '" '
         'He says exactly those words, once, with no other speech and no made-up words. '
+        'The clip OPENS on him silent: his mouth is closed and still for the first half '
+        'second, he is already looking into the lens, and only then does he begin the line '
+        'from its very first word. He is NOT already mid-sentence when the clip starts, and '
+        'the first word is not clipped or half-spoken. Nothing is said before the line. '
         + ((action.rstrip() + ' ') if action else '') +
         'He talks the way a real person talks to their phone -- relaxed, natural pace, '
         'small natural pauses, blinking normally as anyone does mid-sentence. '
@@ -268,10 +272,13 @@ def veo_prompt(line: str, shake: str, framing: str, garment: str,
         'whole shot, and never warps, flickers, scrambles or re-renders. '
         + shake + ' ' + framing + ' '
         'His eyes stay clear and keep their shape and colour from the reference image. '
+        'His ears are bare: no earbuds, no earphones, no headphones, nothing in or over '
+        'either ear. '
         'Ordinary indoor lighting, natural phone-camera look, real time. '
         'Avoid: background music, soundtrack, score, any other dialogue, invented or '
         'nonsense words, subtitles, captions, on-screen text overlays, warped or changing '
-        'screen text, camera moves, scene cuts, a second person.'
+        'screen text, camera moves, scene cuts, a second person, earbuds, earphones, '
+        'AirPods, headphones.'
     , garment)
 
 

@@ -124,6 +124,9 @@ def build_html(spec: dict, marks: list[float]) -> str:
 
     return TEMPLATE.format(
         file=esc(spec.get("file", "")), title=esc(spec.get("title", "")),
+        # the chip carries the BASENAME, the way the terminal prints it; the title bar
+        # already carries the full path and repeating it reads as a duplicate
+        chip=esc(spec.get("file", "").rsplit("/", 1)[-1]),
         meta=esc(spec.get("meta", "")), figures=fig_html, table=table_html,
         n_fig=len(figs), marks=json.dumps([round(m, 3) for m in marks]),
         safe_top=SAFE_TOP, safe_h=SAFE_BOT - SAFE_TOP, bar_h=BAR_H, W=W)
@@ -162,6 +165,12 @@ TEMPLATE = r"""<!doctype html><meta charset="utf-8"><title>report</title>
     border-bottom:1px solid #212121}}
  td.d{{color:#ff7b6b}}
  tr.row{{opacity:0}}
+ /* the deliverable, rendered the way the terminal renders it: the run produced a FILE and
+    the hold has to show it, or the payoff is just numbers on black (#122). */
+ #chip{{opacity:0;display:inline-flex;align-items:center;gap:16px;margin-top:10px;
+      padding:18px 30px;border-radius:13px;background:#142d47;border:1px solid #2d5f8f;
+      font:500 38px "JetBrains Mono",Consolas,monospace;color:#9ccbff}}
+ #chip .tick{{color:#49c06a;font-size:34px}}
 </style>
 <div id="win">
  <div id="bar">
@@ -173,7 +182,8 @@ TEMPLATE = r"""<!doctype html><meta charset="utf-8"><title>report</title>
  <div id="view"><div class="pad">
   <h1>{title}</h1>
   <div class="meta">{meta}</div>
-{figures}{table} </div></div>
+{figures}{table}  <div id="chip"><span class="tick">&#10003;</span>{chip}</div>
+ </div></div>
 </div>
 <script>
 // Every property is a pure function of t, so the render is seek-safe: frame N comes from
@@ -218,6 +228,20 @@ function setTime(t){{
     r.style.opacity = p;
     r.style.transform = 'translateY(' + (10 * (1 - p)).toFixed(2) + 'px)';
   }});
+
+  // the deliverable rises in last, after the final figure has landed, and stays up for the
+  // hold. It is the thing the run actually produced, so it is what the cut ends on.
+  const chip = document.getElementById('chip');
+  if (chip) {{
+    // +0.42 put the chip's fade-in PAST the end of a 3.8s clip, so it rendered in the
+    // --still (which draws at the hold) and never appeared in the video. It belongs on the
+    // last spoken phrase, which is MARKS[last], so it rises WITH the final figure and is up
+    // for the whole hold.
+    const at = (TABLE_AT !== null ? TABLE_AT : MARKS[N_FIG - 1]) + 0.12;
+    const p = power3Out(seg(t, at, at + 0.26));
+    chip.style.opacity = p;
+    chip.style.transform = 'translateY(' + (14 * (1 - p)).toFixed(2) + 'px)';
+  }}
 }}
 window.setTime = setTime;
 setTime(0);
